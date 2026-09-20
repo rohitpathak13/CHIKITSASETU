@@ -31,11 +31,12 @@ htmlcov/
 .tox/
 .nox/
 
-# IDE & OS Artifacts
+# IDE & OS Artifacts & Logs
 .vscode/
 .idea/
 .agents/
 .system_generated/
+*.log
 *.swp
 *.swo
 .DS_Store
