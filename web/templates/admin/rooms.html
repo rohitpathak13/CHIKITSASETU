@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Manage Rooms - MediCare AI{% endblock %}
+{% block page_heading %}Inpatient Rooms & Ward Units{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title">Hospital Clinical Rooms & Wards ({{ total }} Registered)</div>
+            <div class="card-subtitle">Manage inpatient rooms, clinical ICU units, floor allocations, and billing tariffs</div>
+        </div>
+        <button class="btn btn-primary" data-modal-target="create-room-modal">
+            <span>➕</span> Add Room
+        </button>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <form method="GET" action="{{ url_for('admin.manage_rooms') }}" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by room number..." style="flex: 1; min-width: 200px;">
+        
+        <select name="type" class="form-control" style="width: auto; min-width: 160px;">
+            <option value="">All Room Types</option>
+            {% for t in room_types %}
+                <option value="{{ t }}" {% if room_type_filter == t %}selected{% endif %}>{{ t|upper }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="dept" class="form-control" style="width: auto; min-width: 180px;">
+            <option value="">All Departments</option>
+            {% for d in departments %}
+                <option value="{{ d.id }}" {% if dept_id == d.id|string %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if q or room_type_filter or dept_id %}
+            <a href="{{ url_for('admin.manage_rooms') }}" class="btn btn-secondary" style="color: var(--text-dim);">Clear</a>
+        {% endif %}
+    </form>
+
+    <!-- Rooms Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Room Number</th>
+                    <th>Category</th>
+                    <th>Floor</th>
+                    <th>Department</th>
+                    <th>Daily Tariff</th>
+                    <th>Bed Capacity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rooms %}
+                <tr>
+                    <td>
+                        <strong style="font-size: 1.05rem; color: var(--text-main);">{{ r.room_number }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge {% if r.room_type.value == 'icu' %}badge-danger{% elif r.room_type.value == 'emergency' %}badge-warning{% elif r.room_type.value == 'surgical' %}badge-info{% else %}badge-neutral{% endif %}">
+                            {{ r.room_type.value|upper }}
+                        </span>
+                    </td>
+                    <td>Floor {{ r.floor }}</td>
+                    <td>
+                        {% if r.department %}
+                            {{ r.department.name }}
+                        {% else %}
+                            <span style="color: var(--text-dim);">General Facility</span>
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--teal-primary); font-weight: 700;">
+                        ₹{{ "%.2f"|format(r.daily_rate) }} / day
+                    </td>
+                    <td>
+                        <span style="font-weight: 700;">{{ r.beds|length }}</span>
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">/ {{ r.total_beds }} configured</span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                        No clinical rooms found matching criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Showing page {{ page }} of {{ pages }} ({{ total }} rooms)
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+            {% if page > 1 %}
+                <a href="{{ url_for('admin.manage_rooms', page=page-1, q=q, type=room_type_filter, dept=dept_id) }}" class="btn btn-secondary btn-sm">&laquo; Prev</a>
+            {% endif %}
+            
+            <span class="btn btn-primary btn-sm" style="pointer-events: none;">{{ page }}</span>
+
+            {% if page < pages %}
+                <a href="{{ url_for('admin.manage_rooms', page=page+1, q=q, type=room_type_filter, dept=dept_id) }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal: Add Room -->
+<div class="modal-backdrop" id="create-room-modal">
+    <div class="modal-dialog" style="max-width: 550px;">
+        <div class="card-header" style="margin-bottom: 1rem;">
+            <div class="card-title">Add Inpatient Room / Ward Unit</div>
+            <button type="button" class="btn btn-secondary btn-sm" data-close-modal>&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin.create_room') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Room Number / Identifier *</label>
+                    <input type="text" name="room_number" class="form-control" required placeholder="e.g. ICU-301">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Room Category *</label>
+                    <select name="room_type" class="form-control" required>
+                        {% for t in room_types %}
+                            <option value="{{ t }}">{{ t|upper }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Floor Number</label>
+                    <input type="number" name="floor" class="form-control" value="1" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Total Bed Capacity</label>
+                    <input type="number" name="total_beds" class="form-control" value="10" min="1" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Daily Tariff (₹)</label>
+                    <input type="number" step="0.01" name="daily_rate" class="form-control" value="1500.00" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <select name="department_id" class="form-control">
+                        <option value="">-- General Facility --</option>
+                        {% for d in departments %}
+                            <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Room</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

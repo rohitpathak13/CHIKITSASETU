@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Generate Hospital Bill{% endblock %}
+{% block page_heading %}Clinical Invoicing & Bill Creation{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 0 auto;">
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('billing.dashboard') }}" class="btn btn-secondary btn-sm">
+            <span>&larr;</span> Back to Billing Ledger
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>🧾</span> Create New Hospital Invoice</div>
+                <div class="card-subtitle">Generate itemized clinical bill across Consultation, Laboratory, Medicines, Room, Bed, Procedures, and Other services</div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('billing.create_bill') }}" id="billingForm">
+            <!-- Patient & Meta Details -->
+            <div style="background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 1.5rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem;">1. Patient Demographics & Invoice Metadata</h4>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label class="form-label">Select Inpatient / Outpatient *</label>
+                        <select name="patient_id" class="form-control" required>
+                            <option value="">-- Choose Patient --</option>
+                            {% for p in patients %}
+                            <option value="{{ p.id }}">
+                                {{ p.user.full_name }} (MRN: {{ p.medical_record_number or 'N/A' }} | Phone: {{ p.user.phone or 'N/A' }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Payment Due Date</label>
+                        <input type="date" name="due_date" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Invoice Notes / Clinical Summary</label>
+                    <input type="text" name="notes" class="form-control" placeholder="e.g. Outpatient cardiology consultation and laboratory profiling">
+                </div>
+            </div>
+
+            <!-- Itemized Line Items -->
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0;">2. Itemized Clinical Charges</h4>
+                    <button type="button" class="btn btn-secondary btn-sm" id="addItemBtn" onclick="addRow()">
+                        <span>➕</span> Add Service Item
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table" id="itemsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 22%;">Component Category</th>
+                                <th style="width: 38%;">Service Description</th>
+                                <th style="width: 15%;">Unit Price ($)</th>
+                                <th style="width: 10%;">Qty</th>
+                                <th style="width: 10%;">Subtotal</th>
+                                <th style="width: 5%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsBody">
+                            <tr class="item-row">
+                                <td>
+                                    <select name="item_type[]" class="form-control item-type-select" required>
+                                        {% for val, label in components %}
+                                        <option value="{{ val }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" name="description[]" class="form-control item-desc" placeholder="e.g. Specialist Consultation" required>
+                                </td>
+                                <td>
+                                    <input type="number" step="0.01" min="0" name="unit_price[]" class="form-control item-price" placeholder="0.00" required oninput="calculateLiveTotals()">
+                                </td>
+                                <td>
+                                    <input type="number" min="1" value="1" name="quantity[]" class="form-control item-qty" required oninput="calculateLiveTotals()">
+                                </td>
+                                <td class="row-subtotal" style="font-weight: 700; vertical-align: middle;">$0.00</td>
+                                <td style="vertical-align: middle;">
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)" style="padding: 0.25rem 0.5rem;">&times;</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Financial Adjustments & Live Summary -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem;">3. Discounts, Taxes & Insurance</h4>
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label">Discount Value</label>
+                            <input type="number" step="0.01" min="0" name="discount" id="discountInput" class="form-control" value="0.00" oninput="calculateLiveTotals()">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label">Discount Type</label>
+                            <select name="discount_type" id="discountTypeSelect" class="form-control" onchange="calculateLiveTotals()">
+                                <option value="amount">Fixed Amount ($)</option>
+                                <option value="percent">Percentage (%)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label">Healthcare Tax Rate</label>
+                            <select name="tax_rate" id="taxRateSelect" class="form-control" onchange="calculateLiveTotals()">
+                                <option value="0.05">5% (Standard Healthcare GST)</option>
+                                <option value="0.00">0% (Tax Exempt)</option>
+                                <option value="0.10">10%</option>
+                                <option value="0.18">18%</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label">Insurance Covered ($)</label>
+                            <input type="number" step="0.01" min="0" name="insurance_covered" id="insuranceCoveredInput" class="form-control" value="0.00" oninput="calculateLiveTotals()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculated Totals Box -->
+                <div style="background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between;">
+                    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem;">Calculated Invoice Summary</h4>
+                    <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.9rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Subtotal:</span>
+                            <strong id="summarySubtotal">$0.00</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Discount:</span>
+                            <span style="color: #34D399;" id="summaryDiscount">-$0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Tax:</span>
+                            <span id="summaryTax">+$0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Insurance Coverage:</span>
+                            <span style="color: #60A5FA;" id="summaryInsurance">-$0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem; font-size: 1.2rem;">
+                            <span style="font-weight: 700;">Final Amount:</span>
+                            <strong style="color: var(--teal-primary);" id="summaryFinal">$0.00</strong>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-dim);">
+                        Status upon creation: <span class="badge badge-warning" style="font-size: 0.75rem;">PENDING</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                <a href="{{ url_for('billing.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <span>🧾</span> Generate Official Invoice
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function addRow() {
+    const tbody = document.getElementById("itemsBody");
+    const tr = document.createElement("tr");
+    tr.className = "item-row";
+    tr.innerHTML = `
+        <td>
+            <select name="item_type[]" class="form-control item-type-select" required>
+                {% for val, label in components %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <input type="text" name="description[]" class="form-control item-desc" placeholder="Service / Item Name" required>
+        </td>
+        <td>
+            <input type="number" step="0.01" min="0" name="unit_price[]" class="form-control item-price" placeholder="0.00" required oninput="calculateLiveTotals()">
+        </td>
+        <td>
+            <input type="number" min="1" value="1" name="quantity[]" class="form-control item-qty" required oninput="calculateLiveTotals()">
+        </td>
+        <td class="row-subtotal" style="font-weight: 700; vertical-align: middle;">$0.00</td>
+        <td style="vertical-align: middle;">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)" style="padding: 0.25rem 0.5rem;">&times;</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    calculateLiveTotals();
+}
+
+function removeRow(btn) {
+    const tbody = document.getElementById("itemsBody");
+    if (tbody.querySelectorAll(".item-row").length > 1) {
+        btn.closest("tr").remove();
+        calculateLiveTotals();
+    } else {
+        alert("At least one line item is required on a hospital bill.");
+    }
+}
+
+function calculateLiveTotals() {
+    let subtotal = 0.0;
+    const rows = document.querySelectorAll(".item-row");
+    rows.forEach(r => {
+        const price = parseFloat(r.querySelector(".item-price").value) || 0.0;
+        const qty = parseInt(r.querySelector(".item-qty").value) || 1;
+        const rowTot = price * qty;
+        r.querySelector(".row-subtotal").textContent = "$" + rowTot.toFixed(2);
+        subtotal += rowTot;
+    });
+
+    const discVal = parseFloat(document.getElementById("discountInput").value) || 0.0;
+    const discType = document.getElementById("discountTypeSelect").value;
+    let discount = 0.0;
+    if (discType === "percent") {
+        discount = subtotal * (discVal / 100.0);
+    } else {
+        discount = discVal;
+    }
+    discount = Math.min(discount, subtotal);
+
+    const taxableBase = Math.max(0.0, subtotal - discount);
+    const taxRate = parseFloat(document.getElementById("taxRateSelect").value) || 0.0;
+    const tax = taxableBase * taxRate;
+
+    const insurance = parseFloat(document.getElementById("insuranceCoveredInput").value) || 0.0;
+    const finalAmount = Math.max(0.0, subtotal - discount + tax - insurance);
+
+    document.getElementById("summarySubtotal").textContent = "$" + subtotal.toFixed(2);
+    document.getElementById("summaryDiscount").textContent = "-$" + discount.toFixed(2);
+    document.getElementById("summaryTax").textContent = "+$" + tax.toFixed(2);
+    document.getElementById("summaryInsurance").textContent = "-$" + insurance.toFixed(2);
+    document.getElementById("summaryFinal").textContent = "$" + finalAmount.toFixed(2);
+}
+
+// Initial calculation on load
+document.addEventListener("DOMContentLoaded", calculateLiveTotals);
+</script>
+{% endblock %}

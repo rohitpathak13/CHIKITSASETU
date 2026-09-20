@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block title %}Appointment Management - MediCare AI{% endblock %}
+{% block page_heading %}Outpatient Appointment Hub & Clinic Roster{% endblock %}
+
+{% block content %}
+<!-- KPI Stats Ribbon -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Appointments</div>
+        <div class="stat-value" style="color: var(--teal-primary);">{{ stats.total }}</div>
+        <div class="stat-desc">Cumulative hospital bookings</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Today's Visits</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ stats.today }}</div>
+        <div class="stat-desc">Scheduled for {{ today_date }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Confirmed / Scheduled</div>
+        <div class="stat-value" style="color: #FBBF24;">{{ stats.scheduled + stats.confirmed }}</div>
+        <div class="stat-desc">Active in-queue consultations</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Completed Consults</div>
+        <div class="stat-value" style="color: #34D399;">{{ stats.completed }}</div>
+        <div class="stat-desc">Successfully attended</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Cancelled Visits</div>
+        <div class="stat-value" style="color: #F87171;">{{ stats.cancelled }}</div>
+        <div class="stat-desc">Slots released for re-booking</div>
+    </div>
+</div>
+
+<!-- Master Schedule Card -->
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title"><span>📅</span> Master Appointment Schedule</div>
+            <div class="card-subtitle">Real-time outpatient queue, ML attendance triage, and schedule management</div>
+        </div>
+        <div style="display: flex; gap: 0.6rem;">
+            <a href="{{ url_for('appointment.book') }}" class="btn btn-primary">
+                <span>➕</span> Book New Appointment
+            </a>
+        </div>
+    </div>
+
+    <!-- Multi-Criteria Search & Filter Form -->
+    <form method="GET" action="{{ url_for('appointment.index') }}" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; align-items: center;">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search patient name, MRN, doctor, or token..." style="flex: 1; min-width: 220px;">
+
+        {% if user_role != 'doctor' %}
+        <select name="doctor_id" class="form-control" style="width: auto; min-width: 150px;">
+            <option value="all">All Doctors</option>
+            {% for doc in doctors %}
+                <option value="{{ doc.id }}" {% if doctor_id == doc.id|string %}selected{% endif %}>
+                    Dr. {{ doc.user.full_name }} ({{ doc.specialization }})
+                </option>
+            {% endfor %}
+        </select>
+        {% endif %}
+
+        <select name="department_id" class="form-control" style="width: auto; min-width: 150px;">
+            <option value="all">All Departments</option>
+            {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if department_id == dept.id|string %}selected{% endif %}>
+                    {{ dept.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="status" class="form-control" style="width: auto; min-width: 130px;">
+            <option value="all">All Statuses</option>
+            <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
+            <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            <option value="no_show" {% if status_filter == 'no_show' %}selected{% endif %}>No Show</option>
+        </select>
+
+        <select name="date" class="form-control" style="width: auto; min-width: 120px;">
+            <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Dates</option>
+            <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+            <option value="tomorrow" {% if date_filter == 'tomorrow' %}selected{% endif %}>Tomorrow</option>
+            <option value="this_week" {% if date_filter == 'this_week' %}selected{% endif %}>This Week</option>
+        </select>
+
+        <input type="date" name="custom_date" value="{{ custom_date }}" class="form-control" style="width: auto;" title="Filter by specific date">
+
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if q or (doctor_id and doctor_id != 'all') or (department_id and department_id != 'all') or (status_filter and status_filter != 'all') or (date_filter and date_filter != 'all') or custom_date %}
+            <a href="{{ url_for('appointment.index') }}" class="btn btn-secondary" style="color: var(--text-dim);">Clear</a>
+        {% endif %}
+    </form>
+
+    <!-- Master Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Token</th>
+                    <th>Patient Name & MRN</th>
+                    <th>Doctor & Department</th>
+                    <th>Date & Time</th>
+                    <th>Chief Complaint</th>
+                    <th>AI No-Show Risk</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in appointments %}
+                <tr>
+                    <td>
+                        <div class="token-pill" style="display: inline-block; padding: 0.25rem 0.6rem; border-radius: 9999px; background: rgba(13, 148, 136, 0.2); color: var(--teal-primary); font-weight: 800; font-family: monospace;">
+                            #{{ app.token_number }}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700; color: var(--text-main);">
+                            {{ app.patient.user.full_name }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">
+                            PAT-{{ "%05d"|format(app.patient.id) }} | Phone: {{ app.patient.user.phone or 'N/A' }}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600;">Dr. {{ app.doctor.user.full_name }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                            {{ app.doctor.department.name if app.doctor.department else 'General OPD' }} (Room {{ app.doctor.room_number or '-' }})
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700;">
+                            {{ app.appointment_datetime.strftime('%Y-%m-%d') if app.appointment_datetime else 'N/A' }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                            {{ app.appointment_datetime.strftime('%H:%M') if app.appointment_datetime else '' }}
+                        </div>
+                    </td>
+                    <td style="font-size: 0.85rem; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ app.reason or 'Consultation' }}
+                    </td>
+                    <td>
+                        {% if app.no_show_probability is not none %}
+                            {% set pct = (app.no_show_probability * 100)|round(1) %}
+                            {% if pct >= 45 %}
+                                <span class="badge badge-danger">High Risk ({{ pct }}%)</span>
+                            {% elif pct >= 25 %}
+                                <span class="badge badge-warning">Moderate ({{ pct }}%)</span>
+                            {% else %}
+                                <span class="badge badge-success">Reliable ({{ pct }}%)</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-neutral">Pending AI</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if app.status.value == 'completed' %}badge-success{% elif app.status.value == 'confirmed' %}badge-info{% elif app.status.value == 'cancelled' or app.status.value == 'no_show' %}badge-danger{% else %}badge-warning{% endif %}">
+                            {{ app.status.value }}
+                        </span>
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <!-- Action Dropdown & Buttons -->
+                        {% if app.status.value not in ['completed', 'cancelled'] %}
+                            <a href="{{ url_for('appointment.reschedule', appointment_id=app.id) }}" class="btn btn-secondary btn-sm" title="Reschedule Appointment">
+                                <span>🔄</span> Reschedule
+                            </a>
+
+                            <button type="button" class="btn btn-danger btn-sm" data-modal-target="cancelApptModal{{ app.id }}" title="Cancel Appointment">
+                                <span>❌</span> Cancel
+                            </button>
+
+                            <!-- Cancel Confirmation Modal -->
+                            <div class="modal-backdrop" id="cancelApptModal{{ app.id }}">
+                                <div class="modal-dialog">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                        <h3 style="margin: 0; font-size: 1.15rem; color: #F8FAFC;">
+                                            <span>❌</span> Cancel Appointment #{{ app.id }}
+                                        </h3>
+                                        <button type="button" data-close-modal style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+                                    </div>
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; text-align: left;">
+                                        Are you sure you want to cancel the appointment for <strong>{{ app.patient.user.full_name }}</strong> with Dr. <strong>{{ app.doctor.user.full_name }}</strong> on {{ app.appointment_datetime.strftime('%Y-%m-%d at %H:%M') }}? The slot will be released for other patients.
+                                    </p>
+                                    <form action="{{ url_for('appointment.cancel', appointment_id=app.id) }}" method="POST">
+                                        <div class="form-group" style="margin-bottom: 1rem; text-align: left;">
+                                            <label class="form-label">Cancellation Reason (Optional)</label>
+                                            <input type="text" name="cancellation_reason" class="form-control" placeholder="e.g. Patient requested, Doctor on emergency call">
+                                        </div>
+                                        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Keep Appointment</button>
+                                            <button type="submit" class="btn btn-danger btn-sm">Confirm Cancellation</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            {% if user_role in ['admin', 'doctor'] %}
+                            <form action="{{ url_for('appointment.complete', appointment_id=app.id) }}" method="POST" style="display: inline-block; margin-left: 0.25rem;">
+                                <button type="submit" class="btn btn-secondary btn-sm" title="Mark Completed" onclick="return confirm('Mark appointment #{{ app.id }} as completed?');">
+                                    <span>✓</span> Done
+                                </button>
+                            </form>
+                            {% endif %}
+                        {% else %}
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">Archived</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state" style="padding: 2.5rem 1rem;">
+                            <div class="empty-state-icon">📅</div>
+                            <div class="empty-state-title">No Appointments Found</div>
+                            <div class="empty-state-text">No outpatient consultations match your search or filter criteria.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Showing page {{ page }} of {{ pages }} ({{ total }} total appointments)
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+            {% if page > 1 %}
+                <a href="{{ url_for('appointment.index', page=page-1, q=q, doctor_id=doctor_id, department_id=department_id, status=status_filter, date=date_filter, custom_date=custom_date) }}" class="btn btn-secondary btn-sm">&laquo; Prev</a>
+            {% endif %}
+            
+            <span class="btn btn-primary btn-sm" style="pointer-events: none;">{{ page }}</span>
+
+            {% if page < pages %}
+                <a href="{{ url_for('appointment.index', page=page+1, q=q, doctor_id=doctor_id, department_id=department_id, status=status_filter, date=date_filter, custom_date=custom_date) }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Control Script -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-modal-target]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-modal-target');
+            const modal = document.getElementById(targetId);
+            if (modal) modal.classList.add('active');
+        });
+    });
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = btn.closest('.modal-backdrop');
+            if (modal) modal.classList.remove('active');
+        });
+    });
+});
+</script>
+{% endblock %}

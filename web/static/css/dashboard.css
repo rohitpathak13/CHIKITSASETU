@@ -1,0 +1,269 @@
+/* ==========================================================================
+   MediCare AI - Hospital Dashboard, Clinical Workspace & Bed Management
+   ========================================================================== */
+
+/* Dashboard Grid Layouts */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.dashboard-grid-equal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid,
+    .dashboard-grid-equal {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Analytics Chart Containers (Plotly Resilient) */
+.chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    box-shadow: var(--shadow-card);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.chart-card:hover {
+    border-color: rgba(13, 148, 136, 0.3);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.85rem;
+}
+
+.chart-container {
+    width: 100%;
+    min-height: 320px;
+    position: relative;
+}
+
+/* Clinical Bed Management Matrix */
+.bed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.bed-tile {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    text-align: center;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    cursor: default;
+}
+
+.bed-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card);
+}
+
+.bed-tile.available {
+    border-color: rgba(16, 185, 129, 0.45);
+    background: rgba(16, 185, 129, 0.06);
+}
+
+.bed-tile.available .bed-status-text {
+    color: #34D399;
+}
+
+.bed-tile.occupied {
+    border-color: rgba(239, 68, 68, 0.45);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.bed-tile.occupied .bed-status-text {
+    color: #F87171;
+}
+
+.bed-tile.maintenance {
+    border-color: rgba(245, 158, 11, 0.45);
+    background: rgba(245, 158, 11, 0.07);
+}
+
+.bed-tile.maintenance .bed-status-text {
+    color: #FBBF24;
+}
+
+.bed-num {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-main);
+    letter-spacing: -0.01em;
+}
+
+.bed-room-tag {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.bed-status-text {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.bed-patient-occupant {
+    font-size: 0.75rem;
+    color: var(--text-main);
+    font-weight: 600;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 0.25rem;
+}
+
+/* Machine Learning Risk Scoring Badges */
+.ml-risk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+}
+
+.ml-risk-severe {
+    background: rgba(239, 68, 68, 0.2);
+    color: #F87171;
+    border: 1px solid #EF4444;
+}
+
+.ml-risk-high {
+    background: rgba(249, 115, 22, 0.2);
+    color: #FB923C;
+    border: 1px solid #F97316;
+}
+
+.ml-risk-moderate {
+    background: rgba(245, 158, 11, 0.2);
+    color: #FBBF24;
+    border: 1px solid #F59E0B;
+}
+
+.ml-risk-low {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34D399;
+    border: 1px solid #10B981;
+}
+
+/* Outpatient Queue & Consultation List */
+.queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.queue-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.9rem 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+}
+
+.queue-item:hover {
+    border-color: var(--teal-primary);
+    background: rgba(19, 29, 51, 0.8);
+}
+
+.queue-item-patient {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.token-pill {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--teal-glow);
+    color: #2DD4BF;
+    border: 1px solid var(--teal-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    font-family: monospace;
+    flex-shrink: 0;
+}
+
+/* Patient Vitals Telemetry Grid */
+.vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.85rem;
+    margin-top: 0.75rem;
+}
+
+.vital-metric-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.85rem;
+    text-align: center;
+}
+
+.vital-metric-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.vital-metric-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.vital-metric-unit {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 0.15rem;
+}
+
+/* Quick Action Button Pill Group */
+.quick-action-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}

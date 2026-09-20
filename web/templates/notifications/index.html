@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Notifications & Clinical Alerts{% endblock %}
+{% block page_heading %}Notification Center & Real-time Alerts{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>🔔</span> Alerts & System Notifications</div>
+            <div class="card-subtitle">Critical clinical warnings, appointment updates, and hospital operations</div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+            {% if unread_count > 0 %}
+                <form action="{{ url_for('notifications.mark_all_read') }}" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary btn-sm">
+                        <span>✓✓</span> Mark All as Read ({{ unread_count }})
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; gap: 0.5rem; flex-wrap: wrap; background: rgba(255,255,255,0.01);">
+        <a href="{{ url_for('notifications.index') }}" class="btn btn-sm {% if filter_type == 'all' and not filter_unread %}btn-primary{% else %}btn-secondary{% endif %}">
+            All ({{ notifications|length }})
+        </a>
+        <a href="{{ url_for('notifications.index', unread='1') }}" class="btn btn-sm {% if filter_unread %}btn-primary{% else %}btn-secondary{% endif %}">
+            Unread Only ({{ unread_count }})
+        </a>
+        <a href="{{ url_for('notifications.index', type='critical') }}" class="btn btn-sm {% if filter_type == 'critical' %}btn-primary{% else %}btn-secondary{% endif %}">
+            🔴 Critical
+        </a>
+        <a href="{{ url_for('notifications.index', type='alert') }}" class="btn btn-sm {% if filter_type == 'alert' %}btn-primary{% else %}btn-secondary{% endif %}">
+            ⚠️ Alerts
+        </a>
+        <a href="{{ url_for('notifications.index', type='reminder') }}" class="btn btn-sm {% if filter_type == 'reminder' %}btn-primary{% else %}btn-secondary{% endif %}">
+            📅 Reminders
+        </a>
+        <a href="{{ url_for('notifications.index', type='system') }}" class="btn btn-sm {% if filter_type == 'system' %}btn-primary{% else %}btn-secondary{% endif %}">
+            ⚙️ System
+        </a>
+    </div>
+
+    <div style="padding: 1rem 1.5rem;">
+        {% if notifications %}
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for n in notifications %}
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; padding: 1rem 1.25rem; border-radius: var(--radius-md); background: {% if not n.is_read %}rgba(30, 41, 59, 0.85){% else %}rgba(15, 23, 42, 0.5){% endif %}; border: 1px solid {% if not n.is_read %}var(--primary-color){% else %}var(--border-color){% endif %}; border-left: 4px solid {% if n.type.value == 'critical' %}#EF4444{% elif n.type.value == 'alert' %}#F59E0B{% elif n.type.value == 'reminder' %}#3B82F6{% else %}#10B981{% endif %}; transition: transform 0.15s ease;">
+                        <div style="flex: 1; margin-right: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                                <span class="badge {% if n.type.value == 'critical' %}badge-danger{% elif n.type.value == 'alert' %}badge-warning{% elif n.type.value == 'reminder' %}badge-info{% else %}badge-success{% endif %}" style="font-size: 0.7rem; text-transform: uppercase;">
+                                    {{ n.type.value }}
+                                </span>
+                                <strong style="font-size: 0.95rem; color: #F1F5F9;">{{ n.title }}</strong>
+                                {% if not n.is_read %}
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;" title="Unread"></span>
+                                {% endif %}
+                                <span style="font-size: 0.75rem; color: var(--text-dim); margin-left: auto;">
+                                    {{ n.created_at.strftime('%Y-%m-%d %H:%M') if n.created_at else '' }}
+                                </span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
+                                {{ n.message }}
+                            </p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            {% if not n.is_read %}
+                                <form action="{{ url_for('notifications.mark_read', notif_id=n.id) }}" method="POST" style="margin: 0;">
+                                    <button type="submit" class="btn btn-secondary btn-sm" title="Mark as read" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                                        ✓ Mark Read
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span style="font-size: 0.75rem; color: var(--text-dim);">Read</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding: 3rem 1rem;">
+                <div class="empty-state-icon">📭</div>
+                <div class="empty-state-title">No Notifications Found</div>
+                <div class="empty-state-text">You are completely caught up with all clinical tasks and hospital events.</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

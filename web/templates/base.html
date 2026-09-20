@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} - MediCare AI</title>
+    
+    <!-- Design System Typography & Icons -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    
+    <!-- Plotly.js for Native Interactive Hospital Analytics -->
+    <script src="https://cdn.plot.ly/plotly-2.29.1.min.js"></script>
+    <meta name="csrf-token" content="{{ csrf_token() if csrf_token is defined else '' }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Backdrop Overlay on Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <div class="logo-badge">M+</div>
+                <div class="logo-text">MediCare <span>AI</span></div>
+                <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close navigation">&times;</button>
+            </div>
+
+            <nav class="sidebar-nav">
+                {% if session.get('user_role') == 'admin' %}
+                    <div class="nav-section-title">Administration</div>
+                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if active_page == 'admin_dashboard' %}active{% endif %}">
+                        <span>📊</span> System Overview
+                    </a>
+                    <a href="{{ url_for('admin.manage_users') }}" class="nav-link {% if active_page == 'manage_users' %}active{% endif %}">
+                        <span>👥</span> Users
+                    </a>
+                    <a href="{{ url_for('admin.manage_doctors') }}" class="nav-link {% if active_page == 'manage_doctors' %}active{% endif %}">
+                        <span>🩺</span> Doctors
+                    </a>
+                    <a href="{{ url_for('admin.manage_staff') }}" class="nav-link {% if active_page == 'manage_staff' %}active{% endif %}">
+                        <span>👔</span> Staff
+                    </a>
+                    <a href="{{ url_for('admin.manage_patients') }}" class="nav-link {% if active_page == 'manage_patients' %}active{% endif %}">
+                        <span>👤</span> Patients
+                    </a>
+                    <a href="{{ url_for('admin.manage_departments') }}" class="nav-link {% if active_page == 'manage_departments' %}active{% endif %}">
+                        <span>🏢</span> Departments
+                    </a>
+                    <a href="{{ url_for('admin.manage_rooms') }}" class="nav-link {% if active_page == 'manage_rooms' %}active{% endif %}">
+                        <span>🚪</span> Rooms
+                    </a>
+                    <a href="{{ url_for('admin.manage_beds') }}" class="nav-link {% if active_page == 'manage_beds' %}active{% endif %}">
+                        <span>🛏️</span> Beds
+                    </a>
+                    <a href="{{ url_for('ipd.dashboard') }}" class="nav-link {% if active_page in ['ipd_dashboard', 'ipd_beds', 'ipd_admissions'] %}active{% endif %}">
+                        <span>🏥</span> IPD & Bed Control
+                    </a>
+                    <a href="{{ url_for('billing.dashboard') }}" class="nav-link {% if active_page == 'billing_dashboard' %}active{% endif %}">
+                        <span>💳</span> Billing & Revenue
+                    </a>
+                    <a href="{{ url_for('admin.audit_logs') }}" class="nav-link {% if active_page == 'audit_logs' %}active{% endif %}">
+                        <span>🔒</span> Security & Audits
+                    </a>
+                    <a href="{{ url_for('appointment.index') }}" class="nav-link {% if active_page == 'appointments_roster' %}active{% endif %}">
+                        <span>📅</span> Appointments Roster
+                    </a>
+                    <div class="nav-section-title">Intelligence</div>
+                    <a href="{{ url_for('analytics.dashboard') }}" class="nav-link {% if active_page == 'analytics' %}active{% endif %}">
+                        <span>📈</span> Hospital BI & ML
+                    </a>
+
+                {% elif session.get('user_role') == 'doctor' %}
+                    <div class="nav-section-title">Clinical Workbench</div>
+                    <a href="{{ url_for('doctor.dashboard') }}" class="nav-link {% if active_page == 'doctor_dashboard' %}active{% endif %}">
+                        <span>🩺</span> Today's OPD Queue
+                    </a>
+                    <a href="{{ url_for('doctor.schedule') }}" class="nav-link {% if active_page == 'doctor_schedule' %}active{% endif %}">
+                        <span>📅</span> Appointment Schedule
+                    </a>
+                    <a href="{{ url_for('doctor.my_patients') }}" class="nav-link {% if active_page == 'doctor_patients' %}active{% endif %}">
+                        <span>👥</span> My Patients
+                    </a>
+                    <a href="{{ url_for('doctor.profile') }}" class="nav-link {% if active_page == 'doctor_profile' %}active{% endif %}">
+                        <span>👨‍⚕️</span> Doctor Profile
+                    </a>
+                    <a href="{{ url_for('patient.directory') }}" class="nav-link {% if active_page == 'patient_directory' %}active{% endif %}">
+                        <span>📋</span> Patient Directory
+                    </a>
+                    <a href="{{ url_for('doctor.lab_orders') }}" class="nav-link {% if active_page == 'doctor_lab_orders' %}active{% endif %}">
+                        <span>🔬</span> Diagnostic Lab Reports
+                    </a>
+                    <a href="{{ url_for('ipd.dashboard') }}" class="nav-link {% if active_page in ['ipd_dashboard', 'ipd_beds', 'ipd_admissions'] %}active{% endif %}">
+                        <span>🏥</span> IPD Inpatient Care
+                    </a>
+                    <a href="{{ url_for('analytics.dashboard') }}" class="nav-link {% if active_page == 'analytics' %}active{% endif %}">
+                        <span>📈</span> Clinical Analytics
+                    </a>
+
+                {% elif session.get('user_role') == 'patient' %}
+                    <div class="nav-section-title">Patient Portal</div>
+                    <a href="{{ url_for('patient.dashboard') }}" class="nav-link {% if active_page == 'patient_dashboard' %}active{% endif %}">
+                        <span>🏠</span> My Health Summary
+                    </a>
+                    <a href="{{ url_for('patient.appointments') }}" class="nav-link {% if active_page == 'patient_appointments' %}active{% endif %}">
+                        <span>📅</span> Appointments
+                    </a>
+                    <a href="{{ url_for('patient.records') }}" class="nav-link {% if active_page == 'patient_records' %}active{% endif %}">
+                        <span>📋</span> Medical History
+                    </a>
+                    <a href="{{ url_for('patient.prescriptions') }}" class="nav-link {% if active_page == 'patient_prescriptions' %}active{% endif %}">
+                        <span>💊</span> Prescriptions
+                    </a>
+                    <a href="{{ url_for('patient.lab_reports') }}" class="nav-link {% if active_page == 'patient_labs' %}active{% endif %}">
+                        <span>🔬</span> Lab Reports
+                    </a>
+                    <a href="{{ url_for('patient.billing') }}" class="nav-link {% if active_page == 'patient_billing' %}active{% endif %}">
+                        <span>💳</span> Invoices & Receipts
+                    </a>
+
+                {% elif session.get('user_role') == 'receptionist' %}
+                    <div class="nav-section-title">Front Desk Ops</div>
+                    <a href="{{ url_for('receptionist.dashboard') }}" class="nav-link {% if active_page == 'rec_dashboard' %}active{% endif %}">
+                        <span>📋</span> Daily OPD Schedule
+                    </a>
+                    <a href="{{ url_for('patient.directory') }}" class="nav-link {% if active_page == 'patient_directory' %}active{% endif %}">
+                        <span>👥</span> Patient Directory
+                    </a>
+                    <a href="{{ url_for('patient.register') }}" class="nav-link {% if active_page == 'rec_register' %}active{% endif %}">
+                        <span>➕</span> Register Patient
+                    </a>
+                    <a href="{{ url_for('appointment.index') }}" class="nav-link {% if active_page == 'appointments_roster' %}active{% endif %}">
+                        <span>📅</span> All Appointments
+                    </a>
+                    <a href="{{ url_for('appointment.book') }}" class="nav-link {% if active_page == 'appointments_book' %}active{% endif %}">
+                        <span>➕</span> Book Appointment
+                    </a>
+                    <a href="{{ url_for('receptionist.bed_lookup') }}" class="nav-link {% if active_page == 'rec_beds' %}active{% endif %}">
+                        <span>🛏️</span> Bed Availability
+                    </a>
+                    <a href="{{ url_for('ipd.dashboard') }}" class="nav-link {% if active_page in ['ipd_dashboard', 'ipd_beds', 'ipd_admissions'] %}active{% endif %}">
+                        <span>🏥</span> IPD Admissions
+                    </a>
+                    <a href="{{ url_for('billing.dashboard') }}" class="nav-link {% if active_page == 'billing_dashboard' %}active{% endif %}">
+                        <span>💳</span> Billing Desk
+                    </a>
+
+                {% elif session.get('user_role') == 'nurse' %}
+                    <div class="nav-section-title">Ward Management</div>
+                    <a href="{{ url_for('nurse.dashboard') }}" class="nav-link {% if active_page == 'nurse_dashboard' %}active{% endif %}">
+                        <span>🛏️</span> Inpatient Bed Roster
+                    </a>
+                    <a href="{{ url_for('ipd.dashboard') }}" class="nav-link {% if active_page in ['ipd_dashboard', 'ipd_beds', 'ipd_admissions'] %}active{% endif %}">
+                        <span>🏥</span> IPD & Bed Allocation
+                    </a>
+                    <a href="{{ url_for('patient.directory') }}" class="nav-link {% if active_page == 'patient_directory' %}active{% endif %}">
+                        <span>👥</span> Patient Directory
+                    </a>
+                    <a href="{{ url_for('nurse.log_vitals') }}" class="nav-link {% if active_page == 'nurse_vitals' %}active{% endif %}">
+                        <span>💓</span> Record Vital Signs
+                    </a>
+
+                {% elif session.get('user_role') == 'pharmacist' %}
+                    <div class="nav-section-title">Pharmacy Desk</div>
+                    <a href="{{ url_for('pharmacy.dashboard') }}" class="nav-link {% if active_page == 'pharm_dashboard' %}active{% endif %}">
+                        <span>🧾</span> Prescription Queue
+                    </a>
+                    <a href="{{ url_for('pharmacy.inventory') }}" class="nav-link {% if active_page == 'pharm_inventory' %}active{% endif %}">
+                        <span>📦</span> Medicine Batches & Stock
+                    </a>
+
+                {% elif session.get('user_role') == 'lab_tech' %}
+                    <div class="nav-section-title">Diagnostics Lab</div>
+                    <a href="{{ url_for('laboratory.dashboard') }}" class="nav-link {% if active_page == 'lab_dashboard' %}active{% endif %}">
+                        <span>🔬</span> Pending Lab Orders
+                    </a>
+                    <a href="{{ url_for('laboratory.test_catalog') }}" class="nav-link {% if active_page == 'lab_catalog' %}active{% endif %}">
+                        <span>🧪</span> Diagnostic Test Catalog
+                    </a>
+                {% endif %}
+
+                <div class="nav-section-title">Account</div>
+                <a href="{{ url_for('notifications.index') }}" class="nav-link {% if active_page == 'notifications' %}active{% endif %}">
+                    <span>🔔</span> Notifications 
+                    {% if unread_notifications_count > 0 %}
+                        <span class="badge badge-danger" style="margin-left: auto; font-size: 0.65rem; padding: 0.15rem 0.4rem;">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: #F87171;">
+                    <span>🚪</span> Sign Out
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-chip">
+                    <div class="user-avatar">{{ session.get('user_name', 'U')[0] }}</div>
+                    <div>
+                        <div class="user-meta-name">{{ session.get('user_name', 'Guest') }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">
+                            {{ session.get('user_role', 'Visitor') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            <header class="app-topbar">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle navigation" type="button">☰</button>
+                    <div class="topbar-title">{% block page_heading %}Hospital Management Portal{% endblock %}</div>
+                </div>
+                <div class="topbar-actions">
+                    <!-- Notification Bell Dropdown -->
+                    <div class="notif-dropdown-wrapper" id="notifDropdownWrapper">
+                        <button type="button" class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifDropdown(event)" aria-label="Notifications">
+                            <span style="font-size: 1.15rem;">🔔</span>
+                            {% if unread_notifications_count > 0 %}
+                                <span class="notif-bell-badge" id="notifBadge">{{ unread_notifications_count }}</span>
+                            {% endif %}
+                        </button>
+                        <div class="notif-dropdown-panel" id="notifDropdownPanel" style="display: none;">
+                            <div class="notif-panel-header">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <strong style="font-size: 0.9rem; color: #F1F5F9;">Notifications</strong>
+                                    {% if unread_notifications_count > 0 %}
+                                        <span class="badge badge-danger" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">{{ unread_notifications_count }} New</span>
+                                    {% endif %}
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    {% if unread_notifications_count > 0 %}
+                                        <form action="{{ url_for('notifications.mark_all_read') }}" method="POST" style="margin:0;">
+                                            <button type="submit" class="notif-action-btn" title="Mark all as read">✓✓ Read all</button>
+                                        </form>
+                                    {% endif %}
+                                    <a href="{{ url_for('notifications.index') }}" class="notif-action-btn" title="View all">View all</a>
+                                </div>
+                            </div>
+                            <div class="notif-panel-body">
+                                {% if recent_notifications %}
+                                    {% for notif in recent_notifications %}
+                                        <div class="notif-panel-item {% if not notif.is_read %}is-unread{% endif %} type-{{ notif.type.value }}">
+                                            <div class="notif-item-body">
+                                                <div class="notif-item-title-row">
+                                                    <span class="notif-item-title">{{ notif.title }}</span>
+                                                    <span class="notif-item-time">{{ notif.created_at.strftime('%H:%M') if notif.created_at else '' }}</span>
+                                                </div>
+                                                <div class="notif-item-msg">{{ notif.message }}</div>
+                                            </div>
+                                            {% if not notif.is_read %}
+                                                <form action="{{ url_for('notifications.mark_read', notif_id=notif.id) }}" method="POST" style="margin:0;">
+                                                    <button type="submit" class="notif-item-read-btn" title="Mark read">✓</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="notif-panel-empty">No new notifications</div>
+                                {% endif %}
+                            </div>
+                            <div class="notif-panel-footer">
+                                <a href="{{ url_for('notifications.index') }}">Open Notification Center &rarr;</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <span class="badge badge-info" style="font-size: 0.75rem;">
+                        ● System Active (Local)
+                    </span>
+                    <a href="/docs" target="_blank" class="btn btn-secondary btn-sm">
+                        <span>⚡</span> REST API Docs
+                    </a>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Flash Notification Banners -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="alert-container">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">
+                                    <span>{{ message }}</span>
+                                    <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; font-size:1.1rem; cursor:pointer;">&times;</button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- UI Controllers -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        var token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+        if (token) {
+            document.querySelectorAll('form').forEach(function(form) {
+                var method = (form.getAttribute('method') || 'GET').toUpperCase();
+                if (method === 'POST' && !form.querySelector('input[name="csrf_token"]')) {
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'csrf_token';
+                    input.value = token;
+                    form.appendChild(input);
+                }
+            });
+        }
+    });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

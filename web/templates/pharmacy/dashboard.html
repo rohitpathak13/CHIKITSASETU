@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% block title %}Pharmacy Management & Dispensing{% endblock %}
+{% block page_heading %}Pharmacy Desk & Real-time Inventory Analytics{% endblock %}
+
+{% block content %}
+<!-- Top Metrics Grid -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 2rem;">
+    <div class="stat-card">
+        <div class="stat-label">Cataloged Drugs</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ stats.total_medicines }}</div>
+        <div class="stat-desc">Formulary SKUs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">On-Hand Stock</div>
+        <div class="stat-value" style="color: #60A5FA;">{{ stats.total_stock_units }}</div>
+        <div class="stat-desc">Active unexpired units</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Low Stock Alerts</div>
+        <div class="stat-value" style="color: {% if stats.low_stock_count > 0 %}#F87171{% else %}#34D399{% endif %};">
+            {{ stats.low_stock_count }}
+        </div>
+        <div class="stat-desc">Below safety threshold</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Expired Batches</div>
+        <div class="stat-value" style="color: {% if stats.expired_batches_count > 0 %}#EF4444{% else %}#34D399{% endif %};">
+            {{ stats.expired_batches_count }}
+        </div>
+        <div class="stat-desc">{{ stats.expired_units_count }} units to discard</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Expiring Soon</div>
+        <div class="stat-value" style="color: {% if stats.expiring_soon_batches_count > 0 %}#F59E0B{% else %}#34D399{% endif %};">
+            {{ stats.expiring_soon_batches_count }}
+        </div>
+        <div class="stat-desc">Within next 30 days</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Inventory Valuation</div>
+        <div class="stat-value" style="color: #A78BFA; font-size: 1.4rem;">${{ "%.2f"|format(stats.valuation_cost) }}</div>
+        <div class="stat-desc">Retail: ${{ "%.2f"|format(stats.valuation_retail) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Pending Rx Queue</div>
+        <div class="stat-value" style="color: {% if stats.pending_prescriptions_count > 0 %}#F59E0B{% else %}#94A3B8{% endif %};">
+            {{ stats.pending_prescriptions_count }}
+        </div>
+        <div class="stat-desc">Awaiting dispensing</div>
+    </div>
+</div>
+
+<!-- Critical Alert: Expired Medicines -->
+{% if stats.expired_batches_count > 0 %}
+<div class="card" style="margin-bottom: 2rem; border-left: 4px solid #EF4444; background: rgba(239, 68, 68, 0.03);">
+    <div class="card-header" style="background: rgba(239, 68, 68, 0.08);">
+        <div>
+            <div class="card-title" style="color: #F87171;"><span>🛑</span> Expired Stock Detected (Action Required)</div>
+            <div class="card-subtitle">{{ stats.expired_batches_count }} batch(es) totaling {{ stats.expired_units_count }} unit(s) have passed their expiration date and must be discarded from active dispensing.</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Batch #</th>
+                    <th>Medicine</th>
+                    <th>Supplier</th>
+                    <th>Expiry Date</th>
+                    <th>Expired Units</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in stats.expired_batches %}
+                <tr>
+                    <td><code>{{ b.batch_number }}</code></td>
+                    <td><strong>{{ b.medicine.name }}</strong></td>
+                    <td style="color: var(--text-muted);">{{ b.supplier or 'N/A' }}</td>
+                    <td style="color: #F87171; font-weight: 600;">{{ b.expiry_date }}</td>
+                    <td>
+                        <span class="badge badge-danger">{{ b.quantity_in_stock }} units</span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm" data-modal-target="discardModal{{ b.id }}">
+                            <span>🗑️</span> Discard Stock
+                        </button>
+
+                        <!-- Discard Modal -->
+                        <div class="modal-backdrop" id="discardModal{{ b.id }}">
+                            <div class="modal-dialog">
+                                <div class="card-header">
+                                    <div class="card-title" style="color: #F87171;">Discard Expired Stock: Batch {{ b.batch_number }}</div>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-close-modal>&times;</button>
+                                </div>
+                                <form action="{{ url_for('pharmacy.stock_out_route') }}" method="POST">
+                                    <input type="hidden" name="batch_id" value="{{ b.id }}">
+                                    <div class="form-group" style="margin-bottom: 1rem;">
+                                        <label class="form-label">Medication</label>
+                                        <input type="text" class="form-control" value="{{ b.medicine.name }}" readonly>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Quantity to Discard *</label>
+                                            <input type="number" name="quantity" class="form-control" value="{{ b.quantity_in_stock }}" max="{{ b.quantity_in_stock }}" min="1" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Disposal Reason *</label>
+                                            <input type="text" name="reason" class="form-control" value="Expired stock discard" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                                        <label class="form-label">Disposal Notes</label>
+                                        <input type="text" name="notes" class="form-control" placeholder="Incineration / Bio-waste protocol ref">
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Cancel</button>
+                                        <button type="submit" class="btn btn-danger btn-sm">Confirm Disposal</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Hazard Alert: Low Stock Medicines -->
+{% if stats.low_stock_count > 0 %}
+<div class="card" style="margin-bottom: 2rem; border-left: 4px solid #F59E0B; background: rgba(245, 158, 11, 0.02);">
+    <div class="card-header" style="background: rgba(245, 158, 11, 0.08);">
+        <div>
+            <div class="card-title" style="color: #F59E0B;"><span>⚠️</span> Low Stock Warnings</div>
+            <div class="card-subtitle">{{ stats.low_stock_count }} formulary medicine(s) are below minimum reorder thresholds.</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Medicine</th>
+                    <th>Category</th>
+                    <th>Current Stock</th>
+                    <th>Safety Reorder Level</th>
+                    <th>Preferred Supplier</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for med in stats.low_stock_medicines %}
+                <tr>
+                    <td>
+                        <strong>{{ med.name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-dim);">Generic: {{ med.generic_name or 'N/A' }}</div>
+                    </td>
+                    <td><span class="badge badge-info">{{ med.category }}</span></td>
+                    <td>
+                        <span class="badge badge-danger" style="font-size: 0.85rem; font-weight: 700;">
+                            {{ med.total_stock }} {{ med.unit }}s
+                        </span>
+                    </td>
+                    <td>{{ med.reorder_level }} {{ med.unit }}s</td>
+                    <td style="color: var(--text-muted);">{{ med.supplier or 'Standard Formulary' }}</td>
+                    <td>
+                        <button type="button" class="btn btn-warning btn-sm" data-modal-target="reorderModal{{ med.id }}">
+                            <span>⚡</span> Replenish Stock
+                        </button>
+
+                        <!-- Reorder Modal -->
+                        <div class="modal-backdrop" id="reorderModal{{ med.id }}">
+                            <div class="modal-dialog">
+                                <div class="card-header">
+                                    <div class="card-title">Replenish Stock: {{ med.name }}</div>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-close-modal>&times;</button>
+                                </div>
+                                <form action="{{ url_for('pharmacy.reorder_stock', medicine_id=med.id) }}" method="POST">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Batch Number *</label>
+                                            <input type="text" name="batch_number" class="form-control" value="BAT-{{ med.id }}-{{ today_date.strftime('%Y%m') }}" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Quantity to Add *</label>
+                                            <input type="number" name="quantity" class="form-control" value="100" min="1" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Expiry Date *</label>
+                                            <input type="date" name="expiry_date" class="form-control" value="{{ (today_date + timedelta(days=365)).strftime('%Y-%m-%d') }}" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Purchase Unit Cost ($) *</label>
+                                            <input type="number" step="0.01" name="purchase_cost" class="form-control" value="{{ med.purchase_price or 10.00 }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                                        <label class="form-label">Supplier</label>
+                                        <input type="text" name="supplier" class="form-control" value="{{ med.supplier or '' }}" placeholder="Distributor name">
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Cancel</button>
+                                        <button type="submit" class="btn btn-primary btn-sm">Confirm Restock</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Advisory Alert: Batches Expiring Soon (Within 30 Days) -->
+{% if stats.expiring_soon_batches_count > 0 %}
+<div class="card" style="margin-bottom: 2rem; border-left: 4px solid #38BDF8;">
+    <div class="card-header" style="background: rgba(56, 189, 248, 0.05);">
+        <div>
+            <div class="card-title" style="color: #38BDF8;"><span>⏳</span> Batches Expiring Soon (Within 30 Days)</div>
+            <div class="card-subtitle">Prioritize for dispensing under First-Expiring, First-Out (FEFO) protocol.</div>
+        </div>
+        <span class="badge badge-info">{{ stats.expiring_soon_units_count }} units affected</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Batch #</th>
+                    <th>Medicine</th>
+                    <th>Supplier</th>
+                    <th>Expiry Date</th>
+                    <th>Days Remaining</th>
+                    <th>Stock Units</th>
+                    <th>Dispensing Priority</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in stats.expiring_soon_batches %}
+                <tr>
+                    <td><code>{{ b.batch_number }}</code></td>
+                    <td><strong>{{ b.medicine.name }}</strong></td>
+                    <td style="color: var(--text-muted);">{{ b.supplier or 'Standard' }}</td>
+                    <td>{{ b.expiry_date }}</td>
+                    <td>
+                        <span style="color: #F59E0B; font-weight: 700;">{{ b.days_to_expiry }} day(s)</span>
+                    </td>
+                    <td style="font-weight: 600;">{{ b.quantity_in_stock }}</td>
+                    <td><span class="badge badge-warning">High Priority (FEFO)</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Electronic Prescription Fulfillment Queue -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>💊</span> Electronic Prescription Fulfillment Queue</div>
+            <div class="card-subtitle">Automated First-Expiring, First-Out (FEFO) batch deduction upon dispensing</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('pharmacy.inventory', tab='batches') }}" class="btn btn-secondary btn-sm">
+                <span>📦</span> Batch Inventory
+            </a>
+            <a href="{{ url_for('pharmacy.inventory', tab='catalog') }}" class="btn btn-primary btn-sm">
+                <span>📑</span> Drug Formulary
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div style="padding: 0.85rem 1.25rem; background: rgba(15, 23, 42, 0.3); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+            <a href="{{ url_for('pharmacy.dashboard', status='all', q=search_query) }}"
+               class="btn btn-sm {% if current_status == 'all' or not current_status %}btn-primary{% else %}btn-secondary{% endif %}">
+                All ({{ stats.total_prescriptions_count }})
+            </a>
+            <a href="{{ url_for('pharmacy.dashboard', status='pending', q=search_query) }}"
+               class="btn btn-sm {% if current_status == 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Pending
+            </a>
+            <a href="{{ url_for('pharmacy.dashboard', status='partially_dispensed', q=search_query) }}"
+               class="btn btn-sm {% if current_status == 'partially_dispensed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Partially Dispensed
+            </a>
+            <a href="{{ url_for('pharmacy.dashboard', status='dispensed', q=search_query) }}"
+               class="btn btn-sm {% if current_status == 'dispensed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Dispensed ({{ stats.dispensed_prescriptions_count }})
+            </a>
+            <a href="{{ url_for('pharmacy.dashboard', status='cancelled', q=search_query) }}"
+               class="btn btn-sm {% if current_status == 'cancelled' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Cancelled
+            </a>
+        </div>
+
+        <form method="GET" action="{{ url_for('pharmacy.dashboard') }}" style="display: flex; gap: 0.5rem;">
+            <input type="hidden" name="status" value="{{ current_status }}">
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="Search patient, doctor, notes..." value="{{ search_query }}" style="width: 230px;">
+            <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+            {% if search_query %}
+                <a href="{{ url_for('pharmacy.dashboard', status=current_status) }}" class="btn btn-secondary btn-sm">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Rx #</th>
+                    <th>Date</th>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Prescribed Items</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rx in prescriptions %}
+                <tr>
+                    <td>
+                        <strong style="font-family: monospace;">#{{ rx.id }}</strong>
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">{{ rx.created_at.strftime('%Y-%m-%d %H:%M') if rx.created_at else 'N/A' }}</td>
+                    <td>
+                        <strong>{{ rx.patient.user.full_name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-dim);">Phone: {{ rx.patient.user.phone or 'N/A' }}</div>
+                    </td>
+                    <td>Dr. {{ rx.doctor.user.full_name }}</td>
+                    <td>
+                        {% for item in rx.items %}
+                            <div style="font-size: 0.85rem;">
+                                • <strong>{{ item.medicine.name }}</strong> ({{ item.dosage }}) - {{ item.quantity_prescribed }} units [Dispensed: {{ item.quantity_dispensed }}]
+                            </div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <span class="badge {% if rx.status.value == 'dispensed' %}badge-success{% elif rx.status.value == 'partially_dispensed' %}badge-warning{% elif rx.status.value == 'cancelled' %}badge-neutral{% else %}badge-info{% endif %}">
+                            {{ rx.status.value }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.4rem; align-items: center;">
+                            <a href="{{ url_for('pharmacy.prescription_process', rx_id=rx.id) }}" class="btn btn-secondary btn-sm" title="Inspect Batches & Fulfill">
+                                <span>🔍</span> Inspect
+                            </a>
+                            {% if rx.status.value != 'dispensed' and rx.status.value != 'cancelled' %}
+                                <form method="POST" action="{{ url_for('pharmacy.dispense', rx_id=rx.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <span>💊</span> Dispense
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">No prescription requests matching this criteria.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

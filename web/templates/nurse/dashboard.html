@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Nurse Station{% endblock %}
+{% block page_heading %}Inpatient Ward Management & Bed Roster{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">Inpatient Census</div>
+        <div class="stat-value">{{ total_occupied }}</div>
+        <div class="stat-desc">Currently admitted in wards</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Bed Capacity</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ total_beds }}</div>
+        <div class="stat-desc">Across all wards & ICU</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Occupancy Ratio</div>
+        <div class="stat-value" style="color: #FBBF24;">
+            {{ ((total_occupied / total_beds) * 100)|round(1) if total_beds > 0 else 0 }}%
+        </div>
+        <div class="stat-desc">Hospital ward utilization</div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>🛏️</span> Active Inpatients Roster</div>
+            <div class="card-subtitle">Manage bed allocation, patient care monitoring, and vitals recording</div>
+        </div>
+        <a href="{{ url_for('nurse.log_vitals') }}" class="btn btn-primary btn-sm">
+            <span>💓</span> Chart Vitals
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Bed #</th>
+                    <th>Ward</th>
+                    <th>Patient</th>
+                    <th>Admitting Doctor</th>
+                    <th>Admission Date</th>
+                    <th>Reason</th>
+                    <th>AI Deterioration Risk</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for adm in admissions %}
+                <tr>
+                    <td>
+                        <span class="badge badge-info" style="font-size: 0.85rem;">{{ adm.bed.bed_number }}</span>
+                    </td>
+                    <td>{{ adm.bed.ward.name }}</td>
+                    <td>
+                        <strong>{{ adm.patient.user.full_name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-dim);">
+                            DOB: {{ adm.patient.dob }} | Blood: {{ adm.patient.blood_group or 'N/A' }}
+                        </div>
+                    </td>
+                    <td>Dr. {{ adm.doctor.user.full_name }}</td>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">
+                        {{ adm.admission_date.strftime('%Y-%m-%d %H:%M') if adm.admission_date else 'N/A' }}
+                    </td>
+                    <td>{{ adm.admission_reason }}</td>
+                    <td>
+                        {% if adm.readmission_risk_score is not none %}
+                            {% set pct = (adm.readmission_risk_score * 100)|round(1) %}
+                            {% if pct >= 50 %}
+                                <span class="badge badge-danger">High Risk ({{ pct }}%)</span>
+                            {% elif pct >= 30 %}
+                                <span class="badge badge-warning">Moderate ({{ pct }}%)</span>
+                            {% else %}
+                                <span class="badge badge-success">Stable ({{ pct }}%)</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-neutral">Standard</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <a href="{{ url_for('nurse.log_vitals') }}?admission_id={{ adm.id }}" class="btn btn-secondary btn-sm" title="Chart Vitals">
+                                <span>💓</span>
+                            </a>
+                            <button type="button" class="btn btn-danger btn-sm" data-modal-target="dischargeModal{{ adm.id }}" title="Discharge & Bill">
+                                <span>🚪</span> Discharge
+                            </button>
+                        </div>
+
+                        <!-- Discharge Clearance Modal -->
+                        <div class="modal-backdrop" id="dischargeModal{{ adm.id }}">
+                            <div class="modal-dialog">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                                    <h3 style="margin: 0; font-size: 1.25rem; color: #F8FAFC;">
+                                        <span>🚪</span> Inpatient Discharge Clearance
+                                    </h3>
+                                    <button type="button" data-close-modal style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+                                </div>
+                                <div style="margin-bottom: 1rem; padding: 0.75rem; border-radius: var(--radius-sm); background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border-color); font-size: 0.85rem;">
+                                    <div><strong>Patient:</strong> {{ adm.patient.user.full_name }} (DOB: {{ adm.patient.dob }})</div>
+                                    <div><strong>Bed:</strong> {{ adm.bed.bed_number }} ({{ adm.bed.ward.name }}) @ ${{ adm.bed.daily_rate }}/day</div>
+                                    <div><strong>Admitted:</strong> {{ adm.admission_date.strftime('%Y-%m-%d %H:%M') if adm.admission_date else 'N/A' }}</div>
+                                </div>
+                                <form action="{{ url_for('nurse.discharge_inpatient', admission_id=adm.id) }}" method="POST">
+                                    <div class="form-group" style="margin-bottom: 1rem;">
+                                        <label class="form-label">Discharge Summary & Clinical Instructions</label>
+                                        <textarea name="discharge_summary" class="form-control" rows="3" placeholder="Enter clinical discharge instructions, vitals stability, and home care directives..." required>Patient medically cleared in stable condition. Vitals stable. Follow-up advised.</textarea>
+                                    </div>
+                                    <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 1.25rem;">
+                                        ℹ️ Discharging will:
+                                        <ul style="margin: 0.25rem 0 0 1.25rem; padding: 0;">
+                                            <li>Compute length of stay and bed charges</li>
+                                            <li>Consolidate all dispensed pharmacy medications and completed lab orders</li>
+                                            <li>Auto-generate itemized invoice with 5% hospital tax</li>
+                                            <li>Transition Bed {{ adm.bed.bed_number }} to MAINTENANCE status</li>
+                                        </ul>
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Cancel</button>
+                                        <button type="submit" class="btn btn-danger btn-sm">Confirm Discharge & Bill</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state" style="padding: 2.5rem 1rem;">
+                            <div class="empty-state-icon">🛏️</div>
+                            <div class="empty-state-title">No Inpatients Admitted</div>
+                            <div class="empty-state-text">There are currently no active inpatients occupying ward beds.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Housekeeping & Sanitization Section for Maintenance Beds -->
+{% if maintenance_beds %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span style="color: #FBBF24;">🧹</span> Beds Pending Sanitization (Maintenance)</div>
+            <div class="card-subtitle">Beds vacated after patient discharge requiring nurse or housekeeping clearance</div>
+        </div>
+        <span class="badge badge-warning">{{ maintenance_beds|length }} Pending Cleaning</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Bed Number</th>
+                    <th>Ward</th>
+                    <th>Floor</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bed in maintenance_beds %}
+                <tr>
+                    <td><strong>Bed {{ bed.bed_number }}</strong></td>
+                    <td>{{ bed.ward.name }} ({{ bed.ward.ward_type.value|upper }})</td>
+                    <td>Floor {{ bed.ward.floor }}</td>
+                    <td><span class="badge badge-warning">Maintenance</span></td>
+                    <td>
+                        <form action="{{ url_for('nurse.release_bed', bed_id=bed.id) }}" method="POST" style="margin: 0;">
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <span>✨</span> Sanitize & Mark Available
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

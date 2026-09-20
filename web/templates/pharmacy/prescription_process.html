@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Fulfill Rx #{{ rx.id }} - Pharmacy Desk{% endblock %}
+{% block page_heading %}Prescription Fulfillment & Dispensing{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Top Action Toolbar -->
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <a href="{{ url_for('pharmacy.dashboard') }}" class="btn btn-secondary btn-sm">
+            <span>⬅️</span> Back to Pharmacy Queue
+        </a>
+        <div style="display: flex; gap: 0.5rem;">
+            {% if rx.status.value != 'dispensed' and rx.status.value != 'cancelled' %}
+                <!-- Cancel Prescription Modal Trigger -->
+                <button type="button" class="btn btn-danger btn-sm" data-modal-target="cancelModal">
+                    <span>🛑</span> Void / Cancel Order
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Patient & Order Header Card -->
+    <div class="card" style="border-left: 4px solid #38BDF8;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <h3 style="margin: 0; font-size: 1.3rem; color: #F8FAFC;">Prescription #{{ rx.id }}</h3>
+                    <span class="badge {% if rx.status.value == 'dispensed' %}badge-success{% elif rx.status.value == 'partially_dispensed' %}badge-warning{% elif rx.status.value == 'cancelled' %}badge-neutral{% else %}badge-info{% endif %}">
+                        {{ rx.status.value }}
+                    </span>
+                </div>
+                <div style="display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; flex-wrap: wrap;">
+                    <span><strong>Patient:</strong> {{ rx.patient.user.full_name }} (UHID: PAT-{{ rx.patient.id }})</span>
+                    <span><strong>Doctor:</strong> Dr. {{ rx.doctor.user.full_name }}</span>
+                    <span><strong>Date:</strong> {{ rx.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                </div>
+            </div>
+
+            {% if rx.patient.allergies %}
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); padding: 0.5rem 0.85rem; color: #FCA5A5; font-size: 0.85rem;">
+                <strong>⚠️ Allergy Alert:</strong> {{ rx.patient.allergies }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Items & FEFO Batch Inspection -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>📦</span> Prescribed Medications & FEFO Batch Availability</div>
+                <div class="card-subtitle">Active unexpired inventory ordered by earliest expiry date</div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem;">
+            {% for item in rx.items %}
+            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC;">
+                            {{ item.medicine.name }}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                            {{ item.dosage }} &bull; {{ item.frequency }} &bull; Duration: {{ item.duration_days }} days
+                            {% if item.instructions %} &bull; <em>"{{ item.instructions }}"</em>{% endif %}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.9rem;">
+                            <strong>Prescribed:</strong> {{ item.quantity_prescribed }} units |
+                            <strong style="color: #34D399;">Dispensed:</strong> {{ item.quantity_dispensed }} units
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-dim);">
+                            Remaining Needed: <span style="font-weight: 700; color: #F59E0B;">{{ item.quantity_prescribed - item.quantity_dispensed }}</span> units
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Batch Availability Subtable -->
+                <div style="background: rgba(30, 41, 59, 0.6); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem;">
+                    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.4rem;">
+                        Available Unexpired Batches (FEFO Order):
+                    </div>
+                    {% set batches = item_batch_map.get(item.id, []) %}
+                    {% if batches %}
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                            {% for b in batches %}
+                            <div style="font-size: 0.8rem; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-subtle); padding: 0.35rem 0.6rem; border-radius: 4px;">
+                                <strong style="color: #38BDF8;">#{{ b.batch_number }}</strong>:
+                                {{ b.quantity_in_stock }} in stock
+                                <span style="color: var(--text-dim); font-size: 0.75rem;">(Expires: {{ b.expiry_date.strftime('%Y-%m-%d') }})</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="font-size: 0.8rem; color: #F87171;">
+                            ⚠️ No active unexpired batches available in pharmacy inventory. Restock required.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Dispense Action Bar -->
+        {% if rx.status.value != 'dispensed' and rx.status.value != 'cancelled' %}
+        <div style="border-top: 1px solid var(--border-subtle); padding: 1.25rem; display: flex; justify-content: flex-end; gap: 1rem; align-items: center; background: rgba(15, 23, 42, 0.3);">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                FEFO deduction will immediately allocate and subtract units from earliest expiring batches.
+            </div>
+            <form method="POST" action="{{ url_for('pharmacy.dispense', rx_id=rx.id) }}">
+                <button type="submit" class="btn btn-primary">
+                    <span>💊</span> Confirm & Dispense (FEFO)
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div style="border-top: 1px solid var(--border-subtle); padding: 1rem 1.25rem; text-align: center; color: var(--text-dim); font-size: 0.9rem;">
+            This prescription order has been completed or marked as {{ rx.status.value }}.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Cancel Prescription Modal -->
+<div class="modal-backdrop" id="cancelModal">
+    <div class="modal-dialog">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; color: #F8FAFC;">Cancel Prescription #{{ rx.id }}</h3>
+            <button type="button" data-close-modal style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('pharmacy.cancel', rx_id=rx.id) }}">
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label">Clinical Cancellation Reason *</label>
+                <textarea name="cancellation_reason" class="form-control" rows="3" placeholder="e.g. Patient allergic to medication, dosage revision requested by physician..." required></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Back</button>
+                <button type="submit" class="btn btn-danger btn-sm">Confirm Cancellation</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

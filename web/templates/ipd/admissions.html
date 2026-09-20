@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Inpatient Admissions & Medical History{% endblock %}
+{% block page_heading %}Inpatient Admissions Directory & History{% endblock %}
+
+{% block content %}
+<!-- Top Metrics -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 2rem;">
+    <div class="stat-card" style="border-top: 3px solid #38BDF8;">
+        <div class="stat-label">Total Inpatient Records</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ stats.total_admissions_historical }}</div>
+        <div class="stat-desc">Historical admissions</div>
+    </div>
+    <div class="stat-card" style="border-top: 3px solid #EF4444;">
+        <div class="stat-label">Currently Admitted</div>
+        <div class="stat-value" style="color: #F87171;">{{ stats.active_admissions_count }}</div>
+        <div class="stat-desc">Active IPD cases</div>
+    </div>
+    <div class="stat-card" style="border-top: 3px solid #10B981;">
+        <div class="stat-label">Bed Occupancy Rate</div>
+        <div class="stat-value" style="color: #34D399;">{{ "%.1f"|format(stats.occupancy_percentage) }}%</div>
+        <div class="stat-desc">{{ stats.occupied_beds }} / {{ stats.total_beds }} beds occupied</div>
+    </div>
+</div>
+
+<!-- Navigation Bar -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('ipd.dashboard') }}" class="btn btn-secondary" style="font-size: 0.9rem;">
+            <span>📊</span> Dashboard Overview
+        </a>
+        <a href="{{ url_for('ipd.beds') }}" class="btn btn-secondary" style="font-size: 0.9rem;">
+            <span>🛏️</span> Bed Roster & Availability
+        </a>
+        <a href="{{ url_for('ipd.admissions') }}" class="btn btn-primary" style="font-size: 0.9rem;">
+            <span>📋</span> Admissions & History
+        </a>
+    </div>
+</div>
+
+<!-- Filter Toolbar -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-body" style="padding: 1.25rem;">
+        <form method="GET" action="{{ url_for('ipd.admissions') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+            <div style="flex: 2; min-width: 200px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #94A3B8; margin-bottom: 0.3rem;">Search Admissions</label>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search patient name, MRN, bed number, or diagnosis..." style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.5rem; font-size: 0.85rem;">
+            </div>
+
+            <div style="flex: 1; min-width: 150px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #94A3B8; margin-bottom: 0.3rem;">Admission Status</label>
+                <select name="status" style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.5rem; font-size: 0.85rem;">
+                    <option value="">All Statuses</option>
+                    <option value="admitted" {% if current_status == 'admitted' %}selected{% endif %}>ADMITTED (Active)</option>
+                    <option value="discharged" {% if current_status == 'discharged' %}selected{% endif %}>DISCHARGED</option>
+                </select>
+            </div>
+
+            <div style="flex: 1; min-width: 150px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #94A3B8; margin-bottom: 0.3rem;">Department</label>
+                <select name="department_id" style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.5rem; font-size: 0.85rem;">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}" {% if current_dept == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    Search
+                </button>
+                <a href="{{ url_for('ipd.admissions') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Admissions Table -->
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div class="card-title"><span>📋</span> Inpatient Admissions Registry</div>
+            <div class="card-subtitle">Displaying {{ admissions|length }} admission record(s)</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Admission #</th>
+                    <th>Patient</th>
+                    <th>Bed & Room</th>
+                    <th>Department</th>
+                    <th>Admitting Doctor</th>
+                    <th>Admission Date</th>
+                    <th>Stay Length</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for adm in admissions %}
+                <tr>
+                    <td>
+                        <span style="font-family: monospace; font-weight: 700; color: #38BDF8; font-size: 0.95rem;">
+                            #{{ adm.id }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; color: #F1F5F9;">
+                            {{ adm.patient.user.first_name }} {{ adm.patient.user.last_name }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94A3B8;">
+                            MRN: {{ adm.patient.medical_record_number }}
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-weight: 600; color: #E2E8F0;">
+                            Bed {{ adm.bed.bed_number if adm.bed else 'Discharged/None' }}
+                        </span>
+                        <div style="font-size: 0.75rem; color: #94A3B8;">
+                            Room {{ adm.bed.room.room_number if adm.bed and adm.bed.room else 'N/A' }}
+                        </div>
+                    </td>
+                    <td>
+                        <span style="color: #CBD5E1; font-size: 0.85rem;">
+                            {{ adm.department.name if adm.department else (adm.bed.room.department.name if adm.bed and adm.bed.room and adm.bed.room.department else 'General') }}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="color: #E2E8F0; font-size: 0.85rem;">
+                            Dr. {{ adm.doctor.user.first_name if adm.doctor and adm.doctor.user else 'Assigned Staff' }} {{ adm.doctor.user.last_name if adm.doctor and adm.doctor.user else '' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.85rem; color: #E2E8F0;">
+                            {{ adm.admission_date.strftime('%b %d, %Y') if adm.admission_date else 'N/A' }}
+                        </div>
+                        {% if adm.discharge_date %}
+                        <div style="font-size: 0.75rem; color: #94A3B8;">
+                            Discharged: {{ adm.discharge_date.strftime('%b %d, %Y') }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8;">
+                            {{ adm.length_of_stay_days }} Day(s)
+                        </span>
+                    </td>
+                    <td>
+                        {% if adm.status == AdmissionStatusEnum.ADMITTED %}
+                        <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                            ADMITTED
+                        </span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                            DISCHARGED
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="{{ url_for('ipd.admission_detail', admission_id=adm.id) }}" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                            View Chart
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 2.5rem; color: #94A3B8;">
+                        No inpatient admission records found matching the query.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

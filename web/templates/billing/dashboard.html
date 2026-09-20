@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Hospital Billing & Revenue Operations{% endblock %}
+{% block page_heading %}Revenue Operations, Invoicing & Receivables{% endblock %}
+
+{% block content %}
+<!-- Executive Stat Grid -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Invoiced Billing</div>
+        <div class="stat-value">${{ "%.2f"|format(total_billed) }}</div>
+        <div class="stat-desc">Gross clinical billed revenue ({{ stats.total_invoices_count }} invoices)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Cash Collected</div>
+        <div class="stat-value" style="color: #34D399;">${{ "%.2f"|format(total_collected) }}</div>
+        <div class="stat-desc">Settled payments received across facilities</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Pending Receivables</div>
+        <div class="stat-value" style="color: {% if total_due > 0 %}#F87171{% else %}#34D399{% endif %};">
+            ${{ "%.2f"|format(total_due) }}
+        </div>
+        <div class="stat-desc">Outstanding uncollected balances</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Refunds Issued</div>
+        <div class="stat-value" style="color: #A78BFA;">${{ "%.2f"|format(total_refunds) }}</div>
+        <div class="stat-desc">{{ stats.status_counts.refunded }} refunded invoices</div>
+    </div>
+</div>
+
+<!-- Search, Filter & Action Toolbar -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+        <div>
+            <div class="card-title"><span>💳</span> Hospital Billing Ledger & Search</div>
+            <div class="card-subtitle">Search, filter, and track payments across all clinical departments</div>
+        </div>
+        {% if session.get('user_role') in ['admin', 'receptionist'] %}
+        <div>
+            <a href="{{ url_for('billing.create_bill') }}" class="btn btn-primary">
+                <span>➕</span> Create New Hospital Bill
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Search Form -->
+    <form method="GET" action="{{ url_for('billing.dashboard') }}">
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
+            <div style="flex: 2; min-width: 220px;">
+                <label class="form-label" style="font-size: 0.8rem;">Search Invoices / Patients</label>
+                <input type="text" name="q" class="form-control" placeholder="Search by Invoice #, Patient Name, MRN, Phone..." value="{{ search_query }}">
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+                <label class="form-label" style="font-size: 0.8rem;">Payment Status</label>
+                <select name="status" class="form-control">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
+                    <option value="pending" {% if status_filter in ['pending', 'unpaid'] %}selected{% endif %}>Pending (Unpaid)</option>
+                    <option value="partial" {% if status_filter in ['partial', 'partially_paid'] %}selected{% endif %}>Partial</option>
+                    <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid (Settled)</option>
+                    <option value="refunded" {% if status_filter == 'refunded' %}selected{% endif %}>Refunded</option>
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+                <label class="form-label" style="font-size: 0.8rem;">Component Filter</label>
+                <select name="item_type" class="form-control">
+                    <option value="all" {% if item_type_filter == 'all' %}selected{% endif %}>All Components</option>
+                    {% for comp in components %}
+                    <option value="{{ comp.value }}" {% if item_type_filter == comp.value %}selected{% endif %}>{{ comp.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 130px;">
+                <label class="form-label" style="font-size: 0.8rem;">From Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+            <div style="flex: 1; min-width: 130px;">
+                <label class="form-label" style="font-size: 0.8rem;">To Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.55rem 1rem;">
+                    <span>🔍</span> Filter
+                </button>
+                <a href="{{ url_for('billing.dashboard') }}" class="btn btn-secondary btn-sm" style="padding: 0.55rem 0.75rem;">
+                    Reset
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Status Tabs -->
+    <div style="display: flex; gap: 0.5rem; margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('billing.dashboard', q=search_query, status='all', item_type=item_type_filter) }}"
+           class="badge" style="text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.8rem; {% if status_filter == 'all' %}background: var(--teal-primary); color: #fff;{% else %}background: var(--bg-surface); color: var(--text-dim);{% endif %}">
+            All ({{ stats.total_invoices_count }})
+        </a>
+        <a href="{{ url_for('billing.dashboard', q=search_query, status='pending', item_type=item_type_filter) }}"
+           class="badge" style="text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.8rem; {% if status_filter in ['pending', 'unpaid'] %}background: #EF4444; color: #fff;{% else %}background: var(--bg-surface); color: var(--text-dim);{% endif %}">
+            Pending ({{ stats.status_counts.pending }})
+        </a>
+        <a href="{{ url_for('billing.dashboard', q=search_query, status='partial', item_type=item_type_filter) }}"
+           class="badge" style="text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.8rem; {% if status_filter in ['partial', 'partially_paid'] %}background: #F59E0B; color: #fff;{% else %}background: var(--bg-surface); color: var(--text-dim);{% endif %}">
+            Partial ({{ stats.status_counts.partial }})
+        </a>
+        <a href="{{ url_for('billing.dashboard', q=search_query, status='paid', item_type=item_type_filter) }}"
+           class="badge" style="text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.8rem; {% if status_filter == 'paid' %}background: #10B981; color: #fff;{% else %}background: var(--bg-surface); color: var(--text-dim);{% endif %}">
+            Paid ({{ stats.status_counts.paid }})
+        </a>
+        <a href="{{ url_for('billing.dashboard', q=search_query, status='refunded', item_type=item_type_filter) }}"
+           class="badge" style="text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.8rem; {% if status_filter == 'refunded' %}background: #8B5CF6; color: #fff;{% else %}background: var(--bg-surface); color: var(--text-dim);{% endif %}">
+            Refunded ({{ stats.status_counts.refunded }})
+        </a>
+    </div>
+</div>
+
+<!-- Invoices Ledger Table -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <span style="font-size: 0.85rem; color: var(--text-muted);">
+            Showing <strong>{{ invoices|length }}</strong> of <strong>{{ total_count }}</strong> invoices
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Patient Demographics</th>
+                    <th>Date Issued</th>
+                    <th style="text-align: right;">Gross Total</th>
+                    <th style="text-align: right;">Amount Paid</th>
+                    <th style="text-align: right;">Balance Due</th>
+                    <th style="text-align: center;">Payment Status</th>
+                    <th style="text-align: center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                {% set st = inv.status.value %}
+                <tr>
+                    <td>
+                        <strong style="font-family: monospace; color: var(--teal-primary);">{{ inv.bill_number }}</strong>
+                        {% if inv.admission_id %}
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">IPD Stay #{{ inv.admission_id }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ inv.patient.user.full_name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-dim);">
+                            MRN: {{ inv.patient.medical_record_number or 'N/A' }} | Phone: {{ inv.patient.user.phone or 'N/A' }}
+                        </div>
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                        {{ inv.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </td>
+                    <td style="text-align: right; font-weight: 700;">
+                        ${{ "%.2f"|format(inv.total_amount) }}
+                    </td>
+                    <td style="text-align: right; color: #34D399; font-weight: 600;">
+                        ${{ "%.2f"|format(inv.amount_paid) }}
+                    </td>
+                    <td style="text-align: right; font-weight: 700; color: {% if inv.balance_due > 0 %}#F87171{% else %}#34D399{% endif %};">
+                        ${{ "%.2f"|format(inv.balance_due) }}
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="badge {% if st == 'paid' %}badge-success{% elif st in ['partial', 'partially_paid'] %}badge-warning{% elif st == 'refunded' %}badge-info{% else %}badge-danger{% endif %}" style="font-size: 0.75rem; text-transform: uppercase;">
+                            {{ inv.status.value }}
+                        </span>
+                    </td>
+                    <td style="text-align: center;">
+                        <a href="{{ url_for('billing.invoice_detail', invoice_id=inv.id) }}" class="btn btn-secondary btn-sm" style="padding: 0.35rem 0.7rem;">
+                            <span>📄</span> View & Settle
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state" style="padding: 2.5rem 1rem;">
+                            <div class="empty-state-icon">💳</div>
+                            <div class="empty-state-title">No Hospital Invoices Found</div>
+                            <div class="empty-state-text">No invoices match your search query or filter criteria.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

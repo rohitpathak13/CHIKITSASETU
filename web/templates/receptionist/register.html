@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Register Walk-in Patient{% endblock %}
+{% block page_heading %}Walk-In Patient Intake & Registration{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Patient Master Demographics</div>
+            <div class="card-subtitle">Enters record into the hospital Master Patient Index (MPI)</div>
+        </div>
+    </div>
+
+    <form method="POST">
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">First Name *</label>
+                <input type="text" name="first_name" class="form-control" required placeholder="Patient First Name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Last Name *</label>
+                <input type="text" name="last_name" class="form-control" required placeholder="Patient Last Name">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <input type="email" name="email" class="form-control" required placeholder="patient@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Primary Phone Number *</label>
+                <input type="text" name="phone" class="form-control" required placeholder="+1-555-0199">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Date of Birth *</label>
+                <input type="date" name="dob" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gender *</label>
+                <select name="gender" class="form-control" required>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Blood Group</label>
+                <select name="blood_group" class="form-control">
+                    <option value="">Unknown</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Known Allergies</label>
+                <input type="text" name="allergies" class="form-control" placeholder="e.g. Penicillin, Peanuts">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Chronic Conditions</label>
+                <input type="text" name="chronic_conditions" class="form-control" placeholder="e.g. Diabetes, Hypertension">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Emergency Contact Name</label>
+                <input type="text" name="emergency_contact_name" class="form-control" placeholder="Next of Kin">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Emergency Contact Phone</label>
+                <input type="text" name="emergency_contact_phone" class="form-control" placeholder="+1-555-0188">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+            <a href="{{ url_for('receptionist.dashboard') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <span>💾</span> Register & Proceed to Booking
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

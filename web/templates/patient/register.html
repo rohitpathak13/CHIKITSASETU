@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Register Patient - MediCare AI{% endblock %}
+{% block page_heading %}Patient Registration & Master Index Enrollment{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>➕</span> New Patient Registration</div>
+                <div class="card-subtitle">Create master patient index (MRN) and initial clinical profile</div>
+            </div>
+            <a href="{{ url_for('patient.directory') }}" class="btn btn-secondary btn-sm">
+                <span>⬅️</span> Back to Directory
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('patient.register') }}" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Primary Demographics Section -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>👤</span> 1. Demographics & Account Information
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="first_name">First Name <span style="color: #F87171;">*</span></label>
+                        <input type="text" id="first_name" name="first_name" class="form-control" placeholder="e.g. John" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="last_name">Last Name <span style="color: #F87171;">*</span></label>
+                        <input type="text" id="last_name" name="last_name" class="form-control" placeholder="e.g. Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address <span style="color: #F87171;">*</span></label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="e.g. john.doe@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. +91 98765 43210">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="dob">Date of Birth <span style="color: #F87171;">*</span></label>
+                        <input type="date" id="dob" name="dob" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="gender">Gender <span style="color: #F87171;">*</span></label>
+                        <select id="gender" name="gender" class="form-control" required>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="blood_group">Blood Group</label>
+                        <select id="blood_group" name="blood_group" class="form-control">
+                            <option value="">Unknown / Pending Lab</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="password">Initial Portal Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Default: Password123!">
+                        <span style="font-size: 0.72rem; color: var(--text-dim);">Patient can change this upon first login.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact & Emergency Section -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--azure-accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>🚨</span> 2. Address & Emergency Contacts
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label" for="address">Residential Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="2" placeholder="Street address, apartment, city, state, postal code"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="emergency_contact_name">Emergency Contact Name</label>
+                        <input type="text" id="emergency_contact_name" name="emergency_contact_name" class="form-control" placeholder="e.g. Jane Doe (Spouse / Guardian)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="emergency_contact_phone">Emergency Contact Phone</label>
+                        <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" class="form-control" placeholder="e.g. +91 98765 01234">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinical History Flags -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: #FBBF24; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>⚕️</span> 3. Baseline Clinical History & Allergies
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="allergies" style="color: #F87171;">Known Allergies</label>
+                        <input type="text" id="allergies" name="allergies" class="form-control" placeholder="e.g. Penicillin, Aspirin, Peanuts, Latex">
+                        <span style="font-size: 0.72rem; color: var(--text-dim);">Highlighted in red across all clinical workstations.</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="chronic_conditions" style="color: #FBBF24;">Chronic Pre-existing Conditions</label>
+                        <input type="text" id="chronic_conditions" name="chronic_conditions" class="form-control" placeholder="e.g. Type 2 Diabetes, Hypertension, Asthma">
+                        <span style="font-size: 0.72rem; color: var(--text-dim);">Informed to doctors during OPD consultation and inpatient admissions.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+                <a href="{{ url_for('patient.directory') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <span>💾</span> Register & Create Medical Record
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

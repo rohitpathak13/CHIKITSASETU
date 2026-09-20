@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Book Appointment - MediCare AI{% endblock %}
+{% block page_heading %}Outpatient Consultation Booking{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>➕</span> Schedule an Outpatient Consultation</div>
+                <div class="card-subtitle">Real-time doctor duty validation, AI attendance triage, and slot allocation</div>
+            </div>
+            <a href="{{ url_for('appointment.index') }}" class="btn btn-secondary btn-sm">
+                <span>⬅️</span> Back to Schedule
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('appointment.book') }}" id="appointmentBookingForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- 1. Patient Selection -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>👤</span> 1. Patient Details
+                </h3>
+                {% if user_role == 'patient' %}
+                    <div style="padding: 1rem; background: rgba(30, 41, 59, 0.6); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="font-size: 1.05rem; color: var(--text-main);">{{ current_patient.user.full_name }}</strong>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">
+                                PAT-{{ "%05d"|format(current_patient.id) }} | Phone: {{ current_patient.user.phone or 'N/A' }} | Blood: {{ current_patient.blood_group or 'Unknown' }}
+                            </div>
+                        </div>
+                        <span class="badge badge-info">Logged In Patient</span>
+                    </div>
+                {% else %}
+                    <div class="form-group">
+                        <label class="form-label" for="patient_id">Select Patient <span style="color: #F87171;">*</span></label>
+                        <select id="patient_id" name="patient_id" class="form-control" required>
+                            <option value="" disabled {% if not current_patient %}selected{% endif %}>-- Choose Patient from Registry --</option>
+                            {% for p in patients %}
+                                <option value="{{ p.id }}" {% if current_patient and current_patient.id == p.id %}selected{% endif %}>
+                                    PAT-{{ "%05d"|format(p.id) }} - {{ p.user.full_name }} ({{ p.user.phone or p.user.email }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- 2. Department & Doctor Selection -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--azure-accent); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>🩺</span> 2. Department & Consulting Physician
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="department_select">Filter by Department</label>
+                        <select id="department_select" class="form-control">
+                            <option value="all">All Departments</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="doctor_id">Select Consulting Doctor <span style="color: #F87171;">*</span></label>
+                        <select id="doctor_id" name="doctor_id" class="form-control" required>
+                            <option value="" disabled selected>-- Choose Doctor --</option>
+                            {% for doc in doctors %}
+                                <option value="{{ doc.id }}" 
+                                        data-dept="{{ doc.department_id }}" 
+                                        data-spec="{{ doc.specialization }}"
+                                        data-days="{{ doc.available_days }}"
+                                        data-fee="{{ doc.consultation_fee }}"
+                                        data-room="{{ doc.room_number or 'OPD' }}"
+                                        {% if preselected_doctor_id == doc.id|string %}selected{% endif %}>
+                                    Dr. {{ doc.user.full_name }} ({{ doc.specialization }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dynamic Doctor Information Card -->
+                <div id="doctorInfoCard" style="display: none; padding: 0.85rem 1.25rem; background: rgba(30, 41, 59, 0.5); border-radius: var(--radius-md); border-left: 4px solid var(--teal-primary); margin-top: 0.5rem; font-size: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <strong id="docCardName" style="color: var(--text-main); font-size: 0.95rem;"></strong>
+                            <div id="docCardSpec" style="color: var(--teal-primary); font-weight: 600;"></div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div>Chamber: <strong id="docCardRoom"></strong> | Fee: <strong id="docCardFee" style="color: #34D399;"></strong></div>
+                            <div>Available Days: <span class="badge badge-neutral" id="docCardDays"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Date & Time Slot Selection -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: #FBBF24; margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>⏰</span> 3. Date & Consultation Time Slot
+                </h3>
+                
+                <div class="form-group" style="max-width: 320px; margin-bottom: 1rem;">
+                    <label class="form-label" for="appointment_date">Consultation Date <span style="color: #F87171;">*</span></label>
+                    <input type="date" id="appointment_date" name="appointment_date" min="{{ today_date }}" value="{{ today_date }}" class="form-control" required>
+                </div>
+
+                <!-- Live Availability Feedback Alert -->
+                <div id="slotNotice" style="margin-bottom: 0.75rem; font-size: 0.85rem; display: none;"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Available Consultation Time Slots <span style="color: #F87171;">*</span></label>
+                    <input type="hidden" name="time_slot" id="selectedTimeSlot" required>
+                    
+                    <div id="slotsContainer" style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
+                        {% for slot in clinic_slots %}
+                            <button type="button" class="slot-chip" data-slot="{{ slot }}">
+                                {{ slot }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.35rem; display: block;">
+                        Click on a highlighted slot to select your appointment time. Booked slots are disabled.
+                    </span>
+                </div>
+            </div>
+
+            <!-- 4. Clinical Reason / Chief Complaint -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>📝</span> 4. Consultation Reason & Notes
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="reason">Chief Complaint / Symptoms</label>
+                    <textarea id="reason" name="reason" class="form-control" rows="2" placeholder="Briefly describe the symptoms or reason for visit (e.g. persistent cough, routine cardiac review)"></textarea>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 0.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+                <a href="{{ url_for('appointment.index') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" id="submitBookingBtn" class="btn btn-primary">
+                    <span>💾</span> Confirm & Book Appointment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Interactive Doctor & Slot Selection Script -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const deptSelect = document.getElementById('department_select');
+    const docSelect = document.getElementById('doctor_id');
+    const dateInput = document.getElementById('appointment_date');
+    const slotNotice = document.getElementById('slotNotice');
+    const selectedSlotInput = document.getElementById('selectedTimeSlot');
+    const slotChips = document.querySelectorAll('.slot-chip');
+    const docCard = document.getElementById('doctorInfoCard');
+
+    // 1. Department Filter Cascade
+    deptSelect.addEventListener('change', () => {
+        const selectedDept = deptSelect.value;
+        Array.from(docSelect.options).forEach(opt => {
+            if (!opt.value) return;
+            if (selectedDept === 'all' || opt.getAttribute('data-dept') === selectedDept) {
+                opt.style.display = '';
+            } else {
+                opt.style.display = 'none';
+            }
+        });
+        if (docSelect.selectedOptions[0] && docSelect.selectedOptions[0].style.display === 'none') {
+            docSelect.value = '';
+            updateDoctorCard();
+        }
+    });
+
+    // 2. Doctor Info Card & Slots Refresh
+    function updateDoctorCard() {
+        const opt = docSelect.selectedOptions[0];
+        if (opt && opt.value) {
+            docCard.style.display = 'block';
+            document.getElementById('docCardName').textContent = opt.textContent;
+            document.getElementById('docCardSpec').textContent = opt.getAttribute('data-spec');
+            document.getElementById('docCardRoom').textContent = opt.getAttribute('data-room');
+            document.getElementById('docCardFee').textContent = '₹' + parseFloat(opt.getAttribute('data-fee')).toFixed(2);
+            document.getElementById('docCardDays').textContent = opt.getAttribute('data-days');
+            fetchSlots();
+        } else {
+            docCard.style.display = 'none';
+            resetSlots();
+        }
+    }
+
+    docSelect.addEventListener('change', updateDoctorCard);
+    dateInput.addEventListener('change', fetchSlots);
+
+    // 3. Fetch Slot Availability Asynchronously
+    async function fetchSlots() {
+        const docId = docSelect.value;
+        const apptDate = dateInput.value;
+        if (!docId || !apptDate) return;
+
+        resetSlots();
+
+        try {
+            const resp = await fetch(`{{ url_for('appointment.api_doctor_slots') }}?doctor_id=${docId}&date=${apptDate}`);
+            const data = await resp.json();
+
+            if (!data.is_available) {
+                slotNotice.style.display = 'block';
+                slotNotice.style.color = '#F87171';
+                slotNotice.textContent = `⚠️ Dr. is not on duty on this day. Regular schedule: ${data.available_days}.`;
+                slotChips.forEach(chip => chip.classList.add('disabled'));
+                return;
+            }
+
+            slotNotice.style.display = 'block';
+            slotNotice.style.color = '#34D399';
+            slotNotice.textContent = `✓ Doctor available. ${data.free_slots.length} consultation slots open.`;
+
+            const booked = new Set(data.booked_slots || []);
+            slotChips.forEach(chip => {
+                const slotVal = chip.getAttribute('data-slot');
+                if (booked.has(slotVal)) {
+                    chip.classList.add('disabled');
+                    chip.setAttribute('title', 'Already booked');
+                } else {
+                    chip.classList.remove('disabled');
+                    chip.removeAttribute('title');
+                }
+            });
+        } catch (e) {
+            console.error('Slot fetch error:', e);
+        }
+    }
+
+    function resetSlots() {
+        selectedSlotInput.value = '';
+        slotChips.forEach(chip => {
+            chip.classList.remove('active', 'disabled');
+        });
+    }
+
+    // 4. Slot Chip Click Handling
+    slotChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            if (chip.classList.contains('disabled')) return;
+            slotChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            selectedSlotInput.value = chip.getAttribute('data-slot');
+        });
+    });
+
+    // Form Submission Validation
+    document.getElementById('appointmentBookingForm').addEventListener('submit', (e) => {
+        if (!selectedSlotInput.value) {
+            e.preventDefault();
+            alert('Please select an available consultation time slot.');
+        }
+    });
+
+    // Initial Trigger if preselected
+    if (docSelect.value) {
+        updateDoctorCard();
+    }
+});
+</script>
+
+<style>
+.slot-chip {
+    padding: 0.45rem 0.85rem;
+    background: rgba(30, 41, 59, 0.7);
+    color: var(--text-main);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.slot-chip:hover:not(.disabled) {
+    border-color: var(--teal-primary);
+    background: rgba(13, 148, 136, 0.15);
+    color: var(--teal-primary);
+}
+.slot-chip.active {
+    background: var(--teal-primary);
+    color: #FFF;
+    border-color: var(--teal-primary);
+    box-shadow: 0 0 10px rgba(13, 148, 136, 0.4);
+}
+.slot-chip.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: rgba(15, 23, 42, 0.4);
+    text-decoration: line-through;
+}
+</style>
+{% endblock %}

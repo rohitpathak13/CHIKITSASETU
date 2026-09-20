@@ -1,0 +1,251 @@
+patient_age,appointment_weekday,appointment_lead_time,previous_appointment_count,previous_no_show_count,department,sms_reminder_sent,no_show
+9,Monday,3.0,1.0,0,Pediatrics,1,0
+71,Saturday,4.0,5.0,1,Cardiology,1,0
+60,Wednesday,0.0,3.0,1,General Medicine,0,0
+40,Tuesday,15.0,2.0,1,General Medicine,0,1
+40,Thursday,7.0,6.0,1,Orthopedics,1,0
+79,Wednesday,17.0,4.0,1,General Medicine,1,0
+8,Saturday,15.0,2.0,0,ENT,1,1
+64,Friday,0.0,1.0,0,Orthopedics,0,0
+19,Wednesday,11.0,2.0,0,Cardiology,1,0
+9,Tuesday,0.0,2.0,0,Orthopedics,0,0
+48,Saturday,0.0,6.0,0,General Medicine,0,0
+89,Thursday,7.0,2.0,0,Ophthalmology,1,0
+67,Saturday,3.0,3.0,1,Pediatrics,1,1
+70,Monday,10.0,3.0,1,Neurology,1,1
+66,Friday,21.0,0.0,0,General Medicine,1,0
+72,Thursday,3.0,7.0,0,Pediatrics,1,0
+47,Monday,,2.0,0,Pediatrics,1,0
+12,Wednesday,0.0,3.0,0,Ophthalmology,0,0
+77,Thursday,1.0,0.0,0,Orthopedics,0,0
+41,Monday,7.0,0.0,0,Pediatrics,1,1
+46,Wednesday,0.0,7.0,2,General Medicine,0,0
+34,Friday,6.0,1.0,1,Cardiology,1,0
+17,Tuesday,6.0,2.0,0,Pediatrics,1,0
+85,Wednesday,0.0,7.0,1,Pediatrics,1,0
+72,Wednesday,16.0,5.0,0,General Medicine,1,0
+59,Tuesday,9.0,4.0,0,Neurology,1,0
+37,Friday,15.0,2.0,1,ENT,1,1
+75,Friday,1.0,0.0,0,General Medicine,0,0
+50,Monday,9.0,3.0,1,Pediatrics,1,0
+41,Saturday,2.0,0.0,0,General Medicine,0,0
+41,Friday,,5.0,1,Orthopedics,0,0
+21,Tuesday,4.0,3.0,0,Cardiology,0,0
+9,Friday,6.0,9.0,0,Orthopedics,1,0
+51,Monday,2.0,8.0,0,Dermatology,1,0
+81,Saturday,4.0,1.0,0,Dermatology,1,1
+6,Thursday,9.0,3.0,0,General Medicine,1,1
+79,Thursday,6.0,8.0,3,ENT,0,1
+76,Monday,0.0,0.0,0,General Medicine,0,1
+26,Friday,0.0,5.0,1,General Medicine,0,0
+58,Monday,3.0,3.0,0,Pediatrics,1,0
+16,Tuesday,,9.0,0,Cardiology,1,0
+69,Monday,6.0,2.0,0,Neurology,1,0
+64,Friday,1.0,2.0,1,Neurology,0,1
+33,Monday,10.0,1.0,0,Cardiology,0,0
+7,Friday,21.0,0.0,0,Ophthalmology,1,0
+89,Thursday,2.0,2.0,1,Cardiology,1,1
+41,Monday,4.0,3.0,1,Pediatrics,1,0
+82,Monday,3.0,0.0,0,General Medicine,0,0
+62,Monday,2.0,4.0,0,Ophthalmology,1,0
+71,Thursday,2.0,4.0,1,General Medicine,1,0
+70,Friday,2.0,0.0,0,General Medicine,1,0
+18,Tuesday,1.0,1.0,1,Pediatrics,0,1
+34,Friday,0.0,9.0,1,Ophthalmology,1,0
+43,Monday,2.0,3.0,0,ENT,1,0
+46,Friday,14.0,1.0,1,Dermatology,0,1
+4,Saturday,2.0,2.0,1,ENT,1,1
+50,Friday,1.0,7.0,1,ENT,0,0
+15,Thursday,10.0,6.0,1,Pediatrics,1,0
+68,Friday,3.0,1.0,0,Cardiology,1,0
+63,Monday,9.0,1.0,0,Dermatology,1,1
+84,Monday,7.0,1.0,0,Orthopedics,1,0
+68,Monday,7.0,9.0,0,Cardiology,1,1
+34,Wednesday,2.0,2.0,1,General Medicine,1,1
+89,Thursday,5.0,2.0,1,Dermatology,1,1
+38,Thursday,18.0,13.0,4,General Medicine,1,0
+30,Friday,8.0,1.0,0,Ophthalmology,1,0
+83,Monday,7.0,1.0,0,General Medicine,0,0
+34,Thursday,3.0,4.0,2,General Medicine,1,1
+7,Monday,7.0,4.0,2,Neurology,1,0
+43,Tuesday,,5.0,1,General Medicine,1,0
+73,Thursday,1.0,4.0,1,General Medicine,1,0
+18,Saturday,2.0,4.0,1,Orthopedics,1,1
+43,Thursday,1.0,1.0,0,ENT,0,1
+12,Monday,7.0,6.0,0,General Medicine,1,0
+63,Thursday,0.0,3.0,0,Cardiology,0,0
+44,Monday,0.0,5.0,0,Dermatology,0,0
+31,Friday,1.0,3.0,1,Ophthalmology,0,0
+21,Thursday,3.0,3.0,0,Pediatrics,1,0
+52,Monday,1.0,3.0,0,General Medicine,0,0
+61,Monday,8.0,1.0,0,General Medicine,1,0
+86,Monday,,1.0,0,General Medicine,1,0
+40,Saturday,33.0,1.0,0,General Medicine,1,0
+15,Wednesday,22.0,11.0,2,Orthopedics,1,1
+76,Friday,4.0,2.0,0,General Medicine,1,0
+58,Thursday,4.0,7.0,1,Pediatrics,1,1
+64,Wednesday,0.0,7.0,3,Dermatology,0,1
+9,Monday,10.0,2.0,0,Orthopedics,1,0
+29,Saturday,22.0,0.0,0,General Medicine,1,1
+70,Tuesday,4.0,6.0,2,Neurology,1,0
+76,Wednesday,10.0,3.0,1,Dermatology,0,0
+40,Thursday,0.0,5.0,2,Dermatology,1,1
+74,Thursday,45.0,19.0,4,General Medicine,0,1
+77,Saturday,0.0,1.0,0,General Medicine,0,0
+36,Monday,9.0,3.0,1,ENT,0,1
+82,Wednesday,0.0,1.0,0,Cardiology,0,0
+27,Tuesday,2.0,5.0,0,Cardiology,1,0
+22,Wednesday,2.0,1.0,1,Pediatrics,1,0
+63,Monday,6.0,18.0,3,Orthopedics,1,1
+58,Monday,0.0,5.0,2,Ophthalmology,0,0
+13,Tuesday,2.0,11.0,1,Cardiology,1,0
+76,Tuesday,1.0,2.0,0,ENT,1,0
+19,Wednesday,0.0,0.0,0,General Medicine,1,0
+74,Thursday,10.0,6.0,1,Pediatrics,0,0
+1,Thursday,3.0,3.0,0,Orthopedics,1,0
+73,Wednesday,0.0,2.0,0,General Medicine,0,0
+72,Tuesday,3.0,1.0,0,General Medicine,0,0
+72,Monday,1.0,2.0,0,Cardiology,0,0
+61,Wednesday,0.0,3.0,0,Ophthalmology,1,0
+43,Tuesday,0.0,9.0,1,Orthopedics,0,0
+65,Monday,,3.0,2,Ophthalmology,0,1
+26,Wednesday,0.0,0.0,0,Neurology,1,0
+72,Wednesday,3.0,8.0,0,Pediatrics,1,1
+51,Tuesday,4.0,0.0,0,Neurology,1,0
+42,Wednesday,1.0,1.0,0,General Medicine,0,0
+47,Wednesday,5.0,0.0,0,General Medicine,1,0
+52,Thursday,11.0,5.0,0,Neurology,1,0
+4,Thursday,4.0,1.0,0,Neurology,1,1
+13,Thursday,3.0,2.0,0,General Medicine,1,0
+23,Tuesday,0.0,0.0,0,Pediatrics,1,0
+11,Friday,4.0,4.0,1,Orthopedics,1,0
+41,Wednesday,15.0,2.0,1,ENT,1,0
+61,Wednesday,3.0,5.0,0,Orthopedics,1,0
+60,Thursday,4.0,4.0,1,Cardiology,1,0
+43,Tuesday,18.0,4.0,0,Cardiology,1,0
+78,Wednesday,2.0,2.0,0,Pediatrics,1,0
+52,Thursday,0.0,3.0,0,Orthopedics,0,0
+8,Friday,13.0,2.0,0,ENT,1,0
+70,Saturday,4.0,12.0,2,Pediatrics,0,1
+53,Wednesday,0.0,8.0,2,General Medicine,1,0
+58,Wednesday,0.0,7.0,2,General Medicine,0,0
+52,Friday,4.0,11.0,2,Dermatology,0,0
+51,Tuesday,10.0,1.0,0,Neurology,0,0
+9,Friday,0.0,0.0,0,General Medicine,0,0
+51,Wednesday,0.0,3.0,0,General Medicine,0,1
+73,Monday,0.0,2.0,0,Orthopedics,0,1
+28,Monday,1.0,2.0,0,General Medicine,0,1
+55,Friday,6.0,2.0,0,Neurology,1,0
+3,Monday,0.0,12.0,6,Cardiology,0,1
+32,Tuesday,12.0,2.0,0,General Medicine,1,0
+40,Tuesday,16.0,2.0,0,ENT,1,0
+90,Monday,32.0,0.0,0,General Medicine,1,0
+20,Tuesday,0.0,0.0,0,Cardiology,1,0
+26,Thursday,1.0,7.0,2,General Medicine,1,0
+38,Monday,4.0,4.0,1,General Medicine,1,1
+91,Friday,0.0,4.0,1,General Medicine,0,0
+78,Friday,26.0,8.0,2,General Medicine,1,1
+4,Tuesday,21.0,1.0,0,General Medicine,1,1
+22,Monday,4.0,0.0,0,General Medicine,1,0
+75,Thursday,12.0,10.0,3,Orthopedics,0,1
+6,Monday,13.0,0.0,0,Dermatology,1,0
+78,Tuesday,4.0,5.0,0,Cardiology,1,0
+26,Saturday,3.0,0.0,0,Cardiology,1,0
+84,Saturday,13.0,2.0,1,Pediatrics,1,0
+27,Friday,3.0,2.0,0,ENT,1,0
+40,Tuesday,16.0,3.0,1,Neurology,1,1
+61,Thursday,6.0,3.0,0,General Medicine,1,0
+12,Thursday,4.0,7.0,0,General Medicine,0,0
+51,Tuesday,3.0,5.0,0,General Medicine,1,0
+46,Thursday,2.0,1.0,0,General Medicine,1,0
+72,Monday,1.0,3.0,0,Orthopedics,1,0
+91,Monday,0.0,4.0,0,Cardiology,0,1
+61,Wednesday,2.0,3.0,0,General Medicine,0,0
+38,Monday,0.0,1.0,0,Cardiology,0,1
+37,Monday,1.0,0.0,0,Pediatrics,0,0
+39,Friday,21.0,5.0,1,General Medicine,1,0
+75,Saturday,16.0,7.0,3,Neurology,1,0
+30,Wednesday,15.0,3.0,1,General Medicine,1,1
+16,Friday,2.0,2.0,0,ENT,1,0
+31,Saturday,19.0,1.0,0,General Medicine,1,0
+3,Monday,7.0,1.0,1,Neurology,1,0
+10,Wednesday,0.0,0.0,0,ENT,0,1
+9,Tuesday,1.0,3.0,0,Ophthalmology,0,0
+71,Monday,7.0,2.0,0,Neurology,1,0
+66,Thursday,1.0,8.0,3,Dermatology,0,0
+64,Wednesday,0.0,8.0,3,Orthopedics,1,0
+43,Wednesday,9.0,1.0,0,Dermatology,1,0
+66,Monday,0.0,0.0,0,General Medicine,1,0
+15,Monday,0.0,0.0,0,Pediatrics,0,0
+82,Friday,12.0,8.0,2,Pediatrics,1,1
+46,Monday,2.0,4.0,1,Neurology,1,0
+86,Tuesday,17.0,1.0,0,Pediatrics,1,1
+14,Tuesday,9.0,1.0,0,Cardiology,1,0
+46,Wednesday,7.0,2.0,0,Orthopedics,1,0
+64,Wednesday,,5.0,1,General Medicine,1,0
+46,Wednesday,1.0,2.0,0,General Medicine,1,0
+41,Monday,0.0,4.0,1,Pediatrics,0,0
+16,Tuesday,9.0,7.0,1,Cardiology,1,0
+35,Friday,0.0,1.0,1,General Medicine,0,0
+22,Thursday,1.0,0.0,0,Cardiology,0,0
+28,Thursday,4.0,1.0,0,Cardiology,1,0
+63,Thursday,0.0,3.0,0,Cardiology,1,0
+58,Thursday,7.0,2.0,1,Cardiology,1,0
+56,Monday,0.0,5.0,0,Dermatology,0,0
+33,Tuesday,1.0,3.0,0,Cardiology,0,0
+88,Wednesday,0.0,8.0,0,Ophthalmology,0,0
+8,Tuesday,15.0,0.0,0,ENT,1,0
+32,Friday,23.0,6.0,2,Pediatrics,1,1
+11,Wednesday,8.0,2.0,1,Cardiology,1,0
+31,Thursday,7.0,1.0,1,Pediatrics,1,0
+88,Friday,1.0,0.0,0,Neurology,1,1
+34,Wednesday,7.0,1.0,1,Orthopedics,1,0
+83,Friday,7.0,0.0,0,Neurology,1,1
+46,Wednesday,9.0,10.0,4,Pediatrics,1,0
+64,Friday,10.0,2.0,0,Orthopedics,1,0
+42,Tuesday,10.0,,3,Cardiology,1,1
+25,Wednesday,0.0,1.0,0,Dermatology,0,0
+70,Wednesday,7.0,5.0,1,General Medicine,1,0
+89,Monday,6.0,2.0,0,Dermatology,1,0
+24,Tuesday,13.0,11.0,1,ENT,1,0
+71,Friday,0.0,5.0,0,General Medicine,1,0
+24,Thursday,7.0,3.0,0,Orthopedics,1,0
+66,Monday,4.0,2.0,0,General Medicine,1,0
+72,Tuesday,4.0,4.0,1,Dermatology,1,1
+41,Monday,1.0,3.0,1,General Medicine,1,0
+68,Monday,9.0,7.0,1,Ophthalmology,1,0
+25,Saturday,4.0,3.0,0,General Medicine,1,0
+8,Wednesday,0.0,6.0,1,Ophthalmology,1,0
+9,Tuesday,45.0,2.0,0,Neurology,1,1
+41,Thursday,6.0,1.0,0,Orthopedics,1,0
+83,Monday,3.0,3.0,1,Neurology,1,0
+12,Tuesday,21.0,4.0,0,Neurology,1,0
+42,Thursday,12.0,2.0,1,Ophthalmology,1,1
+65,Thursday,10.0,4.0,1,General Medicine,1,0
+19,Saturday,0.0,2.0,0,Orthopedics,1,0
+66,Thursday,7.0,4.0,2,General Medicine,0,1
+28,Wednesday,14.0,9.0,1,Orthopedics,1,1
+74,Thursday,4.0,0.0,0,General Medicine,1,0
+53,Friday,9.0,5.0,2,Orthopedics,1,0
+50,Thursday,2.0,4.0,1,Orthopedics,0,1
+17,Saturday,0.0,1.0,0,Pediatrics,0,0
+43,Friday,14.0,1.0,0,Pediatrics,1,0
+78,Friday,3.0,0.0,0,Dermatology,0,0
+2,Monday,4.0,2.0,1,Neurology,1,0
+70,Thursday,2.0,0.0,0,,0,0
+45,Wednesday,4.0,6.0,4,Orthopedics,1,0
+66,Wednesday,2.0,5.0,1,Ophthalmology,1,0
+61,Thursday,0.0,3.0,1,General Medicine,0,0
+40,Saturday,12.0,2.0,1,General Medicine,1,1
+29,Saturday,1.0,8.0,1,General Medicine,0,0
+58,Tuesday,2.0,6.0,3,Orthopedics,1,0
+13,Thursday,12.0,0.0,0,Cardiology,0,0
+54,Thursday,7.0,2.0,0,Dermatology,1,1
+9,Tuesday,5.0,4.0,1,Orthopedics,1,0
+60,Monday,14.0,0.0,0,Cardiology,0,1
+58,Monday,1.0,14.0,1,ENT,1,0
+8,Friday,4.0,6.0,0,Dermatology,0,0
+69,Wednesday,4.0,0.0,0,General Medicine,1,1
+38,Saturday,22.0,4.0,1,Cardiology,1,0
+72,Wednesday,11.0,6.0,1,Cardiology,1,0
+4,Saturday,1.0,2.0,0,General Medicine,0,0

@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% block title %}Diagnostic Laboratory{% endblock %}
+{% block page_heading %}Pathology Orders & Quantitative Test Entry{% endblock %}
+
+{% block content %}
+<!-- Metric Cards Grid -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-label">All Lab Orders</div>
+        <div class="stat-value" style="color: var(--primary);">{{ counts.all }}</div>
+        <div class="stat-desc">Total diagnostic orders</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Pending Specimen</div>
+        <div class="stat-value" style="color: #F59E0B;">{{ counts.ordered }}</div>
+        <div class="stat-desc">Awaiting sample draw</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Sample Collected</div>
+        <div class="stat-value" style="color: #3B82F6;">{{ counts.sample_collected }}</div>
+        <div class="stat-desc">Ready for laboratory</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">In Processing</div>
+        <div class="stat-value" style="color: #8B5CF6;">{{ counts.processing }}</div>
+        <div class="stat-desc">Active analytical run</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Completed & Reported</div>
+        <div class="stat-value" style="color: #10B981;">{{ counts.completed }}</div>
+        <div class="stat-desc">Verified results</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Cancelled</div>
+        <div class="stat-value" style="color: #EF4444;">{{ counts.cancelled }}</div>
+        <div class="stat-desc">Discontinued orders</div>
+    </div>
+</div>
+
+<!-- Main Diagnostic Queue Card -->
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title"><span>🔬</span> Clinical Pathology Investigation Queue</div>
+            <div class="card-subtitle">Automated reference range threshold checks, critical finding alerts, and workflow progression</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <a href="{{ url_for('laboratory.test_catalog') }}" class="btn btn-secondary btn-sm">
+                <span>🧪</span> Formulary Catalog & Ranges
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div style="padding: 1rem 1.5rem; background: var(--bg-surface-alt, #0F172A); border-bottom: 1px solid var(--border-color, #334155);">
+        <form method="GET" action="{{ url_for('laboratory.dashboard') }}" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+            <input type="hidden" name="status" value="{{ status_filter }}">
+            <div style="flex: 1; min-width: 220px;">
+                <input type="text" name="q" value="{{ search_q }}" class="form-control" placeholder="Search patient name, MRN, test code, or investigation...">
+            </div>
+            <div style="width: 140px;">
+                <select name="priority" class="form-control" onchange="this.form.submit()">
+                    <option value="all" {% if priority_filter == 'all' %}selected{% endif %}>All Priorities</option>
+                    <option value="routine" {% if priority_filter == 'routine' %}selected{% endif %}>Routine</option>
+                    <option value="urgent" {% if priority_filter == 'urgent' %}selected{% endif %}>Urgent</option>
+                    <option value="stat" {% if priority_filter == 'stat' %}selected{% endif %}>STAT</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+                <span>🔍</span> Filter
+            </button>
+            {% if search_q or priority_filter != 'all' or status_filter != 'all' %}
+            <a href="{{ url_for('laboratory.dashboard') }}" class="btn btn-secondary btn-sm">Reset</a>
+            {% endif %}
+        </form>
+
+        <!-- Status Filter Tabs -->
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;">
+            <a href="{{ url_for('laboratory.dashboard', status='all', q=search_q, priority=priority_filter) }}" 
+               class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">
+                All ({{ counts.all }})
+            </a>
+            <a href="{{ url_for('laboratory.dashboard', status='ordered', q=search_q, priority=priority_filter) }}" 
+               class="btn btn-sm {% if status_filter == 'ordered' %}btn-primary{% else %}btn-secondary{% endif %}">
+                ⏳ Ordered ({{ counts.ordered }})
+            </a>
+            <a href="{{ url_for('laboratory.dashboard', status='sample_collected', q=search_q, priority=priority_filter) }}" 
+               class="btn btn-sm {% if status_filter == 'sample_collected' %}btn-primary{% else %}btn-secondary{% endif %}">
+                🧪 Sample Collected ({{ counts.sample_collected }})
+            </a>
+            <a href="{{ url_for('laboratory.dashboard', status='processing', q=search_q, priority=priority_filter) }}" 
+               class="btn btn-sm {% if status_filter == 'processing' %}btn-primary{% else %}btn-secondary{% endif %}">
+                ⚙️ Processing ({{ counts.processing }})
+            </a>
+            <a href="{{ url_for('laboratory.dashboard', status='completed', q=search_q, priority=priority_filter) }}" 
+               class="btn btn-sm {% if status_filter == 'completed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                ✅ Completed ({{ counts.completed }})
+            </a>
+            <a href="{{ url_for('laboratory.dashboard', status='cancelled', q=search_q, priority=priority_filter) }}" 
+               class="btn btn-sm {% if status_filter == 'cancelled' %}btn-primary{% else %}btn-secondary{% endif %}">
+                ❌ Cancelled ({{ counts.cancelled }})
+            </a>
+        </div>
+    </div>
+
+    <!-- Table of Orders -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Patient</th>
+                    <th>Investigation</th>
+                    <th>Specimen</th>
+                    <th>Priority</th>
+                    <th>Reference Range</th>
+                    <th>Ordered Date</th>
+                    <th>Status & Review</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td><strong>#{{ order.id }}</strong></td>
+                    <td>
+                        <strong>{{ order.patient.user.full_name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-dim);">
+                            Dr. {{ order.doctor.user.last_name }} 
+                            {% if order.patient.blood_group %} • <span class="badge badge-secondary" style="font-size: 0.65rem; padding: 0.1rem 0.3rem;">{{ order.patient.blood_group }}</span>{% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <strong>{{ order.test.name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Code: <code>{{ order.test.test_code }}</code></div>
+                        {% if order.clinical_notes %}
+                            <div style="font-size: 0.7rem; color: var(--text-dim); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ order.clinical_notes }}">
+                                <em>Notes: {{ order.clinical_notes }}</em>
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge badge-info">{{ order.test.sample_type }}</span></td>
+                    <td>
+                        {% if order.priority == 'stat' %}
+                            <span class="badge badge-danger" style="animation: pulse 1.5s infinite;">STAT</span>
+                        {% elif order.priority == 'urgent' %}
+                            <span class="badge badge-warning">URGENT</span>
+                        {% else %}
+                            <span class="badge badge-secondary">ROUTINE</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                        {% if order.test.reference_range_min is not none or order.test.reference_range_max is not none %}
+                            {{ order.test.reference_range_min or '0' }} - {{ order.test.reference_range_max or 'N/A' }} {{ order.test.unit or '' }}
+                        {% else %}
+                            <span style="color: var(--text-dim);">Qualitative / N/A</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                        {{ order.ordered_at.strftime('%Y-%m-%d %H:%M') if order.ordered_at else '-' }}
+                    </td>
+                    <td>
+                        <!-- Status Badge -->
+                        {% if order.status.value == 'ordered' %}
+                            <span class="badge badge-warning">ORDERED</span>
+                        {% elif order.status.value == 'sample_collected' %}
+                            <span class="badge badge-info">SAMPLE COLLECTED</span>
+                        {% elif order.status.value == 'processing' %}
+                            <span class="badge" style="background: #8B5CF6; color: white;">PROCESSING</span>
+                        {% elif order.status.value == 'completed' %}
+                            <span class="badge badge-success">COMPLETED</span>
+                            {% if order.doctor_reviewed %}
+                                <div style="margin-top: 0.25rem;">
+                                    <span class="badge badge-primary" style="font-size: 0.65rem;" title="Reviewed by Dr. {{ order.doctor.user.last_name }}">
+                                        ✓ Doc Reviewed
+                                    </span>
+                                </div>
+                            {% else %}
+                                <div style="margin-top: 0.25rem;">
+                                    <span class="badge badge-warning" style="font-size: 0.65rem;">
+                                        ⏳ Review Pending
+                                    </span>
+                                </div>
+                            {% endif %}
+                        {% elif order.status.value == 'cancelled' %}
+                            <span class="badge badge-danger">CANCELLED</span>
+                            {% if order.cancellation_reason %}
+                                <div style="font-size: 0.7rem; color: #EF4444; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ order.cancellation_reason }}">
+                                    {{ order.cancellation_reason }}
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                            <!-- 1. ORDERED: Log Sample -->
+                            {% if order.status.value == 'ordered' %}
+                                <form method="POST" action="{{ url_for('laboratory.collect_sample', order_id=order.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-secondary btn-sm" title="Mark sample as collected">
+                                        <span>🧪</span> Log Sample
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-danger btn-sm" data-modal-target="cancel-modal-{{ order.id }}" title="Cancel order">
+                                    &times;
+                                </button>
+
+                            <!-- 2. SAMPLE_COLLECTED: Start Processing -->
+                            {% elif order.status.value == 'sample_collected' %}
+                                <form method="POST" action="{{ url_for('laboratory.process_order', order_id=order.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-primary btn-sm" title="Advance specimen to analytical processing">
+                                        <span>⚙️</span> Start Processing
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-danger btn-sm" data-modal-target="cancel-modal-{{ order.id }}" title="Cancel order">
+                                    &times;
+                                </button>
+
+                            <!-- 3. PROCESSING: Enter Result Values -->
+                            {% elif order.status.value == 'processing' %}
+                                <button type="button" class="btn btn-primary btn-sm" data-modal-target="result-modal-{{ order.id }}" title="Record quantitative/qualitative findings">
+                                    <span>📝</span> Enter Values
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm" data-modal-target="cancel-modal-{{ order.id }}" title="Cancel order">
+                                    &times;
+                                </button>
+
+                            <!-- 4. COMPLETED: View Result Findings -->
+                            {% elif order.status.value == 'completed' %}
+                                {% if order.result %}
+                                    <button type="button" class="btn btn-secondary btn-sm" data-modal-target="view-modal-{{ order.id }}" title="View verified report findings">
+                                        <span>🔍</span> View Findings
+                                    </button>
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: {% if order.result.critical_alert %}#EF4444{% elif order.result.is_abnormal %}#F59E0B{% else %}#10B981{% endif %};">
+                                        {{ order.result.measured_value }} {{ order.result.unit }}
+                                        {% if order.result.critical_alert %}[CRITICAL]{% elif order.result.is_abnormal %}[ABNORMAL]{% else %}[NORMAL]{% endif %}
+                                    </span>
+                                {% else %}
+                                    <span style="font-size: 0.8rem; color: var(--text-dim);">Completed</span>
+                                {% endif %}
+
+                            <!-- 5. CANCELLED -->
+                            {% else %}
+                                <span style="font-size: 0.8rem; color: var(--text-dim);">Discontinued</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Modal for Result Entry (When in Processing or Collected) -->
+                        {% if order.status.value in ['processing', 'sample_collected'] %}
+                        <div class="modal-backdrop" id="result-modal-{{ order.id }}">
+                            <div class="modal-dialog">
+                                <div class="card-header">
+                                    <div class="card-title">Record Results: {{ order.test.name }}</div>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-close-modal>&times;</button>
+                                </div>
+                                <form method="POST" action="{{ url_for('laboratory.submit_result', order_id=order.id) }}">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Patient: <strong>{{ order.patient.user.full_name }}</strong>
+                                        </label>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                                            Ordered by: Dr. {{ order.doctor.user.full_name }} | Specimen: {{ order.test.sample_type }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Measured Quantitative Value ({{ order.test.unit or 'units' }}) *
+                                        </label>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                            Normal Reference Interval: {{ order.test.reference_range_min if order.test.reference_range_min is not none else '0' }} - {{ order.test.reference_range_max if order.test.reference_range_max is not none else 'N/A' }} {{ order.test.unit or '' }}
+                                        </div>
+                                        <input type="number" step="0.001" name="measured_value" class="form-control" required placeholder="e.g. 14.2">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Qualitative Impression / Findings Summary</label>
+                                        <input type="text" name="result_text" class="form-control" placeholder="e.g. Normal morphology, no blasts observed">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Pathologist / Technician Observations</label>
+                                        <textarea name="notes" class="form-control" rows="2" placeholder="Quality control passed. Hemolysis negative..."></textarea>
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                                        <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Verify & Transmit Report</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Modal for View Findings (When Completed) -->
+                        {% if order.status.value == 'completed' and order.result %}
+                        <div class="modal-backdrop" id="view-modal-{{ order.id }}">
+                            <div class="modal-dialog">
+                                <div class="card-header">
+                                    <div class="card-title">Verified Findings: {{ order.test.name }} (#{{ order.id }})</div>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-close-modal>&times;</button>
+                                </div>
+                                <div style="padding: 1rem 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                                        <span style="color: var(--text-muted);">Patient:</span>
+                                        <strong>{{ order.patient.user.full_name }}</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                                        <span style="color: var(--text-muted);">Measured Value:</span>
+                                        <strong style="color: {% if order.result.critical_alert %}#EF4444{% elif order.result.is_abnormal %}#F59E0B{% else %}#10B981{% endif %};">
+                                            {{ order.result.measured_value }} {{ order.result.unit }}
+                                            {% if order.result.critical_alert %}[CRITICAL ALERT]{% elif order.result.is_abnormal %}[ABNORMAL]{% else %}[NORMAL]{% endif %}
+                                        </strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                                        <span style="color: var(--text-muted);">Standard Range:</span>
+                                        <span>{{ order.test.reference_range_min or '0' }} - {{ order.test.reference_range_max or 'N/A' }} {{ order.test.unit }}</span>
+                                    </div>
+                                    {% if order.result.result_text %}
+                                    <div style="margin-bottom: 0.75rem;">
+                                        <span style="color: var(--text-muted);">Impression:</span>
+                                        <div style="margin-top: 0.25rem;">{{ order.result.result_text }}</div>
+                                    </div>
+                                    {% endif %}
+                                    {% if order.result.technician_notes %}
+                                    <div style="margin-bottom: 0.75rem;">
+                                        <span style="color: var(--text-muted);">Lab Technician Notes:</span>
+                                        <div style="margin-top: 0.25rem; font-style: italic;">{{ order.result.technician_notes }}</div>
+                                    </div>
+                                    {% endif %}
+                                    <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem;">
+                                        <span style="color: var(--text-muted);">Doctor Review:</span>
+                                        {% if order.doctor_reviewed %}
+                                            <div style="color: #10B981; font-weight: 600; margin-top: 0.25rem;">
+                                                ✓ Reviewed on {{ order.doctor_reviewed_at.strftime('%Y-%m-%d %H:%M') if order.doctor_reviewed_at else '' }}
+                                            </div>
+                                            {% if order.doctor_review_notes %}
+                                                <div style="font-size: 0.85rem; margin-top: 0.25rem;">{{ order.doctor_review_notes }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div style="color: #F59E0B; font-weight: 600; margin-top: 0.25rem;">
+                                                ⏳ Awaiting Physician Review Sign-Off
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                                    <button type="button" class="btn btn-secondary" data-close-modal>Close</button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Modal for Cancellation -->
+                        {% if order.status.value not in ['completed', 'cancelled'] %}
+                        <div class="modal-backdrop" id="cancel-modal-{{ order.id }}">
+                            <div class="modal-dialog">
+                                <div class="card-header">
+                                    <div class="card-title">Cancel Order #{{ order.id }}</div>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-close-modal>&times;</button>
+                                </div>
+                                <form method="POST" action="{{ url_for('laboratory.cancel_order', order_id=order.id) }}">
+                                    <p style="font-size: 0.9rem; color: var(--text-muted);">
+                                        Are you sure you want to cancel the <strong>{{ order.test.name }}</strong> order for <strong>{{ order.patient.user.full_name }}</strong>?
+                                    </p>
+                                    <div class="form-group">
+                                        <label class="form-label">Mandatory Cancellation Reason *</label>
+                                        <textarea name="reason" class="form-control" rows="2" required placeholder="e.g. Hemolyzed specimen, duplicate request, patient discharged..."></textarea>
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                                        <button type="button" class="btn btn-secondary" data-close-modal>Back</button>
+                                        <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-dim);">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔬</div>
+                        <div>No laboratory orders found matching the selected filter criteria.</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

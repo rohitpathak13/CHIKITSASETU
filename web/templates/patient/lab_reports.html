@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}My Laboratory Reports{% endblock %}
+{% block page_heading %}Diagnostic Laboratory Reports{% endblock %}
+
+{% block content %}
+<!-- Metric Cards Grid -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-label">Total Lab Orders</div>
+        <div class="stat-value" style="color: var(--primary);">{{ total_count }}</div>
+        <div class="stat-desc">All prescribed tests</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Verified Reports</div>
+        <div class="stat-value" style="color: #10B981;">{{ completed_count }}</div>
+        <div class="stat-desc">Available to view & print</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value" style="color: #F59E0B;">{{ in_progress_count }}</div>
+        <div class="stat-desc">Specimen processing</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title"><span>🔬</span> My Diagnostic Investigations</div>
+            <div class="card-subtitle">Official pathology reports, clinical reference ranges, and doctor impressions</div>
+        </div>
+        <!-- Status Filter Pills -->
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{{ url_for('patient.lab_reports', status='all') }}" 
+               class="btn btn-sm {% if current_status == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">
+                All ({{ total_count }})
+            </a>
+            <a href="{{ url_for('patient.lab_reports', status='completed') }}" 
+               class="btn btn-sm {% if current_status == 'completed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Completed ({{ completed_count }})
+            </a>
+            <a href="{{ url_for('patient.lab_reports', status='pending') }}" 
+               class="btn btn-sm {% if current_status == 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">
+                In Progress ({{ in_progress_count }})
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Investigation</th>
+                    <th>Specimen</th>
+                    <th>Ordering Doctor</th>
+                    <th>Ordered Date</th>
+                    <th>Status</th>
+                    <th>Findings Summary</th>
+                    <th>Doctor Sign-Off</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td><strong>#{{ order.id }}</strong></td>
+                    <td>
+                        <strong>{{ order.test.name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Code: <code>{{ order.test.test_code }}</code></div>
+                    </td>
+                    <td><span class="badge badge-info">{{ order.test.sample_type }}</span></td>
+                    <td>
+                        <strong>Dr. {{ order.doctor.user.full_name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-dim);">{{ order.doctor.specialization or 'General Medicine' }}</div>
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                        {{ order.ordered_at.strftime('%Y-%m-%d') if order.ordered_at else '-' }}
+                    </td>
+                    <td>
+                        {% if order.status.value == 'completed' %}
+                            <span class="badge badge-success">COMPLETED</span>
+                        {% elif order.status.value == 'cancelled' %}
+                            <span class="badge badge-danger">CANCELLED</span>
+                        {% elif order.status.value == 'ordered' %}
+                            <span class="badge badge-warning">AWAITING SPECIMEN</span>
+                        {% elif order.status.value == 'sample_collected' %}
+                            <span class="badge badge-info">SAMPLE COLLECTED</span>
+                        {% elif order.status.value == 'processing' %}
+                            <span class="badge" style="background: #8B5CF6; color: white;">ANALYZING</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.result %}
+                            <span style="font-weight: 700; color: {% if order.result.critical_alert %}#EF4444{% elif order.result.is_abnormal %}#F59E0B{% else %}#10B981{% endif %};">
+                                {{ order.result.measured_value }} {{ order.result.unit }}
+                                {% if order.result.critical_alert %}
+                                    <span class="badge badge-danger" style="font-size: 0.65rem;">CRITICAL</span>
+                                {% elif order.result.is_abnormal %}
+                                    <span class="badge badge-warning" style="font-size: 0.65rem;">ABNORMAL</span>
+                                {% else %}
+                                    <span class="badge badge-success" style="font-size: 0.65rem;">NORMAL</span>
+                                {% endif %}
+                            </span>
+                        {% elif order.status.value == 'cancelled' %}
+                            <span style="font-size: 0.8rem; color: #EF4444;">Cancelled</span>
+                        {% else %}
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">Processing...</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.doctor_reviewed %}
+                            <span style="color: #10B981; font-weight: 600; font-size: 0.8rem;">
+                                ✓ Reviewed
+                            </span>
+                        {% elif order.status.value == 'completed' %}
+                            <span style="color: #F59E0B; font-size: 0.8rem;">
+                                In Review
+                            </span>
+                        {% else %}
+                            <span style="color: var(--text-dim);">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.status.value == 'completed' %}
+                            <a href="{{ url_for('patient.lab_report_detail', order_id=order.id) }}" class="btn btn-secondary btn-sm">
+                                <span>📄</span> View Report
+                            </a>
+                        {% else %}
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">Report Pending</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-dim);">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔬</div>
+                        <div>No laboratory reports on file for the selected filter.</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

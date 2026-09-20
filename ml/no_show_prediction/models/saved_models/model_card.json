@@ -1,0 +1,73 @@
+{
+  "model_name": "Appointment No-Show Predictor",
+  "model_version": "1.0.0",
+  "algorithm": "Logistic Regression",
+  "creation_date": "2026-09-19T17:04:04.722709+00:00",
+  "training_sample_count": 2400,
+  "test_sample_count": 600,
+  "input_features": [
+    "patient_age",
+    "appointment_weekday",
+    "appointment_lead_time",
+    "previous_appointment_count",
+    "previous_no_show_count",
+    "department",
+    "sms_reminder_sent"
+  ],
+  "evaluation_metrics": {
+    "model_name": "Logistic Regression",
+    "accuracy": 0.81,
+    "precision": 0.5,
+    "recall": 0.0263,
+    "f1_score": 0.05,
+    "roc_auc": 0.6788,
+    "brier_score": 0.1434,
+    "confusion_matrix": [
+      [
+        483,
+        3
+      ],
+      [
+        111,
+        3
+      ]
+    ],
+    "classification_report": {
+      "0": {
+        "precision": 0.8131313131313131,
+        "recall": 0.9938271604938271,
+        "f1-score": 0.8944444444444445,
+        "support": 486.0
+      },
+      "1": {
+        "precision": 0.5,
+        "recall": 0.02631578947368421,
+        "f1-score": 0.05,
+        "support": 114.0
+      },
+      "accuracy": 0.81,
+      "macro avg": {
+        "precision": 0.6565656565656566,
+        "recall": 0.5100714749837557,
+        "f1-score": 0.47222222222222227,
+        "support": 600.0
+      },
+      "weighted avg": {
+        "precision": 0.7536363636363637,
+        "recall": 0.81,
+        "f1-score": 0.7340000000000001,
+        "support": 600.0
+      }
+    }
+  },
+  "imputation_defaults": {
+    "patient_age": 46.0,
+    "appointment_lead_time": 4.0,
+    "previous_appointment_count": 3.0,
+    "previous_no_show_count": 0.0,
+    "sms_reminder_sent": 1.0,
+    "appointment_weekday": "Monday",
+    "department": "General Medicine"
+  },
+  "disclaimer": "DISCLAIMER: This machine learning model is an operational scheduling decision-support tool intended strictly for demonstration and attendance risk triage. It DOES NOT make clinical diagnoses or provide medical claims. All patient scheduling and healthcare decisions must be managed by authorized staff."
+}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Patient Directory - MediCare AI{% endblock %}
+{% block page_heading %}Patient Directory & Healthcare Records{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title">Hospital Master Patient Index ({{ total }} Patients)</div>
+            <div class="card-subtitle">Search, view 360° longitudinal healthcare records, and manage patient profiles</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('patient.register') }}" class="btn btn-primary">
+                <span>➕</span> Register New Patient
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <form method="GET" action="{{ url_for('patient.directory') }}" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by name, phone, email, or MRN (e.g. PAT-00001)..." style="flex: 1; min-width: 240px;">
+        
+        <select name="gender" class="form-control" style="width: auto; min-width: 140px;">
+            <option value="">All Genders</option>
+            <option value="male" {% if gender_filter == 'male' %}selected{% endif %}>Male</option>
+            <option value="female" {% if gender_filter == 'female' %}selected{% endif %}>Female</option>
+            <option value="other" {% if gender_filter == 'other' %}selected{% endif %}>Other</option>
+        </select>
+
+        <select name="blood_group" class="form-control" style="width: auto; min-width: 130px;">
+            <option value="">All Blood Groups</option>
+            {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                <option value="{{ bg }}" {% if blood_filter == bg %}selected{% endif %}>{{ bg }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if q or gender_filter or blood_filter %}
+            <a href="{{ url_for('patient.directory') }}" class="btn btn-secondary" style="color: var(--text-dim);">Clear</a>
+        {% endif %}
+    </form>
+
+    <!-- Patients Master Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>MRN</th>
+                    <th>Patient Name</th>
+                    <th>Gender / DOB</th>
+                    <th>Blood Group</th>
+                    <th>Contact Info</th>
+                    <th>Emergency Contact</th>
+                    <th>Allergies & Conditions</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in patients %}
+                <tr>
+                    <td>
+                        <strong style="font-family: monospace; color: var(--teal-primary);">
+                            PAT-{{ "%05d"|format(p.id) }}
+                        </strong>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700; color: var(--text-main);">
+                            <a href="{{ url_for('patient.patient_detail', patient_id=p.id) }}" style="color: inherit; text-decoration: none;">
+                                {{ p.user.full_name }}
+                            </a>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">
+                            {{ p.user.email }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral" style="text-transform: capitalize;">
+                            {{ p.gender.value if p.gender else 'Other' }}
+                        </span>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                            DOB: {{ p.dob }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if p.blood_group %}
+                            <span class="badge badge-danger">{{ p.blood_group }}</span>
+                        {% else %}
+                            <span style="color: var(--text-dim); font-size: 0.8rem;">Unknown</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.85rem;">
+                        <div>{{ p.user.phone or '-' }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ p.address or '' }}
+                        </div>
+                    </td>
+                    <td style="font-size: 0.85rem;">
+                        <div>{{ p.emergency_contact_name or '-' }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                            {{ p.emergency_contact_phone or '' }}
+                        </div>
+                    </td>
+                    <td style="font-size: 0.8rem;">
+                        {% if p.allergies %}
+                            <div><strong style="color: #F87171;">Allergies:</strong> {{ p.allergies }}</div>
+                        {% endif %}
+                        {% if p.chronic_conditions %}
+                            <div style="color: var(--text-muted);"><strong style="color: #FBBF24;">Chronic:</strong> {{ p.chronic_conditions }}</div>
+                        {% endif %}
+                        {% if not p.allergies and not p.chronic_conditions %}
+                            <span style="color: var(--text-dim);">None</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{{ url_for('patient.patient_detail', patient_id=p.id) }}" class="btn btn-secondary btn-sm" title="View 360° Patient Chart">
+                            <span>🔍</span> 360° History
+                        </a>
+                        <a href="{{ url_for('patient.edit_patient', patient_id=p.id) }}" class="btn btn-secondary btn-sm" title="Edit Demographics & Contact">
+                            <span>✏️</span> Edit
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 2.5rem;">
+                        No patient records found matching the query.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Showing page {{ page }} of {{ pages }} ({{ total }} total patients)
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+            {% if page > 1 %}
+                <a href="{{ url_for('patient.directory', page=page-1, q=q, gender=gender_filter, blood_group=blood_filter) }}" class="btn btn-secondary btn-sm">&laquo; Prev</a>
+            {% endif %}
+            
+            <span class="btn btn-primary btn-sm" style="pointer-events: none;">{{ page }}</span>
+
+            {% if page < pages %}
+                <a href="{{ url_for('patient.directory', page=page+1, q=q, gender=gender_filter, blood_group=blood_filter) }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

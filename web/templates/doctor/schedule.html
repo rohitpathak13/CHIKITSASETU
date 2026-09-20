@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Appointment Schedule - MediCare AI{% endblock %}
+{% block page_heading %}Doctor Appointment Schedule & Roster{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title"><span>📅</span> Outpatient Roster & Clinic Calendar</div>
+            <div class="card-subtitle">Manage OPD appointments, token queues, and attendance statuses</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-secondary btn-sm">
+                <span>🩺</span> Today's Queue
+            </a>
+            <a href="{{ url_for('doctor.my_patients') }}" class="btn btn-secondary btn-sm">
+                <span>👥</span> Patient List
+            </a>
+        </div>
+    </div>
+
+    <!-- Date & Status Filter Controls -->
+    <form method="GET" action="{{ url_for('doctor.schedule') }}" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Date:</span>
+            <input type="date" name="date" value="{{ date_filter }}" class="form-control" style="width: auto;">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Status:</span>
+            <select name="status" class="form-control" style="width: auto; min-width: 140px;">
+                <option value="">All Statuses</option>
+                <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                <option value="no_show" {% if status_filter == 'no_show' %}selected{% endif %}>No Show</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+        <a href="{{ url_for('doctor.schedule', date=today_date) }}" class="btn btn-secondary btn-sm">Today</a>
+        <a href="{{ url_for('doctor.schedule', date='all') }}" class="btn btn-secondary btn-sm" style="color: var(--text-dim);">Show All</a>
+    </form>
+
+    <!-- Schedule Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Token</th>
+                    <th>Patient Name & MRN</th>
+                    <th>Appointment Time</th>
+                    <th>Reason / Complaint</th>
+                    <th>AI Attendance Risk</th>
+                    <th>Current Status</th>
+                    <th style="text-align: right;">Actions & Status Control</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in appointments %}
+                <tr>
+                    <td>
+                        <div class="token-pill" style="display: inline-block; padding: 0.25rem 0.6rem; border-radius: 9999px; background: rgba(13, 148, 136, 0.2); color: var(--teal-primary); font-weight: 800; font-family: monospace;">
+                            #{{ app.token_number }}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700; color: var(--text-main);">
+                            {{ app.patient.user.full_name }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">
+                            PAT-{{ "%05d"|format(app.patient.id) }} | Phone: {{ app.patient.user.phone or 'N/A' }}
+                        </div>
+                    </td>
+                    <td>
+                        <strong>{{ app.appointment_datetime.strftime('%Y-%m-%d %H:%M') if app.appointment_datetime else 'N/A' }}</strong>
+                    </td>
+                    <td style="font-size: 0.85rem;">{{ app.reason or 'Consultation' }}</td>
+                    <td>
+                        {% if app.no_show_probability is not none %}
+                            {% set pct = (app.no_show_probability * 100)|round(1) %}
+                            {% if pct >= 45 %}
+                                <span class="badge badge-danger">High No-Show ({{ pct }}%)</span>
+                            {% elif pct >= 25 %}
+                                <span class="badge badge-warning">Moderate ({{ pct }}%)</span>
+                            {% else %}
+                                <span class="badge badge-success">Reliable ({{ pct }}%)</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-neutral">Pending AI</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if app.status.value == 'completed' %}badge-success{% elif app.status.value == 'confirmed' %}badge-info{% elif app.status.value == 'cancelled' or app.status.value == 'no_show' %}badge-danger{% else %}badge-warning{% endif %}">
+                            {{ app.status.value }}
+                        </span>
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{{ url_for('doctor.patient_history', patient_id=app.patient.id) }}" class="btn btn-secondary btn-sm" title="View Patient History">
+                            <span>📋</span> Chart
+                        </a>
+
+                        {% if app.status.value != 'completed' %}
+                            <a href="{{ url_for('doctor.consultation', appointment_id=app.id) }}" class="btn btn-primary btn-sm">
+                                <span>🩺</span> Consult
+                            </a>
+
+                            <!-- Status Dropdown Action Form -->
+                            <form action="{{ url_for('doctor.schedule') }}" method="POST" style="display: inline-block; margin-left: 0.25rem;">
+                                <input type="hidden" name="appointment_id" value="{{ app.id }}">
+                                <select name="status" onchange="this.form.submit()" class="form-control" style="display: inline-block; width: auto; padding: 0.25rem 0.5rem; font-size: 0.75rem; background: var(--bg-surface); height: auto;">
+                                    <option value="" disabled selected>Update...</option>
+                                    <option value="confirmed">Confirm</option>
+                                    <option value="completed">Complete</option>
+                                    <option value="cancelled">Cancel</option>
+                                    <option value="no_show">No Show</option>
+                                </select>
+                            </form>
+                        {% else %}
+                            <span style="font-size: 0.8rem; color: #34D399; font-weight: 600;">✓ Completed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2.5rem;">
+                        No appointments found matching the selected date and status filters.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}My Patients - MediCare AI{% endblock %}
+{% block page_heading %}Doctor's Assigned Patient Directory{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title"><span>👥</span> Longitudinal Patient Panel</div>
+            <div class="card-subtitle">All outpatients and inpatients consulted or admitted under your clinical care</div>
+        </div>
+        
+        <!-- Search Form -->
+        <form method="GET" action="{{ url_for('doctor.my_patients') }}" class="search-box-wrapper">
+            <input type="hidden" name="type" value="{{ patient_type }}">
+            <span class="search-box-icon">🔍</span>
+            <input type="text" name="q" value="{{ search_query or '' }}" class="search-box-input" placeholder="Search by name, MRN, or phone...">
+        </form>
+    </div>
+
+    <!-- Filter Tabs (All / Outpatients / Inpatients) -->
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+        <a href="{{ url_for('doctor.my_patients', q=search_query, type='all') }}" class="btn btn-sm {% if patient_type == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">
+            All Patients ({{ patients_data|length }})
+        </a>
+        <a href="{{ url_for('doctor.my_patients', q=search_query, type='outpatient') }}" class="btn btn-sm {% if patient_type == 'outpatient' %}btn-primary{% else %}btn-secondary{% endif %}">
+            Outpatients (OPD)
+        </a>
+        <a href="{{ url_for('doctor.my_patients', q=search_query, type='inpatient') }}" class="btn btn-sm {% if patient_type == 'inpatient' %}btn-primary{% else %}btn-secondary{% endif %}">
+            Inpatients (Admitted)
+        </a>
+    </div>
+
+    <!-- Patients Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>MRN</th>
+                    <th>Patient Name</th>
+                    <th>Care Type</th>
+                    <th>Gender / DOB</th>
+                    <th>Blood Group</th>
+                    <th>Contact Phone</th>
+                    <th>Clinical Status / Ward</th>
+                    <th style="text-align: right;">Clinical Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in patients_data %}
+                {% set p = item.patient %}
+                <tr>
+                    <td>
+                        <strong style="font-family: monospace; color: var(--teal-primary);">
+                            PAT-{{ "%05d"|format(p.id) }}
+                        </strong>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700; color: var(--text-main);">
+                            <a href="{{ url_for('doctor.patient_history', patient_id=p.id) }}" style="color: inherit; text-decoration: none;">
+                                {{ p.user.full_name }}
+                            </a>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">
+                            {{ p.user.email }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if item.is_inpatient and item.is_outpatient %}
+                            <span class="badge badge-info">In & Outpatient</span>
+                        {% elif item.is_inpatient %}
+                            <span class="badge badge-warning">Inpatient</span>
+                        {% else %}
+                            <span class="badge badge-neutral">Outpatient</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral" style="text-transform: capitalize;">
+                            {{ p.gender.value if p.gender else 'N/A' }}
+                        </span>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                            DOB: {{ p.dob }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if p.blood_group %}
+                            <span class="badge badge-danger">{{ p.blood_group }}</span>
+                        {% else %}
+                            <span style="color: var(--text-dim); font-size: 0.8rem;">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.85rem;">{{ p.user.phone or 'N/A' }}</td>
+                    <td style="font-size: 0.85rem;">
+                        {% if item.active_admission %}
+                            <div style="color: #38BDF8; font-weight: 600;">
+                                Bed {{ item.active_admission.bed.bed_number if item.active_admission.bed else 'Assigned' }}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                {{ item.active_admission.bed.room.room_type.value|capitalize if item.active_admission.bed and item.active_admission.bed.room else 'Ward' }}
+                            </div>
+                        {% elif item.latest_appointment %}
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                Appt: {{ item.latest_appointment.appointment_datetime.strftime('%Y-%m-%d') if item.latest_appointment.appointment_datetime else 'Recent' }}
+                            </div>
+                            <span class="badge badge-neutral" style="font-size: 0.7rem;">{{ item.latest_appointment.status.value }}</span>
+                        {% else %}
+                            <span style="color: var(--text-dim); font-size: 0.8rem;">Consulted</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{{ url_for('doctor.patient_history', patient_id=p.id) }}" class="btn btn-secondary btn-sm" title="View Longitudinal Medical Chart">
+                            <span>📋</span> Medical History
+                        </a>
+
+                        {% if item.latest_appointment and item.latest_appointment.status.value in ['scheduled', 'confirmed'] %}
+                            <a href="{{ url_for('doctor.consultation', appointment_id=item.latest_appointment.id) }}" class="btn btn-primary btn-sm">
+                                <span>🩺</span> Consult
+                            </a>
+                        {% endif %}
+
+                        {% if item.active_admission %}
+                            <button type="button" class="btn btn-danger btn-sm" data-modal-target="docDischargeModal{{ item.active_admission.id }}">
+                                <span>🚪</span> Discharge
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 2.5rem;">
+                        No patients found matching the criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Discharge Clearance Modals -->
+{% for item in patients_data %}
+{% if item.active_admission %}
+{% set adm = item.active_admission %}
+<div class="modal-backdrop" id="docDischargeModal{{ adm.id }}">
+    <div class="modal-dialog">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h3 style="margin: 0; font-size: 1.2rem; color: #F8FAFC;">
+                <span>🚪</span> Clinical Discharge Clearance
+            </h3>
+            <button type="button" data-close-modal style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div style="margin-bottom: 1rem; padding: 0.75rem; border-radius: var(--radius-sm); background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border-subtle); font-size: 0.85rem;">
+            <div><strong>Patient:</strong> {{ adm.patient.user.full_name }} (PAT-{{ "%05d"|format(adm.patient.id) }})</div>
+            <div><strong>Location:</strong> Bed {{ adm.bed.bed_number if adm.bed else 'N/A' }}</div>
+        </div>
+        <form action="{{ url_for('doctor.discharge_patient', admission_id=adm.id) }}" method="POST">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Doctor's Discharge Note & Prognosis</label>
+                <textarea name="discharge_summary" class="form-control" rows="3" required>Patient clinically evaluated and cleared for discharge. Inpatient treatment protocol completed. Vitals stable.</textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="btn btn-secondary btn-sm" data-close-modal>Cancel</button>
+                <button type="submit" class="btn btn-danger btn-sm">Clear & Generate Bill</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Modal Control Script -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-modal-target]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-modal-target');
+            const modal = document.getElementById(targetId);
+            if (modal) modal.classList.add('active');
+        });
+    });
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = btn.closest('.modal-backdrop');
+            if (modal) modal.classList.remove('active');
+        });
+    });
+});
+</script>
+{% endblock %}

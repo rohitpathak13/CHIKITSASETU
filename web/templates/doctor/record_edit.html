@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Edit Medical Record #{{ record.id }} - MediCare AI{% endblock %}
+{% block page_heading %}Amend Electronic Medical Record #{{ record.id }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border-left: 4px solid #FBBF24;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <h2 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-main);">
+                        Patient: {{ patient.user.full_name }}
+                    </h2>
+                    <span class="badge" style="background: rgba(45, 212, 191, 0.15); color: var(--teal-primary); font-family: monospace;">
+                        PAT-{{ "%05d"|format(patient.id) }}
+                    </span>
+                    <span class="badge badge-warning">Encounter EMR-{{ "%05d"|format(record.id) }}</span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+                    Original Visit Date: <strong>{{ record.visit_date }}</strong> | Documenting Physician: <strong>Dr. {{ record.doctor.user.full_name }}</strong>
+                </div>
+            </div>
+            <a href="{{ url_for('doctor.patient_history', patient_id=patient.id) }}" class="btn btn-secondary btn-sm">
+                <span>⬅️</span> Patient Chart
+            </a>
+        </div>
+    </div>
+
+    <!-- Amendment Form -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>✏️</span> Amend Clinical Encounter Record</div>
+                <div class="card-subtitle">All modifications are strictly logged in the HIPAA/clinical audit repository</div>
+            </div>
+        </div>
+
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Amendment Reason (Audited) -->
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); padding: 1rem;">
+                <label class="form-label" for="change_reason" style="color: #FCD34D; font-weight: 700;">
+                    Reason for Clinical Record Amendment <span style="color: #F87171;">*</span>
+                </label>
+                <input type="text" id="change_reason" name="change_reason" class="form-control" required placeholder="e.g. Added lab-confirmed diagnosis, corrected blood pressure measurement, updated treatment plan">
+                <span style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem; display: block;">
+                    This amendment justification will be permanently written to the security audit trail.
+                </span>
+            </div>
+
+            <!-- 1. Symptoms & Chief Complaints -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    1. Symptoms & Chief Complaints
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="symptoms">Reported Symptoms <span style="color: #F87171;">*</span></label>
+                    <textarea id="symptoms" name="symptoms" class="form-control" rows="3" required>{{ record.symptoms }}</textarea>
+                </div>
+            </div>
+
+            <!-- 2. Objective Vital Signs -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--azure-accent); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    2. Objective Vital Signs
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_bp">Blood Pressure (mmHg)</label>
+                        <input type="text" id="vitals_bp" name="vitals_bp" class="form-control" value="{{ record.vitals_bp or '' }}" placeholder="120/80">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_pulse">Pulse Rate (bpm)</label>
+                        <input type="number" id="vitals_pulse" name="vitals_pulse" class="form-control" value="{{ record.vitals_pulse or '' }}" min="30" max="250">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_temp">Temperature (°C)</label>
+                        <input type="number" step="0.1" id="vitals_temp" name="vitals_temp" class="form-control" value="{{ record.vitals_temp or '' }}" min="30" max="45">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_spo2">SpO2 (%)</label>
+                        <input type="number" id="vitals_spo2" name="vitals_spo2" class="form-control" value="{{ record.vitals_spo2 or '' }}" min="50" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_weight">Weight (kg)</label>
+                        <input type="number" step="0.1" id="vitals_weight" name="vitals_weight" class="form-control" value="{{ record.vitals_weight or '' }}" min="1" max="500">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_height">Height (cm)</label>
+                        <input type="number" step="0.1" id="vitals_height" name="vitals_height" class="form-control" value="{{ record.vitals_height or '' }}" min="30" max="250">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_respiratory_rate">Respiration (breaths/min)</label>
+                        <input type="number" id="vitals_respiratory_rate" name="vitals_respiratory_rate" class="form-control" value="{{ record.vitals_respiratory_rate or '' }}" min="6" max="60">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Clinical Diagnosis -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #FBBF24; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    3. Clinical Diagnosis
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="diagnosis">Primary Diagnosis <span style="color: #F87171;">*</span></label>
+                    <input type="text" id="diagnosis" name="diagnosis" class="form-control" required value="{{ record.diagnosis }}">
+                </div>
+            </div>
+
+            <!-- 4. Allergies -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #F87171; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    4. Documented Allergies
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="allergies">Encounter Allergies</label>
+                    <input type="text" id="allergies" name="allergies" class="form-control" value="{{ record.allergies or '' }}" placeholder="Documented allergens">
+                </div>
+            </div>
+
+            <!-- 5. Treatment Plan -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #34D399; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    5. Treatment Plan & Therapy Regimen
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="treatment_plan">Treatment Plan</label>
+                    <textarea id="treatment_plan" name="treatment_plan" class="form-control" rows="3">{{ record.treatment_plan or '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- 6. Clinical Notes -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    6. Physician Clinical Notes
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="clinical_notes">Internal Clinical Notes</label>
+                    <textarea id="clinical_notes" name="clinical_notes" class="form-control" rows="2">{{ record.clinical_notes or '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- 7. Recommended Follow-Up Date -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #60A5FA; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    7. Follow-Up Consultation
+                </h3>
+                <div class="form-group" style="max-width: 300px;">
+                    <label class="form-label" for="follow_up_date">Follow-up Date</label>
+                    <input type="date" id="follow_up_date" name="follow_up_date" min="{{ today_date }}" value="{{ record.follow_up_date.strftime('%Y-%m-%d') if record.follow_up_date else '' }}" class="form-control">
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+                <a href="{{ url_for('doctor.patient_history', patient_id=record.patient_id) }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <span>💾</span> Save Changes & Record Audit Log
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

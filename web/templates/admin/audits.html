@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}System Audit Logs - MediCare AI{% endblock %}
+{% block page_heading %}Security & Operational Audit Trail{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title">HIPAA-Compliant System & Security Logs ({{ total }} Events)</div>
+            <div class="card-subtitle">Every mutating healthcare transaction is cryptographically logged with IP and actor identity</div>
+        </div>
+        <span class="badge badge-success">Audit Compliant</span>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <form method="GET" action="{{ url_for('admin.audit_logs') }}" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by user, action, resource..." style="flex: 1; min-width: 220px;">
+        
+        <select name="action" class="form-control" style="width: auto; min-width: 200px;">
+            <option value="">All Action Types</option>
+            {% for act in actions %}
+                <option value="{{ act }}" {% if action_filter == act %}selected{% endif %}>{{ act }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if q or action_filter %}
+            <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-secondary" style="color: var(--text-dim);">Clear</a>
+        {% endif %}
+    </form>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Timestamp (UTC)</th>
+                    <th>User / Actor</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                    <th>Resource Target</th>
+                    <th>IP Address</th>
+                    <th>Payload Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
+                        {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else 'N/A' }}
+                    </td>
+                    <td><strong>{{ log.user.full_name if log.user else 'System / Anonymous' }}</strong></td>
+                    <td>
+                        <span class="badge badge-neutral">{{ log.user.role.value if log.user else 'System' }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if 'FAIL' in log.action or 'UNAUTHORIZED' in log.action %}badge-danger{% elif 'CREATE' in log.action %}badge-success{% else %}badge-info{% endif %}">
+                            {{ log.action }}
+                        </span>
+                    </td>
+                    <td>{{ log.resource_type }}{% if log.resource_id %} #{{ log.resource_id }}{% endif %}</td>
+                    <td style="font-family: monospace; font-size: 0.8rem;">{{ log.ip_address or '127.0.0.1' }}</td>
+                    <td style="font-family: monospace; font-size: 0.75rem; color: var(--text-dim); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ log.details_json or '{}' }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">No audit records match the specified search criteria.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Showing page {{ page }} of {{ pages }} ({{ total }} audit events)
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+            {% if page > 1 %}
+                <a href="{{ url_for('admin.audit_logs', page=page-1, q=q, action=action_filter) }}" class="btn btn-secondary btn-sm">&laquo; Prev</a>
+            {% endif %}
+            
+            <span class="btn btn-primary btn-sm" style="pointer-events: none;">{{ page }}</span>
+
+            {% if page < pages %}
+                <a href="{{ url_for('admin.audit_logs', page=page+1, q=q, action=action_filter) }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

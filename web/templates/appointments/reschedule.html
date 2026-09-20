@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Reschedule Appointment #{{ appointment.id }} - MediCare AI{% endblock %}
+{% block page_heading %}Reschedule Appointment{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>🔄</span> Reschedule Appointment #{{ appointment.id }}</div>
+                <div class="card-subtitle">Select a new consultation date and time slot with real-time schedule conflict prevention</div>
+            </div>
+            <a href="{{ url_for('appointment.index') }}" class="btn btn-secondary btn-sm">
+                <span>⬅️</span> Back to Schedule
+            </a>
+        </div>
+
+        <!-- Current Appointment Information Card -->
+        <div style="margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: rgba(30, 41, 59, 0.6); border-radius: var(--radius-md); border-left: 4px solid var(--teal-primary); display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Patient</div>
+                <div style="font-size: 1rem; font-weight: 700; color: var(--text-main);">{{ appointment.patient.user.full_name }}</div>
+                <div style="font-size: 0.8rem; color: var(--teal-primary); font-family: monospace;">PAT-{{ "%05d"|format(appointment.patient_id) }}</div>
+            </div>
+
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Doctor</div>
+                <div style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Dr. {{ appointment.doctor.user.full_name }}</div>
+                <div style="font-size: 0.8rem; color: var(--azure-accent);">{{ appointment.doctor.specialization }} ({{ appointment.doctor.department.name if appointment.doctor.department else 'General' }})</div>
+            </div>
+
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Current Schedule</div>
+                <div style="font-size: 1rem; font-weight: 700; color: #FBBF24;">
+                    {{ appointment.appointment_datetime.strftime('%Y-%m-%d at %H:%M') if appointment.appointment_datetime else 'N/A' }}
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-dim);">Current Token: <strong>#{{ appointment.token_number }}</strong></div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('appointment.reschedule', appointment_id=appointment.id) }}" id="rescheduleForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- 1. New Date & Time Slot Selection -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>📅</span> 1. Select New Date & Consultation Time Slot
+                </h3>
+                
+                <div class="form-group" style="max-width: 320px; margin-bottom: 1rem;">
+                    <label class="form-label" for="appointment_date">New Consultation Date <span style="color: #F87171;">*</span></label>
+                    <input type="date" id="appointment_date" name="appointment_date" min="{{ today_date }}" 
+                           value="{{ appointment.appointment_datetime.strftime('%Y-%m-%d') if appointment.appointment_datetime and appointment.appointment_datetime.strftime('%Y-%m-%d') >= today_date else today_date }}" 
+                           class="form-control" required>
+                </div>
+
+                <!-- Live Availability Feedback Alert -->
+                <div id="slotNotice" style="margin-bottom: 0.75rem; font-size: 0.85rem; display: none;"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Available Consultation Time Slots <span style="color: #F87171;">*</span></label>
+                    <input type="hidden" name="time_slot" id="selectedTimeSlot" required>
+                    
+                    <div id="slotsContainer" style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
+                        {% for slot in clinic_slots %}
+                            <button type="button" class="slot-chip" data-slot="{{ slot }}">
+                                {{ slot }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.35rem; display: block;">
+                        Click on an open time slot to select the new schedule. Booked slots are disabled.
+                    </span>
+                </div>
+            </div>
+
+            <!-- 2. Reason for Rescheduling -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>📝</span> 2. Reason for Rescheduling
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="reason">Reason / Clinical Notes</label>
+                    <textarea id="reason" name="reason" class="form-control" rows="2" placeholder="e.g. Patient requested morning slot, physician schedule conflict"></textarea>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 0.5rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+                <a href="{{ url_for('appointment.index') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" id="submitRescheduleBtn" class="btn btn-primary">
+                    <span>🔄</span> Confirm Rescheduling
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.slot-chip {
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: rgba(30, 41, 59, 0.7);
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+.slot-chip:hover:not(.disabled) {
+    background: rgba(45, 212, 191, 0.15);
+    border-color: var(--teal-primary);
+    color: var(--teal-primary);
+    transform: translateY(-1px);
+}
+.slot-chip.active {
+    background: var(--teal-primary);
+    border-color: var(--teal-primary);
+    color: #0F172A;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(45, 212, 191, 0.4);
+}
+.slot-chip.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: rgba(15, 23, 42, 0.5);
+    border-color: rgba(255, 255, 255, 0.05);
+    text-decoration: line-through;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const doctorId = {{ appointment.doctor_id }};
+    const currentAppointmentId = {{ appointment.id }};
+    const currentSlot = "{{ appointment.appointment_datetime.strftime('%H:%M') if appointment.appointment_datetime else '' }}";
+    const dateInput = document.getElementById('appointment_date');
+    const slotNotice = document.getElementById('slotNotice');
+    const selectedSlotInput = document.getElementById('selectedTimeSlot');
+    const slotChips = document.querySelectorAll('.slot-chip');
+    const submitBtn = document.getElementById('submitRescheduleBtn');
+
+    async function fetchSlots() {
+        const apptDate = dateInput.value;
+        if (!apptDate) return;
+
+        resetSlots();
+
+        try {
+            const resp = await fetch(`{{ url_for('appointment.api_doctor_slots') }}?doctor_id=${doctorId}&date=${apptDate}`);
+            const data = await resp.json();
+
+            if (!data.is_available) {
+                slotNotice.style.display = 'block';
+                slotNotice.style.color = '#F87171';
+                slotNotice.textContent = `⚠️ Dr. is not on duty on this day (${data.weekday}). Regular schedule: ${data.available_days}.`;
+                slotChips.forEach(chip => chip.classList.add('disabled'));
+                return;
+            }
+
+            slotNotice.style.display = 'block';
+            slotNotice.style.color = '#34D399';
+            slotNotice.textContent = `✓ Doctor available. ${data.free_slots.length} consultation slots open.`;
+
+            const booked = new Set(data.booked_slots || []);
+            // Current appointment's slot on its current date shouldn't block itself
+            const currentDateStr = "{{ appointment.appointment_datetime.strftime('%Y-%m-%d') if appointment.appointment_datetime else '' }}";
+            if (apptDate === currentDateStr && currentSlot) {
+                booked.delete(currentSlot);
+            }
+
+            slotChips.forEach(chip => {
+                const slotVal = chip.getAttribute('data-slot');
+                if (booked.has(slotVal)) {
+                    chip.classList.add('disabled');
+                    chip.setAttribute('title', 'Already booked');
+                } else {
+                    chip.classList.remove('disabled');
+                    chip.removeAttribute('title');
+                }
+            });
+        } catch (e) {
+            console.error('Slot fetch error:', e);
+        }
+    }
+
+    function resetSlots() {
+        selectedSlotInput.value = '';
+        slotChips.forEach(chip => {
+            chip.classList.remove('active', 'disabled');
+        });
+    }
+
+    slotChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            if (chip.classList.contains('disabled')) return;
+            slotChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            selectedSlotInput.value = chip.getAttribute('data-slot');
+        });
+    });
+
+    dateInput.addEventListener('change', fetchSlots);
+
+    // Initial fetch
+    fetchSlots();
+
+    document.getElementById('rescheduleForm').addEventListener('submit', (e) => {
+        if (!selectedSlotInput.value) {
+            e.preventDefault();
+            alert('Please select an available consultation time slot.');
+        }
+    });
+});
+</script>
+{% endblock %}

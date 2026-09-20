@@ -1,0 +1,108 @@
+services:
+  # ============================================================================
+  # 1. PostgreSQL Relational Database Service
+  # ============================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: medicare_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-medicare_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - medicare_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-medicare_ai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ============================================================================
+  # 2. FastAPI REST & Clinical Machine Learning Microservice
+  # ============================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: medicare_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ENV: ${ENV:-development}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-medicare_ai}
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-medicare_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      FASTAPI_PORT: 8000
+      SECRET_KEY: ${SECRET_KEY:-medicare-super-secret-key-change-in-production-2026}
+    ports:
+      - "${FASTAPI_HOST_PORT:-8000}:8000"
+    networks:
+      - medicare_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ============================================================================
+  # 3. Flask Presentation Portal & Operational Dashboards
+  # ============================================================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    container_name: medicare_web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    environment:
+      ENV: ${ENV:-development}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-medicare_ai}
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-medicare_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      FLASK_PORT: 5000
+      SECRET_KEY: ${SECRET_KEY:-medicare-super-secret-key-change-in-production-2026}
+    ports:
+      - "${FLASK_HOST_PORT:-5000}:5000"
+    networks:
+      - medicare_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/login || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+# ==============================================================================
+# Persistent Volumes
+# ==============================================================================
+volumes:
+  postgres_data:
+    driver: local
+
+# ==============================================================================
+# Networks
+# ==============================================================================
+networks:
+  medicare_net:
+    driver: bridge

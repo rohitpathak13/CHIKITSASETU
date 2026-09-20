@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Registration - MediCare AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2.5rem 1rem;
+            background: radial-gradient(circle at 50% 15%, #131E35 0%, #090D16 100%);
+        }
+        .register-card {
+            width: 100%;
+            max-width: 680px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-card);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div class="logo-badge" style="margin: 0 auto 0.75rem; width: 48px; height: 48px; font-size: 1.5rem;">M+</div>
+            <h1 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">New Patient <span style="color: var(--teal-primary);">Registration</span></h1>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Create your secure MediCare AI patient portal account</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-container" style="margin-bottom: 1.5rem;">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span>{{ message }}</span>
+                            <button onclick="this.parentElement.remove()" style="background:none; border:none; color:inherit; font-size:1.1rem; cursor:pointer;">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.register') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">First Name *</label>
+                    <input type="text" name="first_name" class="form-control" value="{{ first_name or '' }}" placeholder="Jane" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name *</label>
+                    <input type="text" name="last_name" class="form-control" value="{{ last_name or '' }}" placeholder="Doe" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" name="email" class="form-control" value="{{ email or '' }}" placeholder="jane.doe@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" name="phone" class="form-control" value="{{ phone or '' }}" placeholder="+1-555-0199">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Password * (min 8 chars)</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" minlength="8" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password *</label>
+                    <input type="password" name="confirm_password" class="form-control" placeholder="••••••••" minlength="8" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Date of Birth *</label>
+                    <input type="date" name="dob" class="form-control" value="{{ dob or '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gender *</label>
+                    <select name="gender" class="form-control" required>
+                        <option value="female" {% if gender == 'female' %}selected{% endif %}>Female</option>
+                        <option value="male" {% if gender == 'male' %}selected{% endif %}>Male</option>
+                        <option value="other" {% if gender == 'other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Blood Group</label>
+                    <select name="blood_group" class="form-control">
+                        <option value="">Select blood group</option>
+                        <option value="A+" {% if blood_group == 'A+' %}selected{% endif %}>A+</option>
+                        <option value="A-" {% if blood_group == 'A-' %}selected{% endif %}>A-</option>
+                        <option value="B+" {% if blood_group == 'B+' %}selected{% endif %}>B+</option>
+                        <option value="B-" {% if blood_group == 'B-' %}selected{% endif %}>B-</option>
+                        <option value="O+" {% if blood_group == 'O+' %}selected{% endif %}>O+</option>
+                        <option value="O-" {% if blood_group == 'O-' %}selected{% endif %}>O-</option>
+                        <option value="AB+" {% if blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+                        <option value="AB-" {% if blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Emergency Contact Phone</label>
+                    <input type="tel" name="emergency_contact_phone" class="form-control" value="{{ emergency_contact_phone or '' }}" placeholder="+1-555-0999">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Emergency Contact Name</label>
+                <input type="text" name="emergency_contact_name" class="form-control" value="{{ emergency_contact_name or '' }}" placeholder="Family member or guardian">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Residential Address</label>
+                <textarea name="address" class="form-control" rows="2" placeholder="Street address, City, Postal Code">{{ address or '' }}</textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Known Allergies</label>
+                    <input type="text" name="allergies" class="form-control" value="{{ allergies or '' }}" placeholder="e.g., Penicillin, Peanuts">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Chronic Conditions</label>
+                    <input type="text" name="chronic_conditions" class="form-control" value="{{ chronic_conditions or '' }}" placeholder="e.g., Asthma, Hypertension">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.75rem;">
+                Create Patient Account
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
+            Already registered? <a href="{{ url_for('auth.login') }}" style="color: var(--teal-primary); font-weight: 600; text-decoration: none;">Sign in here</a>
+        </div>
+    </div>
+</body>
+</html>

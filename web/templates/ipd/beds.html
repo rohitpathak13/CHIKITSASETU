@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}Hospital Bed Roster & Availability{% endblock %}
+{% block page_heading %}Inpatient Bed Roster & Status Management{% endblock %}
+
+{% block content %}
+<!-- Top Metrics Grid -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 2rem;">
+    <div class="stat-card" style="border-top: 3px solid #38BDF8;">
+        <div class="stat-label">Total Beds</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ stats.total_beds }}</div>
+        <div class="stat-desc">Facility capacity</div>
+    </div>
+    <div class="stat-card" style="border-top: 3px solid #EF4444;">
+        <div class="stat-label">Occupied Beds</div>
+        <div class="stat-value" style="color: #F87171;">{{ stats.occupied_beds }}</div>
+        <div class="stat-desc">Inpatient care active</div>
+    </div>
+    <div class="stat-card" style="border-top: 3px solid #10B981;">
+        <div class="stat-label">Available Beds</div>
+        <div class="stat-value" style="color: #34D399;">{{ stats.available_beds }}</div>
+        <div class="stat-desc">Ready for occupancy</div>
+    </div>
+    <div class="stat-card" style="border-top: 3px solid #F59E0B;">
+        <div class="stat-label">Reserved Beds</div>
+        <div class="stat-value" style="color: #FBBF24;">{{ stats.reserved_beds }}</div>
+        <div class="stat-desc">Planned admissions</div>
+    </div>
+    <div class="stat-card" style="border-top: 3px solid #818CF8;">
+        <div class="stat-label">Maintenance Beds</div>
+        <div class="stat-value" style="color: #A5B4FC;">{{ stats.maintenance_beds }}</div>
+        <div class="stat-desc">Decontamination/Service</div>
+    </div>
+    <div class="stat-card" style="border-top: 3px solid #EC4899;">
+        <div class="stat-label">Occupancy %</div>
+        <div class="stat-value" style="color: {% if stats.occupancy_percentage > 85 %}#EF4444{% elif stats.occupancy_percentage > 60 %}#F59E0B{% else %}#10B981{% endif %};">
+            {{ "%.1f"|format(stats.occupancy_percentage) }}%
+        </div>
+        <div class="stat-desc">Bed utilization</div>
+    </div>
+</div>
+
+<!-- Navigation & Action Links -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('ipd.dashboard') }}" class="btn btn-secondary" style="font-size: 0.9rem;">
+            <span>📊</span> Dashboard Overview
+        </a>
+        <a href="{{ url_for('ipd.beds') }}" class="btn btn-primary" style="font-size: 0.9rem;">
+            <span>🛏️</span> Bed Roster & Availability
+        </a>
+        <a href="{{ url_for('ipd.admissions') }}" class="btn btn-secondary" style="font-size: 0.9rem;">
+            <span>📋</span> Admissions & History
+        </a>
+    </div>
+</div>
+
+<!-- Filters Card -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-body" style="padding: 1.25rem;">
+        <form method="GET" action="{{ url_for('ipd.beds') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+            <div style="flex: 1; min-width: 160px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #94A3B8; margin-bottom: 0.3rem;">Bed Status</label>
+                <select name="status" style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.5rem; font-size: 0.85rem;">
+                    <option value="">All Statuses</option>
+                    <option value="available" {% if current_status == 'available' %}selected{% endif %}>AVAILABLE</option>
+                    <option value="occupied" {% if current_status == 'occupied' %}selected{% endif %}>OCCUPIED</option>
+                    <option value="reserved" {% if current_status == 'reserved' %}selected{% endif %}>RESERVED</option>
+                    <option value="maintenance" {% if current_status == 'maintenance' %}selected{% endif %}>MAINTENANCE</option>
+                </select>
+            </div>
+
+            <div style="flex: 1; min-width: 160px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #94A3B8; margin-bottom: 0.3rem;">Department</label>
+                <select name="department_id" style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.5rem; font-size: 0.85rem;">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}" {% if current_dept == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="flex: 1; min-width: 160px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #94A3B8; margin-bottom: 0.3rem;">Room Type</label>
+                <select name="room_type" style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.5rem; font-size: 0.85rem;">
+                    <option value="">All Types</option>
+                    {% for rt in RoomTypeEnum %}
+                    <option value="{{ rt.value }}" {% if current_room_type == rt.value %}selected{% endif %}>{{ rt.value|upper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    Apply Filters
+                </button>
+                <a href="{{ url_for('ipd.beds') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bed Roster Table -->
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div class="card-title"><span>🛏️</span> Hospital Bed Availability Directory</div>
+            <div class="card-subtitle">Showing {{ beds|length }} bed(s) matching selected criteria</div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Bed #</th>
+                    <th>Room & Ward</th>
+                    <th>Department</th>
+                    <th>Type</th>
+                    <th>Daily Rate</th>
+                    <th>Status</th>
+                    <th>Current Occupant / State</th>
+                    <th style="text-align: right;">Status Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in beds %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: #F8FAFC; font-size: 1.05rem;">
+                            {{ b.bed_number }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94A3B8;">ID: #{{ b.id }}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; color: #E2E8F0;">
+                            Room {{ b.room.room_number if b.room else 'Unassigned' }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94A3B8;">
+                            {{ b.ward.name if b.ward else (b.room.ward.name if b.room and b.room.ward else 'General Ward') }}
+                        </div>
+                    </td>
+                    <td>
+                        <span style="color: #CBD5E1; font-size: 0.85rem;">
+                            {{ b.room.department.name if b.room and b.room.department else 'General' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: rgba(255,255,255,0.06); font-size: 0.75rem;">
+                            {{ b.room.room_type.value|upper if b.room else 'STANDARD' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="font-weight: 600; color: #38BDF8;">
+                            ${{ "%.2f"|format(b.daily_rate) }}
+                        </span>
+                        <span style="font-size: 0.75rem; color: #94A3B8;">/day</span>
+                    </td>
+                    <td>
+                        {% if b.status == BedStatusEnum.AVAILABLE %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                            AVAILABLE
+                        </span>
+                        {% elif b.status == BedStatusEnum.OCCUPIED %}
+                        <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                            OCCUPIED
+                        </span>
+                        {% elif b.status == BedStatusEnum.RESERVED %}
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                            RESERVED
+                        </span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(129, 140, 248, 0.15); color: #A5B4FC; border: 1px solid rgba(129, 140, 248, 0.3);">
+                            MAINTENANCE
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if b.status == BedStatusEnum.OCCUPIED and b.current_admission %}
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #F1F5F9;">
+                            👤 {{ b.current_admission.patient.user.first_name }} {{ b.current_admission.patient.user.last_name }}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94A3B8;">
+                            Stay: {{ b.current_admission.length_of_stay_days }} Day(s) • Adm #{{ b.current_admission.id }}
+                        </div>
+                        {% elif b.status == BedStatusEnum.AVAILABLE %}
+                        <span style="font-size: 0.85rem; color: #10B981;">Ready for assignment</span>
+                        {% elif b.status == BedStatusEnum.MAINTENANCE %}
+                        <span style="font-size: 0.85rem; color: #818CF8;">Awaiting cleaning/sanitization</span>
+                        {% else %}
+                        <span style="font-size: 0.85rem; color: #F59E0B;">Reserved for incoming patient</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 0.4rem;">
+                            {% if b.status == BedStatusEnum.MAINTENANCE %}
+                            <form action="{{ url_for('ipd.update_bed_status', bed_id=b.id) }}" method="POST" style="margin: 0;">
+                                <input type="hidden" name="status" value="available">
+                                <input type="hidden" name="notes" value="Cleaned and sanitized">
+                                <button type="submit" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; background: #059669; border-color: #059669;">
+                                    Mark Ready (Available)
+                                </button>
+                            </form>
+                            {% elif b.status == BedStatusEnum.AVAILABLE %}
+                            <form action="{{ url_for('ipd.update_bed_status', bed_id=b.id) }}" method="POST" style="margin: 0; display: inline;">
+                                <input type="hidden" name="status" value="reserved">
+                                <input type="hidden" name="notes" value="Reserved via bed control">
+                                <button type="submit" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #F59E0B;">
+                                    Reserve
+                                </button>
+                            </form>
+                            <form action="{{ url_for('ipd.update_bed_status', bed_id=b.id) }}" method="POST" style="margin: 0; display: inline;">
+                                <input type="hidden" name="status" value="maintenance">
+                                <input type="hidden" name="notes" value="Service required">
+                                <button type="submit" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #818CF8;">
+                                    Maintenance
+                                </button>
+                            </form>
+                            {% elif b.status == BedStatusEnum.RESERVED %}
+                            <form action="{{ url_for('ipd.update_bed_status', bed_id=b.id) }}" method="POST" style="margin: 0;">
+                                <input type="hidden" name="status" value="available">
+                                <input type="hidden" name="notes" value="Reservation released">
+                                <button type="submit" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; color: #10B981;">
+                                    Release to Available
+                                </button>
+                            </form>
+                            {% elif b.status == BedStatusEnum.OCCUPIED and b.current_admission %}
+                            <a href="{{ url_for('ipd.admission_detail', admission_id=b.current_admission.id) }}" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                                Manage Admission
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 2.5rem; color: #94A3B8;">
+                        No hospital beds found matching the chosen criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

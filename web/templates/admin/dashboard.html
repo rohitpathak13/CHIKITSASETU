@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Executive Administration - MediCare AI{% endblock %}
+{% block page_heading %}Executive Administration & Hospital Operations{% endblock %}
+
+{% block content %}
+<!-- Executive Operational KPI Grid (All 8 Core Metrics + Activity) -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-label">Total Patients</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ total_patients }}</div>
+        <div class="stat-desc">Registered master patient records</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Active Doctors</div>
+        <div class="stat-value" style="color: var(--teal-primary);">{{ total_doctors }}</div>
+        <div class="stat-desc">OPD & inpatient consultants</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Hospital Staff</div>
+        <div class="stat-value" style="color: #A78BFA;">{{ total_staff }}</div>
+        <div class="stat-desc">Nurses, pharmacists, technicians</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Appointments</div>
+        <div class="stat-value" style="color: #34D399;">{{ total_appointments }}</div>
+        <div class="stat-desc">Scheduled, active & completed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Inpatient Admissions</div>
+        <div class="stat-value" style="color: #F472B6;">{{ total_admissions }}</div>
+        <div class="stat-desc">Clinical admissions tracking</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Bed Occupancy</div>
+        <div class="stat-value" style="color: {% if occupancy_rate > 85 %}#EF4444{% elif occupancy_rate > 60 %}#FBBF24{% else %}#10B981{% endif %};">
+            {{ occupancy_rate }}%
+        </div>
+        <div class="stat-desc">{{ occupied_beds }} of {{ total_beds }} beds occupied</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Pending Invoices</div>
+        <div class="stat-value" style="color: {% if pending_bills > 0 %}#F59E0B{% else %}#10B981{% endif %};">
+            {{ pending_bills }}
+        </div>
+        <div class="stat-desc">Unpaid or partially paid bills</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Low-Stock Medicines</div>
+        <div class="stat-value" style="color: {% if low_stock_medicines > 0 %}#EF4444{% else %}#10B981{% endif %};">
+            {{ low_stock_medicines }}
+        </div>
+        <div class="stat-desc">Critical inventory below reorder</div>
+    </div>
+</div>
+
+<!-- Operational Highlights & System Health -->
+<div class="dashboard-grid" style="margin-top: 1.5rem;">
+    <!-- Recent System Audit Trail -->
+    <div class="card" style="grid-column: span 2;">
+        <div class="card-header">
+            <div class="card-title"><span>🔒</span> Recent System Activity & Security Audit Trail</div>
+            <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-secondary btn-sm">View Full Audit Log</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Resource</th>
+                        <th>IP Address</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_audits %}
+                    <tr>
+                        <td style="color: var(--text-muted); font-size: 0.8rem; white-space: nowrap;">
+                            {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else 'N/A' }}
+                        </td>
+                        <td>
+                            <strong>{{ log.user.full_name if log.user else 'System' }}</strong>
+                            {% if log.user %}
+                                <span class="badge badge-info" style="font-size: 0.65rem; padding: 0.15rem 0.4rem; margin-left: 0.25rem;">
+                                    {{ log.user.role.value }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {% if 'FAIL' in log.action or 'UNAUTHORIZED' in log.action %}badge-danger{% elif 'CREATE' in log.action %}badge-success{% else %}badge-info{% endif %}">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td>{{ log.resource_type }}{% if log.resource_id %} #{{ log.resource_id }}{% endif %}</td>
+                        <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">
+                            {{ log.ip_address or '127.0.0.1' }}
+                        </td>
+                        <td style="font-size: 0.75rem; color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ log.details_json or '-' }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state" style="padding: 2.5rem 1rem;">
+                                <div class="empty-state-icon">🔒</div>
+                                <div class="empty-state-title">No Audit Events Logged</div>
+                                <div class="empty-state-text">No security or operational audit records have been generated yet.</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Administrative Quick Actions & Module Directory -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>⚡</span> Executive Command Center</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <a href="{{ url_for('admin.manage_users') }}" class="btn btn-primary" style="justify-content: flex-start;">
+                <span>👥</span> Manage Hospital Users & Credentials
+            </a>
+            <a href="{{ url_for('admin.manage_doctors') }}" class="btn btn-secondary" style="justify-content: flex-start;">
+                <span>🩺</span> Manage Physicians & Department Heads
+            </a>
+            <a href="{{ url_for('admin.manage_staff') }}" class="btn btn-secondary" style="justify-content: flex-start;">
+                <span>👔</span> Manage Clinical & Non-Clinical Staff
+            </a>
+            <a href="{{ url_for('admin.manage_patients') }}" class="btn btn-secondary" style="justify-content: flex-start;">
+                <span>👤</span> Master Patient Directory
+            </a>
+            <a href="{{ url_for('admin.manage_departments') }}" class="btn btn-secondary" style="justify-content: flex-start;">
+                <span>🏢</span> Departments & Clinical Services
+            </a>
+            <a href="{{ url_for('admin.manage_rooms') }}" class="btn btn-secondary" style="justify-content: flex-start;">
+                <span>🚪</span> Rooms & Clinical Facilities
+            </a>
+            <a href="{{ url_for('admin.manage_beds') }}" class="btn btn-secondary" style="justify-content: flex-start;">
+                <span>🛏️</span> Inpatient Bed Roster & Allocation
+            </a>
+            <a href="{{ url_for('analytics.dashboard') }}" class="btn btn-secondary" style="justify-content: flex-start;">
+                <span>📈</span> Hospital BI & ML Risk Prediction Engine
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

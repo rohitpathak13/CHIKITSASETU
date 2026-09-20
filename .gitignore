@@ -1,0 +1,51 @@
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments & Virtual Envs
+.env
+.env.*
+!.env.example
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Local SQLite & Databases
+*.db
+*.db.bak
+*.bak
+*.sqlite
+*.sqlite3
+medicare_dev.db
+medicare_dev.db.bak
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE & OS Artifacts
+.vscode/
+.idea/
+.agents/
+.system_generated/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Build & Distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Docker Local Volume Data
+postgres_data/

@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Lab Report - {{ order.test.name }}{% endblock %}
+{% block page_heading %}Diagnostic Pathology Report{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto;">
+    <!-- Print / Action Toolbar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;" class="no-print">
+        {% if session.get('user_role') == 'patient' %}
+        <a href="{{ url_for('patient.lab_reports') }}" class="btn btn-secondary btn-sm">
+            <span>←</span> Back to All Reports
+        </a>
+        {% elif session.get('user_role') == 'doctor' %}
+        <a href="{{ url_for('doctor.lab_orders') }}" class="btn btn-secondary btn-sm">
+            <span>←</span> Back to Diagnostic Workbench
+        </a>
+        {% else %}
+        <a href="{{ url_for('laboratory.dashboard') }}" class="btn btn-secondary btn-sm">
+            <span>←</span> Back to Laboratory
+        </a>
+        {% endif %}
+
+        <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">
+            <span>🖨️</span> Print Official Report
+        </button>
+    </div>
+
+    <!-- Official Report Document Paper -->
+    <div class="card printable-card" style="padding: 2.5rem; background: var(--bg-surface, #1E293B); border: 1px solid var(--border-color, #334155); border-radius: 8px;">
+        <!-- Hospital Header -->
+        <div style="border-bottom: 2px solid var(--primary, #3B82F6); padding-bottom: 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary, #3B82F6); letter-spacing: -0.5px;">
+                    MEDICARE AI HEALTH SYSTEM
+                </div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main);">
+                    Department of Clinical Pathology & Laboratory Diagnostics
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    Accredited Diagnostics • ISO 15189 Certified Clinical Facility
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.8rem; color: var(--text-muted);">REPORT ID</div>
+                <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">
+                    LAB-{{ "%06d"|format(order.id) }}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">
+                    Generated: {{ order.completed_at.strftime('%Y-%m-%d %H:%M UTC') if order.completed_at else 'In Process' }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Demographics Box -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; background: var(--bg-surface-alt, #0F172A); padding: 1.25rem; border-radius: 6px; margin-bottom: 2rem; border: 1px solid var(--border-color, #334155);">
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">PATIENT DETAILS</div>
+                <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-top: 0.2rem;">
+                    {{ order.patient.user.full_name }}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    MRN: <strong>PAT-{{ "%05d"|format(order.patient.id) }}</strong> • Gender: {{ order.patient.gender.value|capitalize if order.patient.gender else 'N/A' }}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    DOB: {{ order.patient.dob or 'N/A' }} • Blood Group: {{ order.patient.blood_group or 'N/A' }}
+                </div>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">REQUISITION DETAILS</div>
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-top: 0.2rem;">
+                    Dr. {{ order.doctor.user.full_name }}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    Department: {{ order.test.department.name if order.test.department else 'General Medicine' }}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    Specimen: <strong>{{ order.test.sample_type }}</strong> • Priority: {{ order.priority|upper }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Investigation Findings Table -->
+        <div style="margin-bottom: 2rem;">
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem;">
+                Quantitative Diagnostic Findings
+            </div>
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color, #334155); text-align: left;">
+                        <th style="padding: 0.75rem; color: var(--text-muted); font-size: 0.85rem;">INVESTIGATION</th>
+                        <th style="padding: 0.75rem; color: var(--text-muted); font-size: 0.85rem;">MEASURED RESULT</th>
+                        <th style="padding: 0.75rem; color: var(--text-muted); font-size: 0.85rem;">STANDARD REFERENCE INTERVAL</th>
+                        <th style="padding: 0.75rem; color: var(--text-muted); font-size: 0.85rem;">INTERPRETATION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid var(--border-color, #334155);">
+                        <td style="padding: 1rem 0.75rem;">
+                            <div style="font-weight: 700; font-size: 1rem; color: var(--text-main);">
+                                {{ order.test.name }}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                Code: <code>{{ order.test.test_code }}</code>
+                            </div>
+                        </td>
+                        <td style="padding: 1rem 0.75rem;">
+                            {% if order.result %}
+                            <div style="font-size: 1.25rem; font-weight: 800; color: {% if order.result.critical_alert %}#EF4444{% elif order.result.is_abnormal %}#F59E0B{% else %}#10B981{% endif %};">
+                                {{ order.result.measured_value }} <span style="font-size: 0.9rem; font-weight: 500;">{{ order.result.unit }}</span>
+                            </div>
+                            {% else %}
+                            <span style="color: var(--text-dim);">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem 0.75rem; font-size: 0.95rem; color: var(--text-main);">
+                            {% if order.test.reference_range_min is not none or order.test.reference_range_max is not none %}
+                                {{ order.test.reference_range_min or '0' }} - {{ order.test.reference_range_max or 'N/A' }} {{ order.test.unit or '' }}
+                            {% else %}
+                                <span>Qualitative / Descriptive</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem 0.75rem;">
+                            {% if order.result %}
+                                {% if order.result.critical_alert %}
+                                    <span class="badge badge-danger" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">CRITICAL</span>
+                                {% elif order.result.is_abnormal %}
+                                    <span class="badge badge-warning" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">ABNORMAL</span>
+                                {% else %}
+                                    <span class="badge badge-success" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">NORMAL</span>
+                                {% endif %}
+                            {% else %}
+                                <span style="color: var(--text-dim);">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Qualitative Summary / Notes -->
+        {% if order.result and (order.result.result_text or order.result.technician_notes) %}
+        <div style="background: var(--bg-surface-alt, #0F172A); padding: 1rem 1.25rem; border-radius: 6px; margin-bottom: 2rem; border-left: 4px solid var(--primary, #3B82F6);">
+            {% if order.result.result_text %}
+            <div style="margin-bottom: 0.5rem;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Diagnostic Impression:</span>
+                <div style="font-size: 0.95rem; color: var(--text-main); margin-top: 0.2rem;">{{ order.result.result_text }}</div>
+            </div>
+            {% endif %}
+            {% if order.result.technician_notes %}
+            <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Laboratory Notes:</span>
+                <div style="font-size: 0.9rem; color: var(--text-dim); margin-top: 0.2rem; font-style: italic;">{{ order.result.technician_notes }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Physician Clinical Sign-Off Section -->
+        <div style="border-top: 1px solid var(--border-color, #334155); padding-top: 1.5rem; margin-top: 1.5rem;">
+            <div style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">
+                Attending Physician Review & Clinical Remarks
+            </div>
+            {% if order.doctor_reviewed %}
+                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="color: #10B981; font-weight: 700; font-size: 0.9rem;">
+                            ✓ Verified & Signed Off by Dr. {{ order.doctor.user.full_name }}
+                        </span>
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">
+                            Reviewed: {{ order.doctor_reviewed_at.strftime('%Y-%m-%d %H:%M UTC') if order.doctor_reviewed_at else '' }}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.95rem; color: var(--text-main);">
+                        {{ order.doctor_review_notes }}
+                    </div>
+                </div>
+            {% else %}
+                <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); padding: 0.75rem 1rem; border-radius: 6px; color: #F59E0B; font-size: 0.9rem; margin-bottom: 1.5rem;">
+                    ⏳ Laboratory findings verified by technologist. Pending final clinical review from attending physician.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Verification Signatures & Timestamps -->
+        <div style="border-top: 1px solid var(--border-color, #334155); padding-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">SPECIMEN COLLECTION</div>
+                <div style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.25rem;">
+                    Collected: {{ order.sample_collected_at.strftime('%Y-%m-%d %H:%M') if order.sample_collected_at else 'Not Logged' }}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">
+                    Staff: {{ order.sample_collector.full_name if order.sample_collector else 'Authorized Phlebotomist' }}
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">LABORATORY VERIFICATION</div>
+                <div style="font-size: 0.85rem; color: var(--text-main); margin-top: 0.25rem;">
+                    Completed: {{ order.completed_at.strftime('%Y-%m-%d %H:%M') if order.completed_at else 'In Analysis' }}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">
+                    Technician: {{ order.technician.full_name if order.technician else 'Clinical Technologist' }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px dashed var(--border-color, #334155); text-align: center; font-size: 0.7rem; color: var(--text-dim);">
+            Diagnostic investigations should be clinically correlated with patient history and clinical presentation by the treating medical practitioner.
+            Official electronic document verified by MediCare AI Diagnostics.
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    .no-print, .app-sidebar, .app-header {
+        display: none !important;
+    }
+    .printable-card {
+        background: white !important;
+        color: black !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %}

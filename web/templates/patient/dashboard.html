@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Patient Portal{% endblock %}
+{% block page_heading %}Personal Health Record & Services{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">Appointments</div>
+        <div class="stat-value">{{ appointments|length }}</div>
+        <div class="stat-desc">Scheduled & past visits</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Medical Records</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ records|length }}</div>
+        <div class="stat-desc">Clinical consultations</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Blood Group</div>
+        <div class="stat-value" style="color: #F43F5E;">{{ profile.blood_group or 'N/A' }}</div>
+        <div class="stat-desc">Verified donor type</div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>📅</span> Upcoming & Recent Appointments</div>
+            <a href="{{ url_for('patient.appointments') }}" class="btn btn-secondary btn-sm">All Appointments</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Doctor</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in appointments %}
+                    <tr>
+                        <td style="font-weight: 600;">
+                            {{ app.appointment_datetime.strftime('%Y-%m-%d %H:%M') if app.appointment_datetime else 'N/A' }}
+                        </td>
+                        <td>Dr. {{ app.doctor.user.full_name }}</td>
+                        <td>{{ app.doctor.department.name if app.doctor.department else 'General' }}</td>
+                        <td>
+                            <span class="badge {% if app.status.value == 'completed' %}badge-success{% elif app.status.value == 'confirmed' %}badge-info{% else %}badge-warning{% endif %}">
+                                {{ app.status.value }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state" style="padding: 2rem 1rem;">
+                                <div class="empty-state-icon">📅</div>
+                                <div class="empty-state-title">No Appointments Scheduled</div>
+                                <div class="empty-state-text">You currently do not have any upcoming medical appointments.</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>📋</span> Medical Profile</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.875rem;">
+            <div><strong>Date of Birth:</strong> {{ profile.dob if profile and profile.dob else 'N/A' }}</div>
+            <div><strong>Gender:</strong> {{ profile.gender.value|capitalize if profile and profile.gender else 'N/A' }}</div>
+            <div><strong>Allergies:</strong> <span style="color: #F87171;">{{ profile.allergies if profile and profile.allergies else 'None Documented' }}</span></div>
+            <div><strong>Chronic Conditions:</strong> {{ profile.chronic_conditions if profile and profile.chronic_conditions else 'None Documented' }}</div>
+            <div><strong>Emergency Contact:</strong> {{ profile.emergency_contact_name if profile and profile.emergency_contact_name else 'Not set' }} ({{ profile.emergency_contact_phone if profile and profile.emergency_contact_phone else 'N/A' }})</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

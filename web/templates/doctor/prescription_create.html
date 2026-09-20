@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Write Electronic Prescription - MediCare AI{% endblock %}
+{% block page_heading %}Electronic Prescription Order (Rx){% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Patient Context Banner -->
+    <div class="card" style="border-left: 4px solid var(--teal-primary);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h3 style="margin: 0; color: #F8FAFC; font-size: 1.25rem;">
+                    {{ patient.user.full_name }}
+                </h3>
+                <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; flex-wrap: wrap;">
+                    <span><strong>UHID:</strong> PAT-{{ patient.id }}</span>
+                    <span><strong>Gender:</strong> {{ patient.gender.value if patient.gender else 'N/A' }}</span>
+                    <span><strong>DOB:</strong> {{ patient.dob or 'N/A' }}</span>
+                    {% if patient.blood_group %}
+                        <span class="badge badge-danger">{{ patient.blood_group }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="{{ url_for('doctor.patient_history', patient_id=patient.id) }}" class="btn btn-secondary btn-sm">
+                    <span>📁</span> Patient History
+                </a>
+                <a href="{{ url_for('doctor.my_patients') }}" class="btn btn-secondary btn-sm">
+                    <span>⬅️</span> Back to Patients
+                </a>
+            </div>
+        </div>
+
+        {% if patient.allergies %}
+        <div style="margin-top: 1rem; padding: 0.75rem 1rem; border-radius: var(--radius-md); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #FCA5A5; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.2rem;">⚠️</span>
+            <div>
+                <strong>Known Patient Allergies & Adverse Reactions:</strong> {{ patient.allergies }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Multi-Medicine Prescription Form -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>💊</span> Medication Regimen</div>
+                <div class="card-subtitle">Prescribe single or multiple drugs with dosage, frequency, duration, and instructions</div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="addMedicationBtn">
+                <span>➕</span> Add Another Medication
+            </button>
+        </div>
+
+        <form method="POST" id="prescriptionForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="table-responsive">
+                <table class="table" id="medicationTable" style="margin-bottom: 0;">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 200px;">Medication *</th>
+                            <th style="min-width: 130px;">Dosage *</th>
+                            <th style="min-width: 140px;">Frequency *</th>
+                            <th style="min-width: 110px;">Duration (Days) *</th>
+                            <th style="min-width: 100px;">Qty *</th>
+                            <th style="min-width: 160px;">Instructions</th>
+                            <th style="width: 50px; text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medicationRows">
+                        <!-- Initial Medication Row -->
+                        <tr class="med-row">
+                            <td>
+                                <select name="medicine_id" class="form-control med-select" required>
+                                    <option value="">-- Select Drug --</option>
+                                    {% for med in medicines %}
+                                        <option value="{{ med.id }}" data-unit="{{ med.unit }}" data-stock="{{ med.total_stock }}">
+                                            {{ med.name }} (Stock: {{ med.total_stock }} {{ med.unit }}s)
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="dosage" class="form-control" placeholder="e.g. 500mg" required maxlength="50">
+                            </td>
+                            <td>
+                                <input type="text" name="frequency" class="form-control" value="1-0-1 after meals" required maxlength="50">
+                            </td>
+                            <td>
+                                <input type="number" name="duration_days" class="form-control" value="5" min="1" max="365" required>
+                            </td>
+                            <td>
+                                <input type="number" name="qty_prescribed" class="form-control" value="10" min="1" max="1000" required>
+                            </td>
+                            <td>
+                                <input type="text" name="instructions" class="form-control" placeholder="e.g. Take with warm water" maxlength="200">
+                            </td>
+                            <td style="text-align: center; vertical-align: middle;">
+                                <button type="button" class="btn btn-danger btn-sm remove-row-btn" title="Remove medication" style="padding: 0.25rem 0.5rem; visibility: hidden;">
+                                    &times;
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- General Clinical Notes -->
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Physician Notes & Special Precautions (Optional)</label>
+                <textarea name="rx_notes" class="form-control" rows="2" placeholder="e.g. Avoid dairy with antibiotic, monitor blood glucose..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+                <a href="{{ url_for('doctor.patient_history', patient_id=patient.id) }}" class="btn btn-secondary">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <span>💾</span> Issue Electronic Prescription
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const tableBody = document.getElementById("medicationRows");
+    const addBtn = document.getElementById("addMedicationBtn");
+    const form = document.getElementById("prescriptionForm");
+
+    function updateRemoveButtons() {
+        const rows = tableBody.querySelectorAll(".med-row");
+        rows.forEach((row, index) => {
+            const removeBtn = row.querySelector(".remove-row-btn");
+            if (rows.length > 1) {
+                removeBtn.style.visibility = "visible";
+            } else {
+                removeBtn.style.visibility = "hidden";
+            }
+        });
+    }
+
+    addBtn.addEventListener("click", function () {
+        const firstRow = tableBody.querySelector(".med-row");
+        const newRow = firstRow.cloneNode(true);
+
+        // Reset values in new row
+        newRow.querySelector(".med-select").value = "";
+        newRow.querySelector("input[name='dosage']").value = "";
+        newRow.querySelector("input[name='frequency']").value = "1-0-1 after meals";
+        newRow.querySelector("input[name='duration_days']").value = "5";
+        newRow.querySelector("input[name='qty_prescribed']").value = "10";
+        newRow.querySelector("input[name='instructions']").value = "";
+
+        // Bind remove action
+        newRow.querySelector(".remove-row-btn").addEventListener("click", function () {
+            newRow.remove();
+            updateRemoveButtons();
+        });
+
+        tableBody.appendChild(newRow);
+        updateRemoveButtons();
+    });
+
+    // Initial binding for existing remove buttons
+    tableBody.querySelectorAll(".remove-row-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+            if (tableBody.querySelectorAll(".med-row").length > 1) {
+                btn.closest(".med-row").remove();
+                updateRemoveButtons();
+            }
+        });
+    });
+
+    // Client-side duplicate check & validation
+    form.addEventListener("submit", function (e) {
+        const selects = tableBody.querySelectorAll(".med-select");
+        const chosen = new Set();
+        for (let sel of selects) {
+            if (!sel.value) {
+                alert("Please select a medication for every row.");
+                e.preventDefault();
+                return;
+            }
+            if (chosen.has(sel.value)) {
+                alert("Duplicate medication detected. Please combine quantities into a single medication row.");
+                e.preventDefault();
+                return;
+            }
+            chosen.add(sel.value);
+        }
+
+        const durations = tableBody.querySelectorAll("input[name='duration_days']");
+        for (let dur of durations) {
+            const val = parseInt(dur.value);
+            if (isNaN(val) || val <= 0 || val > 365) {
+                alert("Duration must be between 1 and 365 days.");
+                e.preventDefault();
+                return;
+            }
+        }
+
+        const quantities = tableBody.querySelectorAll("input[name='qty_prescribed']");
+        for (let q of quantities) {
+            const val = parseInt(q.value);
+            if (isNaN(val) || val <= 0 || val > 1000) {
+                alert("Prescribed quantity must be between 1 and 1000 units.");
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+
+    updateRemoveButtons();
+});
+</script>
+{% endblock %}

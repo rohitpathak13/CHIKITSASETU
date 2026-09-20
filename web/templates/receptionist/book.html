@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Book Appointment{% endblock %}
+{% block page_heading %}AI-Assisted Appointment Scheduling{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Schedule OPD Consultation</div>
+            <div class="card-subtitle">Integrated with ML Appointment No-Show attendance scoring</div>
+        </div>
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label class="form-label">Select Registered Patient *</label>
+            <select name="patient_id" class="form-control" required>
+                {% for p in patients %}
+                    <option value="{{ p.user_id }}" {% if selected_patient_id and selected_patient_id|int == p.user_id %}selected{% endif %}>
+                        {{ p.user.full_name }} ({{ p.user.email }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Select Consulting Physician *</label>
+            <select name="doctor_id" class="form-control" required>
+                {% for d in doctors %}
+                    <option value="{{ d.user_id }}">
+                        Dr. {{ d.user.full_name }} - {{ d.specialization }} ({{ d.department.name if d.department else 'General' }}) - Fee: ${{ d.consultation_fee }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Appointment Date & Time *</label>
+                <input type="datetime-local" name="appointment_datetime" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Chief Reason / Symptoms</label>
+                <input type="text" name="reason" class="form-control" placeholder="e.g. Chest discomfort, Follow-up">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+            <a href="{{ url_for('receptionist.dashboard') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <span>⚡</span> Run AI Triage & Confirm Booking
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

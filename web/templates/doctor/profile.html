@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Doctor Profile - MediCare AI{% endblock %}
+{% block page_heading %}Doctor Professional Profile & Clinical Availability{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <!-- Profile Summary Banner -->
+    <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border-color: rgba(13, 148, 136, 0.4);">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+                <div style="width: 68px; height: 68px; border-radius: 50%; background: linear-gradient(135deg, var(--teal-primary), var(--azure-accent)); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #FFF; font-weight: 700;">
+                    🩺
+                </div>
+                <div>
+                    <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                        Dr. {{ doctor.user.full_name }}
+                    </h2>
+                    <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.35rem; flex-wrap: wrap;">
+                        <span class="badge badge-info">{{ doctor.specialization }}</span>
+                        <span class="badge badge-neutral">{{ doctor.department.name if doctor.department else 'General OPD' }}</span>
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                            License: {{ doctor.license_number }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-secondary btn-sm">
+                <span>⬅️</span> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Edit Profile Form -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>✏️</span> Manage Profile & Working Schedule</div>
+                <div class="card-subtitle">Configure your clinical availability, chamber room, and qualification details</div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('doctor.profile') }}" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Clinical Credentials & Identity Section -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>👨‍⚕️</span> 1. Professional Credentials
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" value="{{ doctor.user.full_name }}" class="form-control" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Account Email</label>
+                        <input type="email" value="{{ doctor.user.email }}" class="form-control" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Specialization</label>
+                        <input type="text" value="{{ doctor.specialization }}" class="form-control" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Department</label>
+                        <input type="text" value="{{ doctor.department.name if doctor.department else 'General' }}" class="form-control" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Medical License Number</label>
+                        <input type="text" value="{{ doctor.license_number }}" class="form-control" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="qualification">Qualifications & Degrees <span style="color: #F87171;">*</span></label>
+                        <input type="text" id="qualification" name="qualification" value="{{ doctor.qualification }}" class="form-control" placeholder="e.g. MBBS, MD (Cardiology), FACC" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinic Contact & Office Details -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--azure-accent); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>🏢</span> 2. Chamber & Contact Information
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="phone">Direct Contact Phone</label>
+                        <input type="tel" id="phone" name="phone" value="{{ doctor.user.phone or '' }}" class="form-control" placeholder="+91 98765 43210">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="room_number">OPD Chamber / Room Number</label>
+                        <input type="text" id="room_number" name="room_number" value="{{ doctor.room_number or '' }}" class="form-control" placeholder="e.g. Room 204, OPD Wing B">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="consultation_fee">OPD Consultation Fee (₹)</label>
+                        <input type="number" step="10" min="0" id="consultation_fee" name="consultation_fee" value="{{ doctor.consultation_fee }}" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinical Availability Schedule -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: #FBBF24; margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>📅</span> 3. Weekly Availability Schedule (Days on Duty)
+                </h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Select the days of the week you are actively available for Outpatient appointments and ward visits:
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                    {% for day, label in [('Mon', 'Monday'), ('Tue', 'Tuesday'), ('Wed', 'Wednesday'), ('Thu', 'Thursday'), ('Fri', 'Friday'), ('Sat', 'Saturday'), ('Sun', 'Sunday')] %}
+                    <label style="display: flex; align-items: center; gap: 0.5rem; background: rgba(30, 41, 59, 0.6); padding: 0.6rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); cursor: pointer; user-select: none;">
+                        <input type="checkbox" name="available_days" value="{{ day }}" {% if day in current_days %}checked{% endif %} style="accent-color: var(--teal-primary); width: 18px; height: 18px;">
+                        <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Form Submit / Cancel -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+                <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <span>💾</span> Save Profile & Schedule
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

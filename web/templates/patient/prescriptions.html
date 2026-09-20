@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}My Prescriptions - Patient Portal{% endblock %}
+{% block page_heading %}Prescription History & Medication Regimen{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- KPI Summary Grid -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Prescriptions</div>
+            <div class="stat-value" style="color: #38BDF8;">{{ total_count }}</div>
+            <div class="stat-desc">All issued orders</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Active / Pending</div>
+            <div class="stat-value" style="color: {% if pending_count > 0 %}#F59E0B{% else %}#94A3B8{% endif %};">
+                {{ pending_count }}
+            </div>
+            <div class="stat-desc">Awaiting pharmacy fulfillment</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Fulfilled Orders</div>
+            <div class="stat-value" style="color: #34D399;">{{ dispensed_count }}</div>
+            <div class="stat-desc">Successfully dispensed</div>
+        </div>
+    </div>
+
+    <!-- Status Filter Toolbar -->
+    <div class="card" style="padding: 0.85rem 1.25rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-right: 0.5rem;">Filter:</span>
+            <a href="{{ url_for('patient.prescriptions', status='all') }}"
+               class="btn btn-sm {% if current_status == 'all' or not current_status %}btn-primary{% else %}btn-secondary{% endif %}">
+                All Orders ({{ total_count }})
+            </a>
+            <a href="{{ url_for('patient.prescriptions', status='pending') }}"
+               class="btn btn-sm {% if current_status == 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Pending
+            </a>
+            <a href="{{ url_for('patient.prescriptions', status='partially_dispensed') }}"
+               class="btn btn-sm {% if current_status == 'partially_dispensed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Partially Dispensed
+            </a>
+            <a href="{{ url_for('patient.prescriptions', status='dispensed') }}"
+               class="btn btn-sm {% if current_status == 'dispensed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Dispensed ({{ dispensed_count }})
+            </a>
+        </div>
+    </div>
+
+    <!-- Prescriptions List -->
+    {% for rx in prescriptions %}
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💊</span> Prescription #{{ rx.id }}
+                </div>
+                <div class="card-subtitle">
+                    Issued by Dr. {{ rx.doctor.user.full_name }} ({{ rx.doctor.specialization or 'Practitioner' }}) on {{ rx.created_at.strftime('%B %d, %Y') }}
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <span class="badge {% if rx.status.value == 'dispensed' %}badge-success{% elif rx.status.value == 'partially_dispensed' %}badge-warning{% elif rx.status.value == 'cancelled' %}badge-neutral{% else %}badge-info{% endif %}">
+                    {{ rx.status.value }}
+                </span>
+                <a href="{{ url_for('patient.prescription_detail', rx_id=rx.id) }}" class="btn btn-secondary btn-sm">
+                    <span>🖨️</span> View & Print
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Medication</th>
+                        <th>Dosage</th>
+                        <th>Frequency</th>
+                        <th>Duration</th>
+                        <th>Instructions</th>
+                        <th>Dispensation Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in rx.items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.medicine.name }}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-dim);">{{ item.medicine.category }}</div>
+                        </td>
+                        <td>{{ item.dosage }}</td>
+                        <td>{{ item.frequency }}</td>
+                        <td>{{ item.duration_days }} Days</td>
+                        <td>{{ item.instructions or 'Take as prescribed' }}</td>
+                        <td>
+                            {% if item.quantity_dispensed >= item.quantity_prescribed %}
+                                <span class="badge badge-success">Dispensed ({{ item.quantity_dispensed }}/{{ item.quantity_prescribed }})</span>
+                            {% elif item.quantity_dispensed > 0 %}
+                                <span class="badge badge-warning">Partial ({{ item.quantity_dispensed }}/{{ item.quantity_prescribed }})</span>
+                            {% else %}
+                                <span class="badge badge-info">Awaiting Pharmacy</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if rx.notes %}
+        <div style="padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.4); border-top: 1px solid var(--border-subtle); font-size: 0.85rem; color: var(--text-muted);">
+            <strong>Doctor's Advice:</strong> {{ rx.notes }}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; color: var(--text-dim); padding: 3rem;">
+        <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">📋</span>
+        No prescriptions found matching this view.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

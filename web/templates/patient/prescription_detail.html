@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Prescription #{{ rx.id }} - MediCare AI{% endblock %}
+{% block page_heading %}Electronic Prescription Details{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Action Bar (hidden on print) -->
+    <div style="display: flex; justify-content: space-between; align-items: center;" class="no-print">
+        <div>
+            {% if is_doctor_view %}
+                <a href="{{ url_for('doctor.patient_history', patient_id=rx.patient.id) }}" class="btn btn-secondary btn-sm">
+                    <span>⬅️</span> Back to Patient Chart
+                </a>
+            {% else %}
+                <a href="{{ url_for('patient.prescriptions') }}" class="btn btn-secondary btn-sm">
+                    <span>⬅️</span> Back to My Prescriptions
+                </a>
+            {% endif %}
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.print();">
+                <span>🖨️</span> Print Prescription
+            </button>
+        </div>
+    </div>
+
+    <!-- Official Prescription Slip Card -->
+    <div class="card" style="padding: 2rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); position: relative;">
+        <!-- Watermark / Status Stamp -->
+        <div style="position: absolute; top: 1.5rem; right: 2rem; text-align: right;">
+            <span class="badge {% if rx.status.value == 'dispensed' %}badge-success{% elif rx.status.value == 'partially_dispensed' %}badge-warning{% elif rx.status.value == 'cancelled' %}badge-neutral{% else %}badge-info{% endif %}" style="font-size: 0.9rem; padding: 0.4rem 0.8rem; text-transform: uppercase;">
+                {{ rx.status.value }}
+            </span>
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem;">
+                Rx #{{ rx.id }}
+            </div>
+        </div>
+
+        <!-- Clinic Header -->
+        <div style="border-bottom: 2px solid var(--border-subtle); padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem;">
+                <span style="font-size: 1.8rem;">🏥</span>
+                <div>
+                    <h2 style="margin: 0; color: #F8FAFC; font-size: 1.4rem; letter-spacing: -0.02em;">
+                        MediCare AI Health System
+                    </h2>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                        Outpatient Clinical Services & Electronic Prescribing Network
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doctor & Patient Info Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; background: rgba(15, 23, 42, 0.4); padding: 1rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <!-- Doctor Column -->
+            <div>
+                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--teal-primary); margin-bottom: 0.25rem;">
+                    Prescribing Practitioner
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC;">
+                    Dr. {{ rx.doctor.user.full_name }}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    {{ rx.doctor.specialization or 'General Medicine' }}
+                    {% if rx.doctor.department %}
+                        | {{ rx.doctor.department.name }}
+                    {% endif %}
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem;">
+                    License: {{ rx.doctor.license_number or 'MD-VERIFIED' }}
+                </div>
+            </div>
+
+            <!-- Patient Column -->
+            <div>
+                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--teal-primary); margin-bottom: 0.25rem;">
+                    Patient Details
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC;">
+                    {{ rx.patient.user.full_name }}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    UHID: PAT-{{ rx.patient.id }} | Gender: {{ rx.patient.gender.value if rx.patient.gender else 'N/A' }}
+                    {% if rx.patient.dob %} | DOB: {{ rx.patient.dob }}{% endif %}
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem;">
+                    Issue Date: {{ rx.created_at.strftime('%Y-%m-%d %H:%M UTC') if rx.created_at else 'N/A' }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Allergy Safety Alert if present -->
+        {% if rx.patient.allergies %}
+        <div style="margin-bottom: 1.5rem; padding: 0.6rem 1rem; border-radius: var(--radius-sm); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #FCA5A5; font-size: 0.85rem;">
+            <strong>⚠️ Known Allergies / Safety Warnings:</strong> {{ rx.patient.allergies }}
+        </div>
+        {% endif %}
+
+        <!-- Prescribed Medications Table -->
+        <div style="margin-bottom: 1.5rem;">
+            <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.2rem; color: var(--teal-primary);">℞</span> Prescribed Medications
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Medication</th>
+                            <th>Dosage</th>
+                            <th>Frequency</th>
+                            <th>Duration</th>
+                            <th>Qty</th>
+                            <th>Instructions</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in rx.items %}
+                        <tr>
+                            <td style="color: var(--text-dim);">{{ loop.index }}</td>
+                            <td>
+                                <strong>{{ item.medicine.name }}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-dim);">
+                                    {{ item.medicine.generic_name or item.medicine.category }}
+                                </div>
+                            </td>
+                            <td><strong>{{ item.dosage }}</strong></td>
+                            <td>{{ item.frequency }}</td>
+                            <td>{{ item.duration_days }} Days</td>
+                            <td>{{ item.quantity_prescribed }}</td>
+                            <td>{{ item.instructions or 'Take as directed' }}</td>
+                            <td>
+                                {% if item.quantity_dispensed >= item.quantity_prescribed %}
+                                    <span class="badge badge-success" style="font-size: 0.75rem;">Dispensed</span>
+                                {% elif item.quantity_dispensed > 0 %}
+                                    <span class="badge badge-warning" style="font-size: 0.75rem;">Partial ({{ item.quantity_dispensed }}/{{ item.quantity_prescribed }})</span>
+                                {% else %}
+                                    <span class="badge badge-info" style="font-size: 0.75rem;">Awaiting Pharmacy</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Notes / Instructions -->
+        {% if rx.notes %}
+        <div style="margin-bottom: 1.5rem; background: rgba(30, 41, 59, 0.4); border-left: 3px solid var(--teal-primary); padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 0.25rem;">
+                Physician Remarks & Special Precautions:
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); white-space: pre-line;">
+                {{ rx.notes }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Footer / Signature Block -->
+        <div style="margin-top: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px dashed var(--border-subtle); padding-top: 1.5rem;">
+            <div style="font-size: 0.75rem; color: var(--text-dim);">
+                <div>Prescription generated digitally via MediCare AI Electronic Health System.</div>
+                <div>Dispensation verified using First-Expiring, First-Out (FEFO) pharmacy tracking.</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-family: cursive; font-size: 1.25rem; color: var(--teal-primary); margin-bottom: 0.25rem;">
+                    Dr. {{ rx.doctor.user.last_name }}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 0.25rem;">
+                    Physician Signature & Stamp
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    .no-print, header, nav, .sidebar {
+        display: none !important;
+    }
+    .card {
+        background: #FFFFFF !important;
+        border: 1px solid #CCCCCC !important;
+        box-shadow: none !important;
+        color: #000000 !important;
+    }
+    .table {
+        color: #000000 !important;
+    }
+    .table th, .table td {
+        border-color: #DDDDDD !important;
+    }
+}
+</style>
+{% endblock %}

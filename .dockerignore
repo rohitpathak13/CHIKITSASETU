@@ -1,0 +1,45 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.env/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Local databases & logs
+*.db
+*.db.bak
+*.sqlite
+*.sqlite3
+*.log
+
+# Git & IDE metadata
+.git/
+.gitignore
+.vscode/
+.idea/
+.system_generated/
+.agents/
+scratch/
+
+# Secrets and local configurations (do not bake active credentials into images)
+.env
+.env.*
+!.env.example
+
+# OS artifacts
+.DS_Store
+Thumbs.db

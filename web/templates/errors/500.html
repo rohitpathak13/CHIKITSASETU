@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 Server Error - MediCare AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 25%, #251D14 0%, #080C14 100%);
+            padding: 1.5rem;
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        }
+        .error-card {
+            width: 100%;
+            max-width: 500px;
+            background: var(--bg-card);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            border-radius: var(--radius-lg);
+            padding: 3rem 2.5rem;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .error-badge-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.25rem;
+        }
+        .error-code {
+            font-size: 3.75rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #FBBF24;
+            letter-spacing: -0.04em;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <div class="error-badge-icon">⚠️</div>
+        <div class="error-code">500</div>
+        <h1 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--text-main);">
+            Internal Hospital System Exception
+        </h1>
+        <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.75rem;">
+            An unexpected error occurred during database transaction processing. 
+            The transaction has been safely rolled back to protect data integrity.
+        </p>
+        <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('index') }}" class="btn btn-primary" style="padding: 0.65rem 1.35rem;">
+                Return to Safety
+            </a>
+            <button onclick="window.location.reload()" class="btn btn-secondary" style="padding: 0.65rem 1.35rem;">
+                Try Again
+            </button>
+        </div>
+    </div>
+</body>
+</html>

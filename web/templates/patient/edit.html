@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Edit Patient - {{ patient.user.full_name }} - MediCare AI{% endblock %}
+{% block page_heading %}Edit Patient Profile & Healthcare Demographics{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">
+                    <span>✏️</span> Edit Patient Chart: {{ patient.user.full_name }}
+                    <span class="badge badge-info" style="font-family: monospace;">PAT-{{ "%05d"|format(patient.id) }}</span>
+                </div>
+                <div class="card-subtitle">Update contact details, emergency contacts, blood group, and medical history</div>
+            </div>
+            <a href="{{ url_for('patient.patient_detail', patient_id=patient.id) }}" class="btn btn-secondary btn-sm">
+                <span>⬅️</span> View 360° Chart
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('patient.edit_patient', patient_id=patient.id) }}" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Demographics Section -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>👤</span> 1. Personal & Contact Information
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="first_name">First Name <span style="color: #F87171;">*</span></label>
+                        <input type="text" id="first_name" name="first_name" value="{{ patient.user.first_name }}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="last_name">Last Name <span style="color: #F87171;">*</span></label>
+                        <input type="text" id="last_name" name="last_name" value="{{ patient.user.last_name }}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="email_display">Email Address (Account Identifier)</label>
+                        <input type="text" id="email_display" value="{{ patient.user.email }}" class="form-control" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" value="{{ patient.user.phone or '' }}" class="form-control" placeholder="+91 98765 43210">
+                    </div>
+
+                    {% if user_role in ['admin', 'receptionist', 'doctor'] %}
+                    <div class="form-group">
+                        <label class="form-label" for="dob">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" value="{{ patient.dob }}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="gender">Gender</label>
+                        <select id="gender" name="gender" class="form-control">
+                            <option value="male" {% if patient.gender and patient.gender.value == 'male' %}selected{% endif %}>Male</option>
+                            <option value="female" {% if patient.gender and patient.gender.value == 'female' %}selected{% endif %}>Female</option>
+                            <option value="other" {% if patient.gender and patient.gender.value == 'other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    {% else %}
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth</label>
+                        <input type="text" value="{{ patient.dob }}" class="form-control" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Gender</label>
+                        <input type="text" value="{{ patient.gender.value|capitalize if patient.gender else 'Other' }}" class="form-control" disabled style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label class="form-label" for="blood_group">Blood Group</label>
+                        <select id="blood_group" name="blood_group" class="form-control">
+                            <option value="">Unknown</option>
+                            {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                                <option value="{{ bg }}" {% if patient.blood_group == bg %}selected{% endif %}>{{ bg }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address & Emergency Contact -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: var(--azure-accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>🚨</span> 2. Address & Emergency Contacts
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label" for="address">Residential Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="2" placeholder="Full residential address">{{ patient.address or '' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="emergency_contact_name">Emergency Contact Name</label>
+                        <input type="text" id="emergency_contact_name" name="emergency_contact_name" value="{{ patient.emergency_contact_name or '' }}" class="form-control" placeholder="Guardian / Spouse / Next of Kin">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="emergency_contact_phone">Emergency Contact Phone</label>
+                        <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" value="{{ patient.emergency_contact_phone or '' }}" class="form-control" placeholder="+91 98765 01234">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinical Flags -->
+            <div>
+                <h3 style="font-size: 1rem; font-weight: 700; color: #FBBF24; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                    <span>⚕️</span> 3. Clinical Alerts & Pre-existing Conditions
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="allergies" style="color: #F87171;">Known Allergies</label>
+                        <input type="text" id="allergies" name="allergies" value="{{ patient.allergies or '' }}" class="form-control" placeholder="e.g. Penicillin, Peanuts, Latex">
+                        <span style="font-size: 0.72rem; color: var(--text-dim);">Critical safety alert for pharmacy and attending physicians.</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="chronic_conditions" style="color: #FBBF24;">Chronic Pre-existing Conditions</label>
+                        <input type="text" id="chronic_conditions" name="chronic_conditions" value="{{ patient.chronic_conditions or '' }}" class="form-control" placeholder="e.g. Hypertension, Type 2 Diabetes">
+                        <span style="font-size: 0.72rem; color: var(--text-dim);">Maintained across longitudinal patient history.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+                <a href="{{ url_for('patient.patient_detail', patient_id=patient.id) }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <span>💾</span> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

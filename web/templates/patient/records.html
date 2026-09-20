@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+{% block title %}Medical History & Chronological Timeline - MediCare AI{% endblock %}
+{% block page_heading %}Chronological Medical History & Electronic Records{% endblock %}
+
+{% block content %}
+<!-- Patient Clinical Profile Header -->
+<div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border-left: 4px solid var(--teal-primary);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <h2 style="margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--text-main);">
+                    {{ patient.user.full_name }}
+                </h2>
+                <span class="badge" style="background: rgba(45, 212, 191, 0.15); color: var(--teal-primary); border: 1px solid var(--teal-primary); font-family: monospace;">
+                    PAT-{{ "%05d"|format(patient.id) }}
+                </span>
+                <span class="badge badge-neutral" style="text-transform: capitalize;">
+                    {{ patient.gender.value if patient.gender else 'Other' }}
+                </span>
+                {% if patient.blood_group %}
+                    <span class="badge badge-danger" style="font-weight: 700;">{{ patient.blood_group }}</span>
+                {% endif %}
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                <span><strong>DOB:</strong> {{ patient.dob }}</span>
+                <span><strong>Phone:</strong> {{ patient.user.phone or 'N/A' }}</span>
+                <span><strong>Emergency Contact:</strong> {{ patient.emergency_contact_name or 'None' }} ({{ patient.emergency_contact_phone or '-' }})</span>
+            </div>
+        </div>
+
+        <a href="{{ url_for('appointment.book') }}" class="btn btn-primary btn-sm">
+            <span>➕</span> Book New Consultation
+        </a>
+    </div>
+
+    <!-- Allergies & Chronic Conditions Alert Bars -->
+    {% if patient.allergies or patient.chronic_conditions %}
+    <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-wrap: wrap; gap: 0.75rem;">
+        {% if patient.allergies %}
+        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.35rem 0.75rem; border-radius: var(--radius-md); font-size: 0.82rem; color: #FCA5A5;">
+            <span>⚠️</span>
+            <strong>Known Allergies:</strong> {{ patient.allergies }}
+        </div>
+        {% endif %}
+        {% if patient.chronic_conditions %}
+        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); padding: 0.35rem 0.75rem; border-radius: var(--radius-md); font-size: 0.82rem; color: #FCD34D;">
+            <span>⚕️</span>
+            <strong>Chronic Conditions:</strong> {{ patient.chronic_conditions }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Summary Metrics Bar -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+    <div class="card" style="padding: 0.85rem; text-align: center;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Events</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">{{ total_events }}</div>
+    </div>
+    <div class="card" style="padding: 0.85rem; text-align: center;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--teal-primary); font-weight: 600;">Consultations</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--teal-primary);">{{ counts.records_count }}</div>
+    </div>
+    <div class="card" style="padding: 0.85rem; text-align: center;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--azure-accent); font-weight: 600;">Diagnoses</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--azure-accent);">{{ counts.diagnoses_count }}</div>
+    </div>
+    <div class="card" style="padding: 0.85rem; text-align: center;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: #34D399; font-weight: 600;">Prescriptions</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #34D399);">{{ counts.prescriptions_count }}</div>
+    </div>
+    <div class="card" style="padding: 0.85rem; text-align: center;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: #FBBF24; font-weight: 600;">Lab Orders</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #FBBF24;">{{ counts.lab_orders_count }}</div>
+    </div>
+    <div class="card" style="padding: 0.85rem; text-align: center;">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: #F87171; font-weight: 600;">Inpatient Stays</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #F87171;">{{ counts.admissions_count }}</div>
+    </div>
+</div>
+
+<!-- Interactive Timeline Category Filter Toolbar -->
+<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center;">
+    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-right: 0.5rem;">Filter Timeline:</span>
+    <button type="button" class="timeline-filter-btn active" data-filter="all">All Events ({{ total_events }})</button>
+    <button type="button" class="timeline-filter-btn" data-filter="consultation">Consultations ({{ counts.records_count }})</button>
+    <button type="button" class="timeline-filter-btn" data-filter="diagnosis">Diagnoses ({{ counts.diagnoses_count }})</button>
+    <button type="button" class="timeline-filter-btn" data-filter="prescription">Prescriptions ({{ counts.prescriptions_count }})</button>
+    <button type="button" class="timeline-filter-btn" data-filter="lab_order">Lab Tests ({{ counts.lab_orders_count }})</button>
+    <button type="button" class="timeline-filter-btn" data-filter="admission">Hospital Stays ({{ counts.admissions_count }})</button>
+</div>
+
+<!-- Chronological Vertical Timeline Container -->
+<div class="timeline-container" id="timelineList">
+    {% for event in timeline %}
+    <div class="timeline-item" data-type="{{ event.type }}">
+        <!-- Left Icon Node -->
+        <div class="timeline-marker {{ event.type }}">
+            <span>{{ event.icon }}</span>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="card timeline-content-card">
+            <div class="card-header" style="padding-bottom: 0.5rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <span class="timeline-date-badge">{{ event.date_str }}</span>
+                        <h3 class="card-title" style="margin: 0; font-size: 1.05rem;">{{ event.title }}</h3>
+                        <span class="badge {{ event.badge_class }}" style="font-size: 0.72rem; text-transform: uppercase;">
+                            {{ event.type }}
+                        </span>
+                    </div>
+                    <div class="card-subtitle" style="margin-top: 0.2rem;">
+                        {{ event.subtitle }}
+                    </div>
+                </div>
+
+                {% if event.type == 'consultation' %}
+                <a href="{{ url_for('patient.record_detail', record_id=event.entity_id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
+                    <span>📄</span> Full Record
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Consultation Details Body -->
+            {% if event.type == 'consultation' %}
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.88rem;">
+                    <!-- Symptoms & Complaints -->
+                    <div>
+                        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">
+                            Reported Symptoms & Chief Complaint
+                        </span>
+                        <div style="color: var(--text-main); line-height: 1.4;">{{ event.data.symptoms }}</div>
+                    </div>
+
+                    <!-- Vitals Strip -->
+                    {% if event.data.vitals_summary %}
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.6rem 0.85rem; display: flex; flex-wrap: wrap; gap: 0.85rem; align-items: center;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--teal-primary); text-transform: uppercase;">Vital Signs:</span>
+                        {% if event.data.vitals_bp %}<span class="vitals-chip">BP: <strong>{{ event.data.vitals_bp }}</strong> mmHg</span>{% endif %}
+                        {% if event.data.vitals_pulse %}<span class="vitals-chip">Pulse: <strong>{{ event.data.vitals_pulse }}</strong> bpm</span>{% endif %}
+                        {% if event.data.vitals_temp %}<span class="vitals-chip">Temp: <strong>{{ event.data.vitals_temp }}</strong> °C</span>{% endif %}
+                        {% if event.data.vitals_spo2 %}<span class="vitals-chip">SpO2: <strong>{{ event.data.vitals_spo2 }}</strong>%</span>{% endif %}
+                        {% if event.data.vitals_weight %}<span class="vitals-chip">Weight: <strong>{{ event.data.vitals_weight }}</strong> kg</span>{% endif %}
+                        {% if event.data.vitals_height %}<span class="vitals-chip">Height: <strong>{{ event.data.vitals_height }}</strong> cm</span>{% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Treatment Plan Callout -->
+                    {% if event.data.treatment_plan %}
+                    <div style="background: rgba(45, 212, 191, 0.08); border-left: 3px solid var(--teal-primary); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem;">
+                        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--teal-primary); display: block; margin-bottom: 0.2rem;">
+                            🩺 Prescribed Treatment Plan & Lifestyle Guidance
+                        </span>
+                        <div style="color: var(--text-main); font-size: 0.85rem; line-height: 1.4;">{{ event.data.treatment_plan }}</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Allergies Noted in Encounter -->
+                    {% if event.data.allergies %}
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); padding: 0.4rem 0.75rem; font-size: 0.82rem; color: #FCA5A5;">
+                        <strong>⚠️ Allergies Noted During Consultation:</strong> {{ event.data.allergies }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Clinical Notes -->
+                    {% if event.data.clinical_notes %}
+                    <div style="background: var(--bg-surface); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                        <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: var(--text-dim); display: block; margin-bottom: 0.2rem;">
+                            Physician Clinical Notes
+                        </span>
+                        <div style="color: var(--text-muted); font-size: 0.82rem;">{{ event.data.clinical_notes }}</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Follow-Up Date Reminder -->
+                    {% if event.data.follow_up_date %}
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-sm); padding: 0.45rem 0.85rem; font-size: 0.82rem;">
+                        <div style="color: #93C5FD;">
+                            <span>⏰</span> <strong>Recommended Follow-up Visit:</strong> {{ event.data.follow_up_date }}
+                        </div>
+                        <a href="{{ url_for('appointment.book', doctor_id=event.doctor_id) }}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                            Book Follow-Up
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+            <!-- Prescription Details Body -->
+            {% elif event.type == 'prescription' %}
+                <div style="font-size: 0.85rem;">
+                    <div style="margin-bottom: 0.5rem; color: var(--text-muted);">
+                        Prescribed Medication Items ({{ event.data.item_count }}):
+                    </div>
+                    <ul style="margin: 0; padding-left: 1.25rem; color: var(--text-main); line-height: 1.5;">
+                        {% for it in event.data.get('items', []) %}
+                            <li>{{ it }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% if event.data.notes %}
+                        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-dim);">
+                            <strong>Instructions:</strong> {{ event.data.notes }}
+                        </div>
+                    {% endif %}
+                </div>
+
+            <!-- Diagnosis Details Body -->
+            {% elif event.type == 'diagnosis' %}
+                <div style="font-size: 0.85rem; color: var(--text-main);">
+                    <div>ICD-10 Registry Code: <strong style="font-family: monospace; color: var(--teal-primary);">{{ event.data.code or 'N/A' }}</strong></div>
+                    <div>Status: <span class="badge badge-neutral">{{ event.data.status }}</span></div>
+                    {% if event.data.description %}
+                        <div style="margin-top: 0.35rem; color: var(--text-muted);">{{ event.data.description }}</div>
+                    {% endif %}
+                </div>
+
+            <!-- Lab Investigation Body -->
+            {% elif event.type == 'lab_order' %}
+                <div style="font-size: 0.85rem; color: var(--text-main);">
+                    <div>Investigation: <strong>{{ event.data.test_name }}</strong> (Code: <span style="font-family: monospace;">{{ event.data.test_code }}</span>)</div>
+                    <div>Order Status: <span class="badge badge-info">{{ event.data.status|capitalize }}</span></div>
+                </div>
+
+            <!-- Admission Body -->
+            {% elif event.type == 'admission' %}
+                <div style="font-size: 0.85rem; color: var(--text-main);">
+                    <div>Admission Department: <strong>{{ event.data.ward }}</strong></div>
+                    <div>Reason: {{ event.data.reason or 'Medical observation and inpatient care' }}</div>
+                    <div style="margin-top: 0.35rem; color: var(--text-muted);">
+                        Discharge Status: <strong>{{ event.data.discharge_date }}</strong>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; color: var(--text-dim); padding: 3rem;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📋</div>
+        <div style="font-size: 1.1rem; color: var(--text-main); font-weight: 600;">No Medical Records on File</div>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Your clinical consultations, diagnosis records, prescriptions, and test results will appear here chronologically.</p>
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('appointment.book') }}" class="btn btn-primary btn-sm">Schedule a Consultation</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+/* Chronological Timeline Styling */
+.timeline-container {
+    position: relative;
+    padding-left: 2.5rem;
+    margin-top: 1.5rem;
+}
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 1.1rem;
+    width: 2px;
+    background: var(--border-subtle);
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+}
+.timeline-marker {
+    position: absolute;
+    left: -2.5rem;
+    top: 1rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+}
+.timeline-marker.consultation { border-color: var(--teal-primary); }
+.timeline-marker.diagnosis { border-color: var(--azure-accent); }
+.timeline-marker.prescription { border-color: #34D399; }
+.timeline-marker.lab_order { border-color: #FBBF24; }
+.timeline-marker.admission { border-color: #F87171; }
+
+.timeline-content-card {
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+.timeline-date-badge {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-family: monospace;
+    font-weight: 600;
+}
+.vitals-chip {
+    font-size: 0.8rem;
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+.timeline-filter-btn {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.timeline-filter-btn:hover {
+    color: var(--text-main);
+    border-color: var(--teal-primary);
+}
+.timeline-filter-btn.active {
+    background: var(--teal-primary);
+    color: #0F172A;
+    font-weight: 700;
+    border-color: var(--teal-primary);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const filterBtns = document.querySelectorAll('.timeline-filter-btn');
+    const timelineItems = document.querySelectorAll('.timeline-item');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const filterType = btn.getAttribute('data-filter');
+
+            timelineItems.forEach(item => {
+                if (filterType === 'all' || item.getAttribute('data-type') === filterType) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

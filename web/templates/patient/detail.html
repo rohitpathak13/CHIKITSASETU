@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+{% block title %}Patient Chart - {{ patient.user.full_name }} - MediCare AI{% endblock %}
+{% block page_heading %}360° Longitudinal Patient Health Record{% endblock %}
+
+{% block content %}
+<!-- Top Header Banner -->
+<div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border-color: rgba(13, 148, 136, 0.4);">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--teal-primary), var(--azure-accent)); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; color: #FFF; font-weight: 700; box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3);">
+                {{ patient.user.first_name[0]|upper }}{{ patient.user.last_name[0]|upper }}
+            </div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ patient.user.full_name }}</h2>
+                    <span class="badge" style="background: rgba(13, 148, 136, 0.2); color: var(--teal-primary); border: 1px solid var(--teal-primary); font-family: monospace; font-size: 0.85rem; padding: 0.2rem 0.6rem;">
+                        PAT-{{ "%05d"|format(patient.id) }}
+                    </span>
+                    <span class="badge badge-neutral" style="text-transform: capitalize;">
+                        {{ patient.gender.value if patient.gender else 'Other' }}
+                    </span>
+                    {% if patient.blood_group %}
+                        <span class="badge badge-danger" style="font-weight: 700;">{{ patient.blood_group }}</span>
+                    {% endif %}
+                </div>
+                <div style="display: flex; gap: 1.25rem; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem; flex-wrap: wrap;">
+                    <span><strong>Age:</strong> {{ age }} years (DOB: {{ patient.dob }})</span>
+                    <span><strong>Phone:</strong> {{ patient.user.phone or 'Not provided' }}</span>
+                    <span><strong>Email:</strong> {{ patient.user.email }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            {% if user_role in ['admin', 'doctor'] %}
+                <a href="{{ url_for('doctor.order_lab_test', patient_id=patient.id) }}" class="btn btn-primary">
+                    <span>🔬</span> Order Lab Tests
+                </a>
+            {% endif %}
+
+            {% if user_role in ['admin', 'receptionist', 'doctor'] or (user_role == 'patient' and session.get('user_id') == patient.id) %}
+                <a href="{{ url_for('patient.edit_patient', patient_id=patient.id) }}" class="btn btn-secondary">
+                    <span>✏️</span> Edit Patient
+                </a>
+            {% endif %}
+            
+            {% if user_role in ['admin', 'receptionist', 'doctor', 'nurse'] %}
+                <a href="{{ url_for('patient.directory') }}" class="btn btn-secondary">
+                    <span>⬅️</span> Patient Directory
+                </a>
+            {% elif user_role == 'patient' %}
+                <a href="{{ url_for('patient.dashboard') }}" class="btn btn-secondary">
+                    <span>⬅️</span> My Portal
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Critical Alerts Bar (Allergies & Chronic Conditions) -->
+    {% if patient.allergies or patient.chronic_conditions %}
+    <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-wrap: wrap; gap: 1rem;">
+        {% if patient.allergies %}
+        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.4rem 0.85rem; border-radius: var(--radius-md); font-size: 0.85rem; color: #FCA5A5;">
+            <span style="font-size: 1rem;">⚠️</span>
+            <strong>Documented Allergies:</strong> {{ patient.allergies }}
+        </div>
+        {% endif %}
+        {% if patient.chronic_conditions %}
+        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); padding: 0.4rem 0.85rem; border-radius: var(--radius-md); font-size: 0.85rem; color: #FCD34D;">
+            <span style="font-size: 1rem;">⚕️</span>
+            <strong>Chronic Conditions:</strong> {{ patient.chronic_conditions }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Clinical & Administrative Stats -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">Consultations</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ medical_records|length }}</div>
+        <div class="stat-desc">Clinical visits & history</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Appointments</div>
+        <div class="stat-value" style="color: var(--teal-primary);">{{ appointments|length }}</div>
+        <div class="stat-desc">Scheduled & past visits</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Prescriptions</div>
+        <div class="stat-value" style="color: #A78BFA;">{{ prescriptions|length }}</div>
+        <div class="stat-desc">Itemized pharmacy orders</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Lab Reports</div>
+        <div class="stat-value" style="color: #34D399;">{{ lab_orders|length }}</div>
+        <div class="stat-desc">Diagnostic test investigations</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Outstanding Balance</div>
+        <div class="stat-value" style="color: {% if outstanding_balance > 0 %}#F87171{% else %}#34D399{% endif %};">
+            ₹{{ "%.2f"|format(outstanding_balance) }}
+        </div>
+        <div class="stat-desc">Total billed: ₹{{ "%.2f"|format(total_billed) }}</div>
+    </div>
+</div>
+
+<!-- Demographics, Emergency & Insurance Summary Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    <!-- Demographics & Address Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>👤</span> Basic Demographics & Contact</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.875rem;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Medical Record Number</span>
+                <strong style="font-family: monospace; color: var(--teal-primary);">PAT-{{ "%05d"|format(patient.id) }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Full Legal Name</span>
+                <strong>{{ patient.user.full_name }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Date of Birth / Age</span>
+                <span>{{ patient.dob }} ({{ age }} years)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Gender</span>
+                <span style="text-transform: capitalize;">{{ patient.gender.value if patient.gender else 'Other' }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Blood Type</span>
+                <span style="font-weight: 700; color: #F87171;">{{ patient.blood_group or 'Unknown' }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Primary Contact Phone</span>
+                <span>{{ patient.user.phone or 'Not provided' }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Primary Email</span>
+                <span style="font-family: monospace;">{{ patient.user.email }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Residential Address</span>
+                <span style="text-align: right; max-width: 60%;">{{ patient.address or 'None recorded' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contact & Insurance Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>🚨</span> Emergency Contact & Insurance Coverage</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.875rem;">
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem;">Next of Kin / Emergency Contact</div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Contact Name</span>
+                <strong>{{ patient.emergency_contact_name or 'Not designated' }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Contact Phone</span>
+                <span>{{ patient.emergency_contact_phone or 'N/A' }}</span>
+            </div>
+
+            <div style="font-weight: 700; color: var(--text-main); margin-top: 0.5rem; margin-bottom: 0.25rem;">Health Insurance Policy</div>
+            {% if patient.insurance %}
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Insurance Provider</span>
+                <strong>{{ patient.insurance.provider_name }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Policy Number</span>
+                <span style="font-family: monospace;">{{ patient.insurance.policy_number }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
+                <span style="color: var(--text-muted);">Coverage Limit</span>
+                <span style="color: #34D399; font-weight: 600;">₹{{ "%.2f"|format(patient.insurance.coverage_amount) }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Valid Until / Status</span>
+                <span>
+                    {{ patient.insurance.valid_until }}
+                    <span class="badge {% if patient.insurance.status == 'Active' %}badge-success{% else %}badge-neutral{% endif %}">{{ patient.insurance.status }}</span>
+                </span>
+            </div>
+            {% else %}
+            <div style="padding: 1rem; background: rgba(30, 41, 59, 0.4); border-radius: var(--radius-md); text-align: center; color: var(--text-dim);">
+                No active insurance policy registered. Billing mode: Self-paying / Out-of-pocket.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Diagnoses & Clinical Records Section -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>🩺</span> Clinical Consultations & Medical Diagnoses</div>
+            <div class="card-subtitle">Recorded ICD-10 diagnoses, vital signs, and physician encounter notes</div>
+        </div>
+    </div>
+
+    <!-- Diagnoses Badges/Table -->
+    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem;">Documented Diagnoses</h4>
+    <div class="table-responsive" style="margin-bottom: 1.5rem;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ICD-10 Code</th>
+                    <th>Diagnosis Name</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Diagnosed Date</th>
+                    <th>Attending Doctor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in diagnoses %}
+                <tr>
+                    <td>
+                        <strong style="font-family: monospace; color: var(--teal-primary);">
+                            {{ d.diagnosis_code or 'ICD-N/A' }}
+                        </strong>
+                    </td>
+                    <td>
+                        <strong>{{ d.diagnosis_name }}</strong>
+                        {% if d.description %}
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ d.description }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral">{{ d.diagnosis_type }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if d.status == 'Active' %}badge-warning{% elif d.status == 'Resolved' %}badge-success{% else %}badge-info{% endif %}">
+                            {{ d.status }}
+                        </span>
+                    </td>
+                    <td>{{ d.diagnosed_date }}</td>
+                    <td>Dr. {{ d.doctor.user.full_name if d.doctor and d.doctor.user else 'Staff' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                        No diagnoses documented for this patient.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Longitudinal Medical Records -->
+    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem;">Encounter History & Vitals</h4>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Visit Date</th>
+                    <th>Doctor</th>
+                    <th>Symptoms & Assessment</th>
+                    <th>Vitals Signs</th>
+                    <th>Clinical Notes</th>
+                    <th>Follow-up</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in medical_records %}
+                <tr>
+                    <td><strong>{{ rec.visit_date }}</strong></td>
+                    <td>Dr. {{ rec.doctor.user.full_name if rec.doctor and rec.doctor.user else 'Consultant' }}</td>
+                    <td>
+                        <div><strong>Symptoms:</strong> {{ rec.symptoms }}</div>
+                        <div style="color: var(--teal-primary); font-size: 0.8rem; margin-top: 0.2rem;">
+                            <strong>Diagnosis:</strong> {{ rec.diagnosis }}
+                        </div>
+                    </td>
+                    <td style="font-size: 0.8rem;">
+                        {% if rec.vitals_bp or rec.vitals_pulse or rec.vitals_temp or rec.vitals_spo2 %}
+                            <div>BP: <strong>{{ rec.vitals_bp or '-' }}</strong></div>
+                            <div>Pulse: <strong>{{ rec.vitals_pulse or '-' }} bpm</strong></div>
+                            <div>Temp: <strong>{{ rec.vitals_temp or '-' }}°</strong> | SpO2: <strong>{{ rec.vitals_spo2 or '-' }}%</strong></div>
+                        {% else %}
+                            <span style="color: var(--text-dim);">No vitals logged</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 200px;">
+                        {{ rec.clinical_notes or 'None' }}
+                    </td>
+                    <td>{{ rec.follow_up_date or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                        No consultation records logged yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Appointments & Prescriptions Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    <!-- Appointments History Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>📅</span> Appointment History</div>
+            <span class="card-subtitle">{{ appointments|length }} records</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Doctor / Dept</th>
+                        <th>Token</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in appointments %}
+                    <tr>
+                        <td>
+                            <strong>{{ app.appointment_datetime.strftime('%Y-%m-%d %H:%M') if app.appointment_datetime else 'N/A' }}</strong>
+                        </td>
+                        <td>
+                            <div>Dr. {{ app.doctor.user.full_name if app.doctor and app.doctor.user else 'Assigned' }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                {{ app.doctor.department.name if app.doctor and app.doctor.department else 'OPD' }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-neutral">#{{ app.token_number }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if app.status.value == 'completed' %}badge-success{% elif app.status.value == 'confirmed' %}badge-info{% elif app.status.value == 'cancelled' or app.status.value == 'no_show' %}badge-danger{% else %}badge-warning{% endif %}">
+                                {{ app.status.value }}
+                            </span>
+                        </td>
+                        <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ app.reason or 'Consultation' }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                            No appointments logged.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Prescriptions History Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>💊</span> Prescription History</div>
+            <span class="card-subtitle">{{ prescriptions|length }} records</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date / Prescriber</th>
+                        <th>Status</th>
+                        <th>Medicines & Dosages</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rx in prescriptions %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 700; font-family: monospace;">RX-#{{ rx.id }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ rx.created_at.strftime('%Y-%m-%d') if rx.created_at else 'N/A' }}</div>
+                            <div style="font-size: 0.8rem; margin-top: 0.2rem;">Dr. {{ rx.doctor.user.full_name if rx.doctor and rx.doctor.user else 'Consultant' }}</div>
+                        </td>
+                        <td>
+                            <span class="badge {% if rx.status.value == 'dispensed' %}badge-success{% elif rx.status.value == 'partially_dispensed' %}badge-warning{% elif rx.status.value == 'cancelled' %}badge-danger{% else %}badge-info{% endif %}">
+                                {{ rx.status.value }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if rx.items %}
+                                <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                                    {% for it in rx.items %}
+                                        <li>
+                                            <strong>{{ it.medicine.name if it.medicine else 'Drug' }}</strong> - 
+                                            {{ it.dosage }} ({{ it.frequency }}) for {{ it.duration_days }} days
+                                            <span style="color: var(--text-muted); font-size: 0.75rem;">[Qty: {{ it.quantity_prescribed }}]</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span style="color: var(--text-dim); font-size: 0.8rem;">No itemized drugs</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                            No prescriptions issued.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Lab Reports & Diagnostic Investigations -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>🔬</span> Laboratory Investigations & Test Reports</div>
+            <div class="card-subtitle">Ordered laboratory diagnostic tests, specimen status, and verified lab results</div>
+        </div>
+        <span class="badge badge-info">{{ lab_orders|length }} Orders</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Test Name / Code</th>
+                    <th>Sample Type</th>
+                    <th>Ordered At</th>
+                    <th>Status</th>
+                    <th>Result & Reference Range</th>
+                    <th>Flag</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in lab_orders %}
+                <tr>
+                    <td><strong style="font-family: monospace;">LAB-{{ order.id }}</strong></td>
+                    <td>
+                        <strong>{{ order.test.name if order.test else 'Lab Test' }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--teal-primary); font-family: monospace;">
+                            {{ order.test.test_code if order.test else '' }}
+                        </div>
+                    </td>
+                    <td>{{ order.test.sample_type if order.test else '-' }}</td>
+                    <td>{{ order.ordered_at.strftime('%Y-%m-%d %H:%M') if order.ordered_at else 'N/A' }}</td>
+                    <td>
+                        <span class="badge {% if order.status.value == 'completed' %}badge-success{% elif order.status.value == 'sample_collected' or order.status.value == 'processing' %}badge-info{% elif order.status.value == 'cancelled' %}badge-danger{% else %}badge-warning{% endif %}">
+                            {{ order.status.value }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if order.result %}
+                            <div style="font-weight: 700; font-size: 0.95rem;">
+                                {{ order.result.measured_value }} {{ order.result.unit }}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                Ref: {{ order.test.reference_range_min if order.test else '-' }} - {{ order.test.reference_range_max if order.test else '-' }} {{ order.test.unit if order.test else '' }}
+                            </div>
+                        {% else %}
+                            <span style="color: var(--text-dim); font-size: 0.8rem;">Result pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.result %}
+                            {% if order.result.critical_alert %}
+                                <span class="badge badge-danger" style="animation: pulse 1.5s infinite;">CRITICAL</span>
+                            {% elif order.result.is_abnormal %}
+                                <span class="badge badge-warning">ABNORMAL</span>
+                            {% else %}
+                                <span class="badge badge-success">NORMAL</span>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: var(--text-dim); font-size: 0.75rem;">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                        No laboratory orders recorded for this patient.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Invoices & Billing History Section -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>💳</span> Billing & Payment History</div>
+            <div class="card-subtitle">Comprehensive ledger of hospital bills, payments, and outstanding balances</div>
+        </div>
+        <div style="font-size: 0.85rem;">
+            Total Outstanding: <strong style="color: {% if outstanding_balance > 0 %}#F87171{% else %}#34D399{% endif %}; font-size: 1.1rem;">₹{{ "%.2f"|format(outstanding_balance) }}</strong>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Bill Number</th>
+                    <th>Date Generated</th>
+                    <th>Subtotal</th>
+                    <th>Discount / Insurance</th>
+                    <th>Total Amount</th>
+                    <th>Amount Paid</th>
+                    <th>Balance Due</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bills %}
+                <tr>
+                    <td>
+                        <strong style="font-family: monospace; color: var(--teal-primary);">
+                            {{ b.bill_number }}
+                        </strong>
+                    </td>
+                    <td>{{ b.created_at.strftime('%Y-%m-%d') if b.created_at else 'N/A' }}</td>
+                    <td>₹{{ "%.2f"|format(b.subtotal) }}</td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                        Disc: ₹{{ "%.2f"|format(b.discount or 0) }} | Ins: ₹{{ "%.2f"|format(b.insurance_covered or 0) }}
+                    </td>
+                    <td><strong>₹{{ "%.2f"|format(b.total_amount) }}</strong></td>
+                    <td style="color: #34D399;">₹{{ "%.2f"|format(b.amount_paid) }}</td>
+                    <td>
+                        <strong style="color: {% if b.balance_due > 0 %}#F87171{% else %}#34D399{% endif %};">
+                            ₹{{ "%.2f"|format(b.balance_due) }}
+                        </strong>
+                    </td>
+                    <td>
+                        <span class="badge {% if b.status.value == 'paid' %}badge-success{% elif b.status.value == 'partially_paid' %}badge-warning{% elif b.status.value == 'cancelled' %}badge-neutral{% else %}badge-danger{% endif %}">
+                            {{ b.status.value }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                        No billing records found for this patient.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

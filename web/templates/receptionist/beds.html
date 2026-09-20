@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Hospital Bed Roster{% endblock %}
+{% block page_heading %}Inpatient Bed Availability & Occupancy Grid{% endblock %}
+
+{% block content %}
+<div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center;">
+    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Status Legend:</span>
+    <span class="badge badge-success">● Available</span>
+    <span class="badge badge-danger">● Occupied</span>
+    <span class="badge badge-warning">● Maintenance</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 2rem;">
+    {% for ward in wards %}
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">{{ ward.name }}</div>
+                <div class="card-subtitle">Floor {{ ward.floor }} | {{ ward.ward_type.value|capitalize }} | Total Beds: {{ ward.beds|length }}</div>
+            </div>
+            <span class="badge badge-info">{{ ward.department.name if ward.department else 'General Facility' }}</span>
+        </div>
+
+        <div class="bed-grid">
+            {% for bed in ward.beds %}
+            <div class="bed-tile {{ bed.status.value }}">
+                <div style="font-size: 1.25rem;">🛏️</div>
+                <div class="bed-num">{{ bed.bed_number }}</div>
+                <div class="bed-status-text" style="color: {% if bed.status.value == 'available' %}#34D399{% elif bed.status.value == 'occupied' %}#F87171{% else %}#FBBF24{% endif %};">
+                    {{ bed.status.value }}
+                </div>
+                <div style="font-size: 0.7rem; color: var(--text-dim);">${{ bed.daily_rate }}/day</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

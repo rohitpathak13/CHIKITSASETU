@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Receptionist Desk{% endblock %}
+{% block page_heading %}Front Desk Operations & OPD Queue{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Appointments</div>
+        <div class="stat-value">{{ appointments|length }}</div>
+        <div class="stat-desc">Scheduled OPD roster</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Registered Patients</div>
+        <div class="stat-value" style="color: #34D399;">{{ total_patients }}</div>
+        <div class="stat-desc">Master patient records</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Available Inpatient Beds</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ available_beds }}</div>
+        <div class="stat-desc">Ready for immediate intake</div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>📋</span> Outpatient Appointment Register</div>
+            <div class="card-subtitle">AI-assisted scheduling with automated attendance risk triage</div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <form method="GET" action="{{ url_for('receptionist.dashboard') }}" class="search-box-wrapper">
+                <span class="search-box-icon">🔍</span>
+                <input type="text" name="q" value="{{ search_query or '' }}" class="search-box-input" placeholder="Search patient or token #...">
+            </form>
+            <a href="{{ url_for('receptionist.register_patient') }}" class="btn btn-secondary btn-sm">
+                <span>➕</span> Register Walk-in
+            </a>
+            <a href="{{ url_for('receptionist.book_appointment') }}" class="btn btn-primary btn-sm">
+                <span>📅</span> Book Appointment (AI)
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Token</th>
+                    <th>Patient Name</th>
+                    <th>Doctor</th>
+                    <th>Department</th>
+                    <th>Date & Time</th>
+                    <th>AI Attendance Risk</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in appointments %}
+                <tr>
+                    <td><div class="token-pill">#{{ app.token_number }}</div></td>
+                    <td>
+                        <strong>{{ app.patient.user.full_name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-dim);">Phone: {{ app.patient.user.phone or 'N/A' }}</div>
+                    </td>
+                    <td>Dr. {{ app.doctor.user.full_name }}</td>
+                    <td>{{ app.doctor.department.name if app.doctor.department else 'General' }}</td>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">
+                        {{ app.appointment_datetime.strftime('%Y-%m-%d %H:%M') if app.appointment_datetime else 'N/A' }}
+                    </td>
+                    <td>
+                        {% if app.no_show_probability is not none %}
+                            {% set pct = (app.no_show_probability * 100)|round(1) %}
+                            {% if pct >= 45 %}
+                                <span class="badge badge-danger">High No-Show Risk ({{ pct }}%)</span>
+                            {% elif pct >= 25 %}
+                                <span class="badge badge-warning">Moderate ({{ pct }}%)</span>
+                            {% else %}
+                                <span class="badge badge-success">High Probability Attend ({{ pct }}%)</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-neutral">Standard</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if app.status.value == 'completed' %}badge-success{% elif app.status.value == 'confirmed' %}badge-info{% else %}badge-warning{% endif %}">
+                            {{ app.status.value }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="padding: 2.5rem 1rem;">
+                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-title">No Appointments Scheduled</div>
+                            <div class="empty-state-text">No scheduled outpatient appointments match your query or are rostered for today.</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

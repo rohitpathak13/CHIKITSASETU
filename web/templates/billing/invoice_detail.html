@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% block title %}Invoice #{{ invoice.invoice_number }}{% endblock %}
+{% block page_heading %}Healthcare Tax Invoice & Settlement{% endblock %}
+
+{% block content %}
+<div class="invoice-container" style="max-width: 920px; margin: 0 auto;">
+    <!-- Top Action Bar (Hidden when printing) -->
+    <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <a href="{{ url_for('billing.dashboard') }}" class="btn btn-secondary btn-sm">
+            <span>&larr;</span> Back to Invoicing Ledger
+        </a>
+        <div style="display: flex; gap: 0.75rem;">
+            <button onclick="window.print()" class="btn btn-primary btn-sm">
+                <span>🖨️</span> Print / Download PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Official Printable Invoice Sheet -->
+    <div class="card invoice-sheet" style="padding: 2.5rem; background: var(--bg-card); box-shadow: var(--shadow-md); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); position: relative;">
+        
+        <!-- Header: Hospital Credentials & Invoice ID -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--border-subtle); padding-bottom: 1.5rem; margin-bottom: 1.75rem;">
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <div class="logo-badge" style="width: 52px; height: 52px; font-size: 1.6rem; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--teal-primary), #2563EB); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900;">
+                    M+
+                </div>
+                <div>
+                    <h1 style="font-size: 1.4rem; font-weight: 800; margin: 0; color: var(--text-main); letter-spacing: -0.02em;">
+                        MediCare <span style="color: var(--teal-primary);">AI</span> Multispecialty Hospital
+                    </h1>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4;">
+                        Licensed Multispecialty Clinical Facility & Research Institute<br>
+                        100 Medical Center Way, Metro District, PIN 400012 | GSTIN: 27AABCM8921N1ZK<br>
+                        24x7 Helpline: +91 800-MEDICARE | Email: billing@medicare-ai.org
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: right;">
+                <div style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-dim); margin-bottom: 0.4rem;">
+                    TAX INVOICE
+                </div>
+                <div style="font-family: monospace; font-size: 1.15rem; font-weight: 800; color: var(--teal-primary);">
+                    {{ invoice.invoice_number }}
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">
+                    <strong>Issued:</strong> {{ invoice.created_at.strftime('%d %b %Y, %H:%M') }}
+                </div>
+                {% if invoice.due_date %}
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    <strong>Due Date:</strong> {{ invoice.due_date.strftime('%d %b %Y') }}
+                </div>
+                {% endif %}
+                <div style="margin-top: 0.6rem;">
+                    {% set st = invoice.status.value %}
+                    <span class="badge {% if st == 'paid' %}badge-success{% elif st in ['partial', 'partially_paid'] %}badge-warning{% elif st == 'refunded' %}badge-info{% else %}badge-danger{% endif %}" style="font-size: 0.9rem; padding: 0.35rem 0.75rem; text-transform: uppercase;">
+                        ● {{ invoice.status.value|upper }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demographics & Clinical Care Trajectory Cards -->
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; margin-bottom: 1.75rem;">
+            <!-- Patient Demographics -->
+            <div style="background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--teal-primary); letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                    Billed Patient
+                </div>
+                <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">
+                    {{ invoice.patient.user.full_name }}
+                </div>
+                <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 0.4rem; line-height: 1.5;">
+                    <div><strong>MRN:</strong> {{ invoice.patient.medical_record_number or 'MRN-PENDING' }}</div>
+                    <div><strong>Contact:</strong> {{ invoice.patient.user.phone or 'N/A' }} | {{ invoice.patient.user.email }}</div>
+                    <div><strong>Address:</strong> {{ invoice.patient.address or 'Address on clinical file' }}</div>
+                </div>
+            </div>
+
+            <!-- Care Episode / Insurance -->
+            <div style="background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--teal-primary); letter-spacing: 0.05em; margin-bottom: 0.5rem;">
+                    Care Encounter Details
+                </div>
+                <div style="font-size: 0.825rem; color: var(--text-muted); line-height: 1.5;">
+                    {% if invoice.admission %}
+                    <div><strong>Encounter:</strong> Inpatient Stay (#{{ invoice.admission_id }})</div>
+                    <div><strong>Room / Bed:</strong> Room {{ invoice.admission.bed.room.room_number if invoice.admission.bed and invoice.admission.bed.room else 'N/A' }} / Bed {{ invoice.admission.bed.bed_number if invoice.admission.bed else 'N/A' }}</div>
+                    <div><strong>Admitted:</strong> {{ invoice.admission.admission_date.strftime('%d %b %Y') }}</div>
+                    {% elif invoice.appointment %}
+                    <div><strong>Encounter:</strong> Outpatient Appointment (#{{ invoice.appointment_id }})</div>
+                    <div><strong>Doctor:</strong> Dr. {{ invoice.appointment.doctor.user.full_name if invoice.appointment.doctor else 'Hospital Clinic' }}</div>
+                    {% else %}
+                    <div><strong>Encounter:</strong> Clinical Outpatient Services</div>
+                    {% endif %}
+
+                    {% if invoice.insurance %}
+                    <div style="margin-top: 0.35rem; border-top: 1px dashed var(--border-subtle); padding-top: 0.35rem;">
+                        <strong>Insurance:</strong> {{ invoice.insurance.provider_name }} (Policy: {{ invoice.insurance.policy_number }})
+                    </div>
+                    {% endif %}
+
+                    {% if invoice.notes %}
+                    <div style="margin-top: 0.35rem; font-style: italic; color: var(--text-dim);">
+                        "{{ invoice.notes }}"
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Itemized Components Table -->
+        <div style="margin-bottom: 1.75rem;">
+            <div style="font-size: 0.9rem; font-weight: 800; text-transform: uppercase; color: var(--text-main); margin-bottom: 0.75rem; letter-spacing: 0.03em;">
+                Itemized Service Breakdown
+            </div>
+            <div class="table-responsive">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-subtle);">
+                            <th style="width: 18%;">Component</th>
+                            <th style="width: 44%;">Clinical Description</th>
+                            <th style="width: 13%; text-align: right;">Unit Price</th>
+                            <th style="width: 10%; text-align: center;">Qty</th>
+                            <th style="width: 15%; text-align: right;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in invoice.items %}
+                        {% set itype = item.item_type.value %}
+                        <tr>
+                            <td>
+                                <span class="badge" style="font-size: 0.75rem;
+                                    {% if itype in ['consultation'] %}background: rgba(14, 165, 233, 0.15); color: #38BDF8; border: 1px solid rgba(14, 165, 233, 0.3);
+                                    {% elif itype in ['laboratory', 'lab_test'] %}background: rgba(139, 92, 246, 0.15); color: #A78BFA; border: 1px solid rgba(139, 92, 246, 0.3);
+                                    {% elif itype in ['medicines', 'pharmacy'] %}background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3);
+                                    {% elif itype in ['room'] %}background: rgba(6, 182, 212, 0.15); color: #22D3EE; border: 1px solid rgba(6, 182, 212, 0.3);
+                                    {% elif itype in ['bed', 'bed_charge'] %}background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3);
+                                    {% elif itype in ['procedures', 'procedure'] %}background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3);
+                                    {% else %}background: rgba(100, 116, 139, 0.15); color: #94A3B8; border: 1px solid rgba(100, 116, 139, 0.3);
+                                    {% endif %}">
+                                    {{ item.category_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong style="color: var(--text-main);">{{ item.description }}</strong>
+                            </td>
+                            <td style="text-align: right;">${{ item.unit_price }}</td>
+                            <td style="text-align: center;">{{ item.quantity }}</td>
+                            <td style="text-align: right; font-weight: 700;">${{ item.subtotal }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">No items itemized on this invoice.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Financial Summary Ledger -->
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 2rem;">
+            <div style="width: 320px; font-size: 0.925rem; display: flex; flex-direction: column; gap: 0.55rem; background: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Subtotal:</span>
+                    <strong>${{ "%.2f"|format(invoice.subtotal) }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Discount Applied:</span>
+                    <span style="color: #34D399;">-${{ "%.2f"|format(invoice.discount) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-muted);">Healthcare Tax:</span>
+                    <span>+${{ "%.2f"|format(invoice.tax) }}</span>
+                </div>
+                {% if invoice.insurance_covered > 0 %}
+                <div style="display: flex; justify-content: space-between; color: #60A5FA;">
+                    <span>Insurance Covered:</span>
+                    <span>-${{ "%.2f"|format(invoice.insurance_covered) }}</span>
+                </div>
+                {% endif %}
+                <div style="display: flex; justify-content: space-between; border-top: 2px solid var(--border-subtle); padding-top: 0.6rem; font-size: 1.15rem;">
+                    <span style="font-weight: 800;">Final Amount:</span>
+                    <strong style="color: var(--teal-primary);">${{ "%.2f"|format(invoice.total_amount) }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #34D399; font-weight: 600;">
+                    <span>Amount Paid:</span>
+                    <span>${{ "%.2f"|format(invoice.amount_paid) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-subtle); padding-top: 0.6rem; font-size: 1.15rem; color: {% if invoice.balance_due > 0 %}#F87171{% else %}#34D399{% endif %}; font-weight: 800;">
+                    <span>Balance Due:</span>
+                    <span>${{ "%.2f"|format(invoice.balance_due) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment & Refund Transaction Receipts -->
+        {% if invoice.payments %}
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; margin-bottom: 2rem;">
+            <div style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--text-main); margin-bottom: 0.65rem; letter-spacing: 0.05em;">
+                Receipts & Payment History
+            </div>
+            <div class="table-responsive">
+                <table class="table" style="font-size: 0.825rem;">
+                    <thead>
+                        <tr>
+                            <th>Date / Timestamp</th>
+                            <th>Transaction Type</th>
+                            <th>Method</th>
+                            <th>Reference Code</th>
+                            <th>Notes / Reason</th>
+                            <th style="text-align: right;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in invoice.payments %}
+                        <tr>
+                            <td>{{ p.payment_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if p.is_refund %}
+                                <span class="badge badge-danger" style="font-size: 0.7rem;">REFUND</span>
+                                {% else %}
+                                <span class="badge badge-success" style="font-size: 0.7rem;">PAYMENT</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ p.payment_method.value|upper }}</strong></td>
+                            <td><code>{{ p.transaction_reference }}</code></td>
+                            <td style="color: var(--text-dim);">{{ p.notes or 'Settled at hospital cashier desk' }}</td>
+                            <td style="text-align: right; font-weight: 700; color: {% if p.is_refund %}#F87171{% else %}#34D399{% endif %};">
+                                {% if p.is_refund %}-{% else %}+{% endif %}${{ "%.2f"|format(p.amount) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Official Signatory & Footer -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-dim);">
+            <div style="max-width: 450px; line-height: 1.4;">
+                <strong>Notice:</strong> This is a computer-generated official tax invoice verified by MediCare AI Hospital Information System. In case of discrepancies, contact the hospital billing desk within 7 working days.
+            </div>
+            <div style="text-align: center; width: 220px;">
+                <div style="border-bottom: 1px solid var(--text-dim); height: 40px; margin-bottom: 0.35rem;"></div>
+                <strong>Authorized Signatory</strong>
+                <div style="font-size: 0.75rem;">Accounts & Cashier Desk</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Settlement Desk (Hidden in print) -->
+    {% if session.get('user_role') in ['admin', 'receptionist'] %}
+    <div class="no-print" style="margin-top: 1.5rem; display: grid; grid-template-columns: {% if invoice.balance_due > 0 and invoice.amount_paid > 0 and session.get('user_role') == 'admin' %}1fr 1fr{% else %}1fr{% endif %}; gap: 1.5rem;">
+        
+        <!-- Record Payment Card -->
+        {% if invoice.balance_due > 0 %}
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span>💳</span> Record Payment</div>
+                <div class="card-subtitle">Settle outstanding balance (partial or full)</div>
+            </div>
+            <form method="POST" action="{{ url_for('billing.process_payment', invoice_id=invoice.id) }}">
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Payment Amount ($) *</label>
+                        <input type="number" step="0.01" min="0.01" max="{{ invoice.balance_due }}" name="amount" class="form-control" value="{{ invoice.balance_due }}" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Payment Method *</label>
+                        <select name="payment_method" class="form-control" required>
+                            <option value="cash">Cash Settlement</option>
+                            <option value="card">Credit / Debit Card</option>
+                            <option value="upi">UPI / Digital QR</option>
+                            <option value="insurance">Insurance Claim</option>
+                            <option value="net_banking">Net Banking / Wire</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Transaction Reference #</label>
+                        <input type="text" name="transaction_reference" class="form-control" placeholder="e.g. TXN-CARD-991204">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Notes</label>
+                        <input type="text" name="notes" class="form-control" placeholder="Optional notes">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem;">
+                    <button type="submit" class="btn btn-primary">
+                        <span>💵</span> Submit Payment Receipt
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Process Refund Card (Admin only and if payments exist) -->
+        {% if session.get('user_role') == 'admin' and invoice.amount_paid > 0 %}
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title" style="color: #F87171;"><span>🔄</span> Process Refund</div>
+                <div class="card-subtitle">Issue full or partial refund for settled charges</div>
+            </div>
+            <form method="POST" action="{{ url_for('billing.process_refund', invoice_id=invoice.id) }}">
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Refund Amount ($) *</label>
+                        <input type="number" step="0.01" min="0.01" max="{{ invoice.amount_paid }}" name="refund_amount" class="form-control" value="{{ invoice.amount_paid }}" required>
+                        <small style="color: var(--text-dim); font-size: 0.75rem;">Max refundable: ${{ "%.2f"|format(invoice.amount_paid) }}</small>
+                    </div>
+                    <div class="form-group" style="flex: 1.5;">
+                        <label class="form-label">Clinical / Admin Reason *</label>
+                        <input type="text" name="reason" class="form-control" placeholder="e.g. Test cancelled / Billing adjustment" required>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem;">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to process this refund?');">
+                        <span>🔄</span> Process Refund
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Print Stylesheet -->
+<style>
+@media print {
+    /* Hide app chrome, sidebars, headers, action buttons */
+    .sidebar, .top-bar, .no-print, header, nav, .btn, .flash-messages {
+        display: none !important;
+    }
+
+    body, .main-content, .content-area, .invoice-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    }
+
+    .invoice-sheet {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+    }
+
+    .table {
+        color: #000000 !important;
+    }
+
+    .badge {
+        border: 1px solid #000000 !important;
+        color: #000000 !important;
+        background: #ffffff !important;
+    }
+}
+</style>
+{% endblock %}

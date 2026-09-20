@@ -1,0 +1,48 @@
+{
+  "readmission_model": {
+    "timestamp": "2026-09-16T13:17:59.329338+00:00",
+    "algorithm": "RandomForestClassifier with Balanced Weights",
+    "metrics": {
+      "cv_roc_auc_mean": 0.7372,
+      "test_roc_auc": 0.708,
+      "test_accuracy": 0.708,
+      "recall_positive": 0.829,
+      "f1_positive": 0.7981
+    },
+    "features": [
+      "age",
+      "gender",
+      "admission_type",
+      "ward_type",
+      "length_of_stay_days",
+      "previous_admissions_12m",
+      "chronic_conditions_count",
+      "abnormal_lab_count",
+      "vital_instability_index",
+      "medication_count",
+      "high_risk_medication_flag"
+    ]
+  },
+  "no_show_model": {
+    "timestamp": "2026-09-16T13:18:28.058305+00:00",
+    "algorithm": "CalibratedClassifierCV(HistGradientBoostingClassifier)",
+    "metrics": {
+      "test_roc_auc": 0.6901,
+      "brier_score": 0.1418,
+      "test_accuracy": 0.8142,
+      "recall_positive": 0.0262,
+      "f1_positive": 0.0511
+    },
+    "features": [
+      "age",
+      "gender",
+      "lead_time_days",
+      "day_of_week",
+      "appointment_hour",
+      "department",
+      "historical_appointments",
+      "historical_no_show_ratio",
+      "sms_reminder_sent"
+    ]
+  }
+}

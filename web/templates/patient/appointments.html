@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}My Appointments - MediCare AI{% endblock %}
+{% block page_heading %}Appointment History & Schedules{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div class="card-title"><span>📅</span> Scheduled Consultations & History</div>
+            <div class="card-subtitle">View, reschedule, or cancel your outpatient appointments</div>
+        </div>
+        <a href="{{ url_for('appointment.book') }}" class="btn btn-primary btn-sm">
+            <span>➕</span> Book New Appointment
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Token</th>
+                    <th>Date & Time</th>
+                    <th>Physician</th>
+                    <th>Department</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in appointments %}
+                <tr>
+                    <td><div class="token-pill">#{{ app.token_number }}</div></td>
+                    <td style="font-weight: 600; color: var(--text-main);">
+                        {{ app.appointment_datetime.strftime('%Y-%m-%d %H:%M') if app.appointment_datetime else 'N/A' }}
+                    </td>
+                    <td>Dr. {{ app.doctor.user.full_name }}</td>
+                    <td>{{ app.doctor.department.name if app.doctor.department else 'General Medicine' }}</td>
+                    <td>{{ app.reason or 'General OPD Consultation' }}</td>
+                    <td>
+                        {% if app.status.value == 'scheduled' %}
+                            <span class="badge badge-warning">Scheduled</span>
+                        {% elif app.status.value == 'confirmed' %}
+                            <span class="badge badge-info">Confirmed</span>
+                        {% elif app.status.value == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                        {% elif app.status.value == 'cancelled' %}
+                            <span class="badge badge-danger">Cancelled</span>
+                        {% elif app.status.value == 'no_show' %}
+                            <span class="badge badge-neutral">No Show</span>
+                        {% else %}
+                            <span class="badge badge-neutral">{{ app.status.value }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        {% if app.status.value in ['scheduled', 'confirmed'] %}
+                            <a href="{{ url_for('appointment.reschedule', appointment_id=app.id) }}" class="btn btn-secondary btn-sm" title="Reschedule Appointment">
+                                <span>🔄</span> Reschedule
+                            </a>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="openCancelModal({{ app.id }}, '{{ app.appointment_datetime.strftime('%Y-%m-%d %H:%M') if app.appointment_datetime else '' }}')">
+                                <span>✖️</span> Cancel
+                            </button>
+                        {% else %}
+                            <span style="color: var(--text-dim); font-size: 0.8rem; font-style: italic;">No actions</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2.5rem 1rem;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📅</div>
+                        <div>No appointments on record.</div>
+                        <div style="margin-top: 0.75rem;">
+                            <a href="{{ url_for('appointment.book') }}" class="btn btn-primary btn-sm">Book Your First Consultation</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Cancellation Confirmation Modal -->
+<div id="cancelModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 440px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+        <h3 style="margin-top: 0; color: #F87171; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>⚠️</span> Cancel Consultation
+        </h3>
+        <p style="color: var(--text-main); font-size: 0.9rem;" id="cancelModalText">
+            Are you sure you want to cancel this appointment? The consultation slot will be released.
+        </p>
+
+        <form id="cancelForm" method="POST" action="">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label" for="cancelReasonInput">Reason for Cancellation</label>
+                <input type="text" id="cancelReasonInput" name="cancellation_reason" class="form-control" placeholder="Optional reason (e.g. feeling better, personal emergency)">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeCancelModal()">Keep Appointment</button>
+                <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openCancelModal(apptId, apptTime) {
+    const modal = document.getElementById('cancelModal');
+    const form = document.getElementById('cancelForm');
+    const text = document.getElementById('cancelModalText');
+    form.action = `/appointments/${apptId}/cancel`;
+    text.textContent = `Are you sure you want to cancel appointment #${apptId} scheduled for ${apptTime}? This will release the slot.`;
+    modal.style.display = 'flex';
+}
+
+function closeCancelModal() {
+    document.getElementById('cancelModal').style.display = 'none';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+{% block title %}Patient History - {{ patient.user.full_name }} - MediCare AI{% endblock %}
+{% block page_heading %}Doctor's Clinical Patient Chart & Medical History{% endblock %}
+
+{% block content %}
+<!-- Top Patient Header & Safety Alerts -->
+<div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border-color: rgba(13, 148, 136, 0.4);">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--teal-primary), var(--azure-accent)); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #FFF; font-weight: 700;">
+                {{ patient.user.first_name[0]|upper }}{{ patient.user.last_name[0]|upper }}
+            </div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                        {{ patient.user.full_name }}
+                    </h2>
+                    <span class="badge" style="background: rgba(13, 148, 136, 0.2); color: var(--teal-primary); border: 1px solid var(--teal-primary); font-family: monospace;">
+                        PAT-{{ "%05d"|format(patient.id) }}
+                    </span>
+                    <span class="badge badge-neutral" style="text-transform: capitalize;">
+                        {{ patient.gender.value if patient.gender else 'Other' }}
+                    </span>
+                    {% if patient.blood_group %}
+                        <span class="badge badge-danger" style="font-weight: 700;">{{ patient.blood_group }}</span>
+                    {% endif %}
+                </div>
+                <div style="display: flex; gap: 1.25rem; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem; flex-wrap: wrap;">
+                    <span><strong>Age:</strong> {{ age }} yrs (DOB: {{ patient.dob }})</span>
+                    <span><strong>Phone:</strong> {{ patient.user.phone or 'Not provided' }}</span>
+                    <span><strong>Emergency:</strong> {{ patient.emergency_contact_name or 'N/A' }} ({{ patient.emergency_contact_phone or '-' }})</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{{ url_for('doctor.new_prescription', patient_id=patient.id) }}" class="btn btn-primary btn-sm" style="background: #0ea5e9;">
+                <span>💊</span> Write Prescription
+            </a>
+            <a href="{{ url_for('doctor.new_medical_record', patient_id=patient.id) }}" class="btn btn-primary btn-sm">
+                <span>➕</span> New EMR Record
+            </a>
+            <a href="{{ url_for('doctor.my_patients') }}" class="btn btn-secondary btn-sm">
+                <span>⬅️</span> My Patients
+            </a>
+            <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-secondary btn-sm">
+                <span>🩺</span> Workbench
+            </a>
+        </div>
+    </div>
+
+    <!-- Safety Alerts (Allergies & Chronic Pre-existing Conditions) -->
+    {% if patient.allergies or patient.chronic_conditions %}
+    <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-wrap: wrap; gap: 1rem;">
+        {% if patient.allergies %}
+        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.4rem 0.85rem; border-radius: var(--radius-md); font-size: 0.85rem; color: #FCA5A5;">
+            <span>⚠️</span>
+            <strong>Documented Allergies:</strong> {{ patient.allergies }}
+        </div>
+        {% endif %}
+        {% if patient.chronic_conditions %}
+        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); padding: 0.4rem 0.85rem; border-radius: var(--radius-md); font-size: 0.85rem; color: #FCD34D;">
+            <span>⚕️</span>
+            <strong>Chronic Pre-existing Conditions:</strong> {{ patient.chronic_conditions }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Diagnoses & Clinical Encounters -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>🩺</span> Documented Diagnoses & ICD-10 Registry</div>
+            <div class="card-subtitle">Active and historical diagnoses confirmed by attending physicians</div>
+        </div>
+    </div>
+
+    <div class="table-responsive" style="margin-bottom: 1.5rem;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ICD-10 Code</th>
+                    <th>Diagnosis Name</th>
+                    <th>Classification</th>
+                    <th>Status</th>
+                    <th>Diagnosed Date</th>
+                    <th>Documenting Doctor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in diagnoses %}
+                <tr>
+                    <td>
+                        <strong style="font-family: monospace; color: var(--teal-primary);">
+                            {{ d.diagnosis_code or 'ICD-N/A' }}
+                        </strong>
+                    </td>
+                    <td>
+                        <strong>{{ d.diagnosis_name }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral">{{ d.diagnosis_type }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if d.status == 'Active' %}badge-warning{% elif d.status == 'Resolved' %}badge-success{% else %}badge-info{% endif %}">
+                            {{ d.status }}
+                        </span>
+                    </td>
+                    <td>{{ d.diagnosed_date }}</td>
+                    <td>Dr. {{ d.doctor.user.full_name if d.doctor and d.doctor.user else 'Consultant' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                        No diagnoses documented for this patient.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem;">
+        Clinical Consultations & Electronic Medical Records (EMR)
+    </h4>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Visit Date</th>
+                    <th>Consultant</th>
+                    <th>Chief Complaints & Assessment</th>
+                    <th>Vital Signs</th>
+                    <th>Treatment Plan & Notes</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in medical_records %}
+                <tr>
+                    <td>
+                        <strong>{{ rec.visit_date }}</strong>
+                        <div style="font-size: 0.72rem; color: var(--text-dim); font-family: monospace;">EMR-#{{ rec.id }}</div>
+                    </td>
+                    <td>Dr. {{ rec.doctor.user.full_name if rec.doctor and rec.doctor.user else 'Practitioner' }}</td>
+                    <td>
+                        <div><strong>Symptoms:</strong> {{ rec.symptoms }}</div>
+                        <div style="color: var(--teal-primary); font-size: 0.82rem; margin-top: 0.2rem;">
+                            <strong>Diagnosis:</strong> {{ rec.diagnosis }}
+                        </div>
+                        {% if rec.allergies %}
+                            <div style="color: #FCA5A5; font-size: 0.75rem; margin-top: 0.2rem;">
+                                ⚠️ Allergies: {{ rec.allergies }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.78rem;">
+                        {% if rec.vitals_bp or rec.vitals_pulse or rec.vitals_temp or rec.vitals_spo2 or rec.vitals_weight %}
+                            <div>BP: <strong>{{ rec.vitals_bp or '-' }}</strong> | Pulse: <strong>{{ rec.vitals_pulse or '-' }} bpm</strong></div>
+                            <div>Temp: <strong>{{ rec.vitals_temp or '-' }}°C</strong> | SpO2: <strong>{{ rec.vitals_spo2 or '-' }}%</strong></div>
+                            {% if rec.vitals_weight or rec.vitals_height %}
+                                <div style="color: var(--text-dim);">Wt: {{ rec.vitals_weight or '-' }}kg | Ht: {{ rec.vitals_height or '-' }}cm</div>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: var(--text-dim);">No vitals logged</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.8rem; max-width: 240px;">
+                        {% if rec.treatment_plan %}
+                            <div style="color: #34D399; margin-bottom: 0.25rem;">
+                                <strong>Plan:</strong> {{ rec.treatment_plan }}
+                            </div>
+                        {% endif %}
+                        {% if rec.clinical_notes %}
+                            <div style="color: var(--text-muted);">
+                                <strong>Notes:</strong> {{ rec.clinical_notes }}
+                            </div>
+                        {% endif %}
+                        {% if rec.follow_up_date %}
+                            <div style="color: #60A5FA; font-size: 0.75rem; margin-top: 0.25rem;">
+                                ⏰ Follow-up: <strong>{{ rec.follow_up_date }}</strong>
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        {% if session.get('user_role') == 'admin' or rec.doctor_id == session.get('user_id') %}
+                            <a href="{{ url_for('doctor.edit_medical_record', record_id=rec.id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem;">
+                                <span>✏️</span> Edit
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                        No consultation records on file.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Prescriptions & Lab Results Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    <!-- Prescriptions Card -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>💊</span> Prescription History</div>
+                <div class="card-subtitle">{{ prescriptions|length }} records</div>
+            </div>
+            <a href="{{ url_for('doctor.new_prescription', patient_id=patient.id) }}" class="btn btn-primary btn-sm" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+                <span>➕</span> New Prescription
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Prescribed Regimen</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rx in prescriptions %}
+                    <tr>
+                        <td>
+                            <strong style="font-family: monospace;">RX-#{{ rx.id }}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ rx.created_at.strftime('%Y-%m-%d') if rx.created_at else 'N/A' }}</div>
+                        </td>
+                        <td>
+                            <span class="badge {% if rx.status.value == 'dispensed' %}badge-success{% elif rx.status.value == 'partially_dispensed' %}badge-warning{% elif rx.status.value == 'cancelled' %}badge-neutral{% else %}badge-info{% endif %}">
+                                {{ rx.status.value }}
+                            </span>
+                        </td>
+                        <td>
+                            <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.8rem;">
+                                {% for it in rx.items %}
+                                    <li>
+                                        <strong>{{ it.medicine.name if it.medicine else 'Drug' }}</strong> - {{ it.dosage }} ({{ it.frequency }}) for {{ it.duration_days }}d [Qty: {{ it.quantity_prescribed }}]
+                                    </li>
+                                {% else %}
+                                    <li>No items</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('doctor.prescription_detail', rx_id=rx.id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
+                                <span>👁️</span> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                            No prescriptions issued.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Lab Reports Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>🔬</span> Lab Diagnostic Reports</div>
+            <span class="card-subtitle">{{ lab_orders|length }} orders</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Test Name</th>
+                        <th>Status</th>
+                        <th>Result</th>
+                        <th>Flag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in lab_orders %}
+                    <tr>
+                        <td>
+                            <strong>{{ order.test.name if order.test else 'Lab Test' }}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ order.ordered_at.strftime('%Y-%m-%d') if order.ordered_at else 'N/A' }}</div>
+                        </td>
+                        <td>
+                            <span class="badge {% if order.status.value == 'completed' %}badge-success{% else %}badge-info{% endif %}">
+                                {{ order.status.value }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if order.result %}
+                                <strong>{{ order.result.measured_value }} {{ order.result.unit }}</strong>
+                            {% else %}
+                                <span style="color: var(--text-dim); font-size: 0.8rem;">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.result %}
+                                {% if order.result.critical_alert %}
+                                    <span class="badge badge-danger">CRITICAL</span>
+                                {% elif order.result.is_abnormal %}
+                                    <span class="badge badge-warning">ABNORMAL</span>
+                                {% else %}
+                                    <span class="badge badge-success">NORMAL</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                            No lab orders on file.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Longitudinal Chronological Clinical History Timeline -->
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>⏳</span> Longitudinal Medical History Timeline</div>
+            <div class="card-subtitle">Chronologically merged record of clinical consultations, diagnoses, prescriptions, labs, and hospital admissions</div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="doc-tl-filter-btn active" data-filter="all">All Events ({{ timeline|length }})</button>
+            <button type="button" class="doc-tl-filter-btn" data-filter="consultation">Consultations</button>
+            <button type="button" class="doc-tl-filter-btn" data-filter="diagnosis">Diagnoses</button>
+            <button type="button" class="doc-tl-filter-btn" data-filter="prescription">Prescriptions</button>
+            <button type="button" class="doc-tl-filter-btn" data-filter="lab_order">Labs</button>
+            <button type="button" class="doc-tl-filter-btn" data-filter="admission">Admissions</button>
+        </div>
+    </div>
+
+    <div class="doc-timeline-container" id="docTimelineList">
+        {% for event in timeline %}
+        <div class="doc-timeline-item" data-type="{{ event.type }}">
+            <div class="doc-timeline-marker {{ event.type }}">
+                <span>{{ event.icon }}</span>
+            </div>
+            <div class="card" style="margin-bottom: 1rem; border-radius: var(--radius-md);">
+                <div style="padding: 0.85rem 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.35rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="font-size: 0.75rem; font-family: monospace; background: rgba(30, 41, 59, 0.8); border: 1px solid var(--border-subtle); padding: 0.15rem 0.45rem; border-radius: var(--radius-sm); color: var(--text-dim); font-weight: 600;">
+                                {{ event.date_str }}
+                            </span>
+                            <strong style="color: var(--text-main); font-size: 0.95rem;">{{ event.title }}</strong>
+                            <span class="badge {{ event.badge_class }}" style="font-size: 0.7rem; text-transform: uppercase;">{{ event.type }}</span>
+                        </div>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">{{ event.subtitle }}</span>
+                    </div>
+
+                    {% if event.type == 'consultation' %}
+                        <div style="font-size: 0.85rem; color: var(--text-main); line-height: 1.4;">
+                            <div><strong>Symptoms:</strong> {{ event.data.symptoms }}</div>
+                            {% if event.data.vitals_summary %}
+                                <div style="font-size: 0.8rem; color: var(--teal-primary); margin-top: 0.25rem;">
+                                    <strong>Vitals:</strong> {{ event.data.vitals_summary }}
+                                </div>
+                            {% endif %}
+                            {% if event.data.allergies %}
+                                <div style="font-size: 0.8rem; color: #FCA5A5; margin-top: 0.25rem;">
+                                    <strong>⚠️ Allergies Noted:</strong> {{ event.data.allergies }}
+                                </div>
+                            {% endif %}
+                            {% if event.data.treatment_plan %}
+                                <div style="font-size: 0.8rem; color: #34D399; margin-top: 0.25rem;">
+                                    <strong>Plan:</strong> {{ event.data.treatment_plan }}
+                                </div>
+                            {% endif %}
+                            {% if event.data.clinical_notes %}
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                    <strong>Notes:</strong> {{ event.data.clinical_notes }}
+                                </div>
+                            {% endif %}
+                            {% if event.data.follow_up_date %}
+                                <div style="font-size: 0.8rem; color: #60A5FA; margin-top: 0.25rem;">
+                                    <strong>⏰ Follow-up:</strong> {{ event.data.follow_up_date }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% elif event.type == 'prescription' %}
+                        <div style="font-size: 0.82rem; color: var(--text-muted);">
+                            {% for it in event.data.get('items', []) %}
+                                <div>• {{ it }}</div>
+                            {% endfor %}
+                        </div>
+                    {% elif event.type == 'admission' %}
+                        <div style="font-size: 0.82rem; color: var(--text-main);">
+                            <div>Department: <strong>{{ event.data.ward }}</strong> | Status: {{ event.data.status }}</div>
+                            <div>Discharge: {{ event.data.discharge_date }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: var(--text-dim); padding: 2rem;">No timeline events recorded.</div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.doc-timeline-container {
+    position: relative;
+    padding-left: 2.2rem;
+    margin-top: 1rem;
+}
+.doc-timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 1rem;
+    width: 2px;
+    background: var(--border-subtle);
+}
+.doc-timeline-item {
+    position: relative;
+}
+.doc-timeline-marker {
+    position: absolute;
+    left: -2.2rem;
+    top: 0.75rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    z-index: 2;
+}
+.doc-timeline-marker.consultation { border-color: var(--teal-primary); }
+.doc-timeline-marker.diagnosis { border-color: var(--azure-accent); }
+.doc-timeline-marker.prescription { border-color: #34D399; }
+.doc-timeline-marker.lab_order { border-color: #FBBF24; }
+.doc-timeline-marker.admission { border-color: #F87171; }
+
+.doc-tl-filter-btn {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.doc-tl-filter-btn.active {
+    background: var(--teal-primary);
+    color: #0F172A;
+    font-weight: 700;
+    border-color: var(--teal-primary);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const filterBtns = document.querySelectorAll('.doc-tl-filter-btn');
+    const items = document.querySelectorAll('.doc-timeline-item');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const filterType = btn.getAttribute('data-filter');
+            items.forEach(item => {
+                if (filterType === 'all' || item.getAttribute('data-type') === filterType) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

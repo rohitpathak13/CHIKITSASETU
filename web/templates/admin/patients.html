@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}Manage Patients - MediCare AI{% endblock %}
+{% block page_heading %}Master Patient Registry{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title">Registered Hospital Patients ({{ total }} Total)</div>
+            <div class="card-subtitle">Manage master patient demographic profiles, clinical history indicators, and emergency contacts</div>
+        </div>
+        <button class="btn btn-primary" data-modal-target="create-patient-modal">
+            <span>➕</span> Register Patient
+        </button>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <form method="GET" action="{{ url_for('admin.manage_patients') }}" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by patient name, email, phone..." style="flex: 1; min-width: 220px;">
+        
+        <select name="gender" class="form-control" style="width: auto; min-width: 140px;">
+            <option value="">All Genders</option>
+            <option value="male" {% if gender_filter == 'male' %}selected{% endif %}>Male</option>
+            <option value="female" {% if gender_filter == 'female' %}selected{% endif %}>Female</option>
+            <option value="other" {% if gender_filter == 'other' %}selected{% endif %}>Other</option>
+        </select>
+
+        <select name="blood_group" class="form-control" style="width: auto; min-width: 130px;">
+            <option value="">All Blood Groups</option>
+            {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                <option value="{{ bg }}" {% if blood_filter == bg %}selected{% endif %}>{{ bg }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if q or gender_filter or blood_filter %}
+            <a href="{{ url_for('admin.manage_patients') }}" class="btn btn-secondary" style="color: var(--text-dim);">Clear</a>
+        {% endif %}
+    </form>
+
+    <!-- Patients Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Patient Name</th>
+                    <th>Gender & Age</th>
+                    <th>Blood Group</th>
+                    <th>Contact Info</th>
+                    <th>Emergency Contact</th>
+                    <th>Allergies & Conditions</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in patients %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: var(--text-main);">
+                            <a href="{{ url_for('patient.patient_detail', patient_id=p.id) }}" style="color: inherit; text-decoration: none;">
+                                {{ p.user.full_name }}
+                            </a>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">MRN: PAT-{{ "%05d"|format(p.id) }}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral" style="text-transform: capitalize;">{{ p.gender.value if p.gender else 'N/A' }}</span>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">DOB: {{ p.dob }}</div>
+                    </td>
+                    <td>
+                        {% if p.blood_group %}
+                            <span class="badge badge-danger">{{ p.blood_group }}</span>
+                        {% else %}
+                            <span style="color: var(--text-dim); font-size: 0.8rem;">Unknown</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.85rem;">
+                        <div>{{ p.user.phone or '-' }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">{{ p.user.email }}</div>
+                    </td>
+                    <td style="font-size: 0.85rem;">
+                        <div>{{ p.emergency_contact_name or '-' }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ p.emergency_contact_phone or '' }}</div>
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 200px;">
+                        {% if p.allergies %}
+                            <div><strong style="color: #F87171;">Allergies:</strong> {{ p.allergies }}</div>
+                        {% endif %}
+                        {% if p.chronic_conditions %}
+                            <div><strong>Chronic:</strong> {{ p.chronic_conditions }}</div>
+                        {% endif %}
+                        {% if not p.allergies and not p.chronic_conditions %}
+                            <span style="color: var(--text-dim);">None recorded</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <a href="{{ url_for('patient.patient_detail', patient_id=p.id) }}" class="btn btn-secondary btn-sm" title="View 360° Health Record">
+                            <span>🔍</span> Chart
+                        </a>
+                        <a href="{{ url_for('patient.edit_patient', patient_id=p.id) }}" class="btn btn-secondary btn-sm" title="Edit Patient Record">
+                            <span>✏️</span> Edit
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                        No patients found matching search criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Showing page {{ page }} of {{ pages }} ({{ total }} patients)
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+            {% if page > 1 %}
+                <a href="{{ url_for('admin.manage_patients', page=page-1, q=q, gender=gender_filter, blood_group=blood_filter) }}" class="btn btn-secondary btn-sm">&laquo; Prev</a>
+            {% endif %}
+            
+            <span class="btn btn-primary btn-sm" style="pointer-events: none;">{{ page }}</span>
+
+            {% if page < pages %}
+                <a href="{{ url_for('admin.manage_patients', page=page+1, q=q, gender=gender_filter, blood_group=blood_filter) }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal: Register Patient -->
+<div class="modal-backdrop" id="create-patient-modal">
+    <div class="modal-dialog" style="max-width: 650px;">
+        <div class="card-header" style="margin-bottom: 1rem;">
+            <div class="card-title">Register Patient Profile</div>
+            <button type="button" class="btn btn-secondary btn-sm" data-close-modal>&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin.create_patient') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">First Name *</label>
+                    <input type="text" name="first_name" class="form-control" required placeholder="Aarav">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name *</label>
+                    <input type="text" name="last_name" class="form-control" required placeholder="Sharma">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" name="email" class="form-control" required placeholder="patient@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" name="phone" class="form-control" placeholder="+91 98765 43210">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Date of Birth *</label>
+                    <input type="date" name="dob" class="form-control" value="1990-01-01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gender *</label>
+                    <select name="gender" class="form-control" required>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Blood Group</label>
+                    <select name="blood_group" class="form-control">
+                        <option value="">-- Unknown --</option>
+                        {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                            <option value="{{ bg }}">{{ bg }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Emergency Contact Name</label>
+                    <input type="text" name="emergency_contact_name" class="form-control" placeholder="Relative / Guardian">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Emergency Contact Phone</label>
+                    <input type="text" name="emergency_contact_phone" class="form-control" placeholder="+91 98765 00000">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Residential Address</label>
+                <textarea name="address" class="form-control" rows="2" placeholder="Full postal address"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Known Allergies</label>
+                    <input type="text" name="allergies" class="form-control" placeholder="Penicillin, Sulfa, Peanuts">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Chronic Conditions</label>
+                    <input type="text" name="chronic_conditions" class="form-control" placeholder="Hypertension, Diabetes">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Initial Password</label>
+                <input type="password" name="password" class="form-control" value="Password123!" required>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                <button type="submit" class="btn btn-primary">Register Patient</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

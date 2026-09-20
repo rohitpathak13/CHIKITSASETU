@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Billing & Invoices{% endblock %}
+{% block page_heading %}Inpatient & Outpatient Invoices{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>💳</span> My Invoices & Payments</div>
+            <div class="card-subtitle">Itemized clinical charges, payments, and clearance receipts</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Subtotal</th>
+                    <th>Tax</th>
+                    <th>Total Amount</th>
+                    <th>Paid</th>
+                    <th>Balance Due</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td><strong>{{ inv.invoice_number }}</strong></td>
+                    <td style="color: var(--text-muted);">{{ inv.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>${{ inv.subtotal }}</td>
+                    <td>${{ inv.tax }}</td>
+                    <td style="font-weight: 700; color: var(--text-main);">${{ inv.total_amount }}</td>
+                    <td style="color: #34D399;">${{ inv.amount_paid }}</td>
+                    <td style="color: {% if inv.balance_due > 0 %}#F87171{% else %}#34D399{% endif %}; font-weight: 600;">
+                        ${{ inv.balance_due }}
+                    </td>
+                    <td>
+                        <span class="badge {% if inv.status.value == 'paid' %}badge-success{% elif inv.status.value == 'partially_paid' %}badge-warning{% else %}badge-danger{% endif %}">
+                            {{ inv.status.value }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" style="text-align: center; color: var(--text-dim);">No billing invoices issued yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

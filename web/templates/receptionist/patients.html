@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Patient Directory{% endblock %}
+{% block page_heading %}Patient Records & Registry Directory{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title"><span>👥</span> Hospital Patient Master Index</div>
+            <div class="card-subtitle">Showing {{ patients|length }} of {{ total_count }} registered patients</div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <form method="GET" action="{{ url_for('receptionist.patients_directory') }}" class="search-box-wrapper">
+                <span class="search-box-icon">🔍</span>
+                <input type="text" name="q" value="{{ search_query or '' }}" class="search-box-input" placeholder="Search name, phone, email, blood group...">
+                {% if gender_filter %}
+                    <input type="hidden" name="gender" value="{{ gender_filter }}">
+                {% endif %}
+            </form>
+            <a href="{{ url_for('receptionist.register_patient') }}" class="btn btn-primary btn-sm">
+                <span>➕</span> Register Patient
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter chips -->
+    <div style="padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; gap: 0.5rem; background: rgba(255,255,255,0.01);">
+        <a href="{{ url_for('receptionist.patients_directory', q=search_query) }}" class="btn btn-sm {% if not gender_filter %}btn-primary{% else %}btn-secondary{% endif %}">
+            All Genders
+        </a>
+        <a href="{{ url_for('receptionist.patients_directory', q=search_query, gender='male') }}" class="btn btn-sm {% if gender_filter == 'male' %}btn-primary{% else %}btn-secondary{% endif %}">
+            Male
+        </a>
+        <a href="{{ url_for('receptionist.patients_directory', q=search_query, gender='female') }}" class="btn btn-sm {% if gender_filter == 'female' %}btn-primary{% else %}btn-secondary{% endif %}">
+            Female
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>MRN / ID</th>
+                    <th>Patient Name</th>
+                    <th>DOB / Age</th>
+                    <th>Gender</th>
+                    <th>Contact Info</th>
+                    <th>Blood Group</th>
+                    <th>Emergency Contact</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in patients %}
+                <tr>
+                    <td>
+                        <span class="badge badge-info" style="font-size: 0.8rem;">#PT-{{ p.user_id }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ p.user.full_name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-dim);">
+                            {{ p.user.email }}
+                        </div>
+                    </td>
+                    <td>
+                        {{ p.dob.strftime('%Y-%m-%d') if p.dob else 'N/A' }}
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral" style="text-transform: capitalize;">
+                            {{ p.gender.value }}
+                        </span>
+                    </td>
+                    <td>
+                        <div>📞 {{ p.user.phone or 'N/A' }}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-warning" style="font-weight: 700;">
+                            {{ p.blood_group or 'N/A' }}
+                        </span>
+                    </td>
+                    <td style="font-size: 0.82rem; color: var(--text-muted);">
+                        {% if p.emergency_contact_name %}
+                            {{ p.emergency_contact_name }} ({{ p.emergency_contact_phone or 'No phone' }})
+                        {% else %}
+                            <span style="color: var(--text-dim);">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="white-space: nowrap;">
+                        <a href="{{ url_for('patient.patient_detail', patient_id=p.user_id) }}" class="btn btn-secondary btn-sm" title="View 360° Health Record">
+                            <span>🔍</span> Chart
+                        </a>
+                        <a href="{{ url_for('receptionist.book_appointment', patient_id=p.user_id) }}" class="btn btn-secondary btn-sm" title="Schedule Appointment">
+                            <span>📅</span> Book
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                        No patients found matching your search.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination-container">
+        <div>
+            Page {{ current_page }} of {{ total_pages }} (Total: {{ total_count }} patients)
+        </div>
+        <div class="pagination-controls">
+            {% if current_page > 1 %}
+                <a href="{{ url_for('receptionist.patients_directory', page=current_page - 1, q=search_query, gender=gender_filter) }}" class="page-btn">&larr; Prev</a>
+            {% endif %}
+
+            {% for page_num in range(1, total_pages + 1) %}
+                <a href="{{ url_for('receptionist.patients_directory', page=page_num, q=search_query, gender=gender_filter) }}" class="page-btn {% if page_num == current_page %}active{% endif %}">
+                    {{ page_num }}
+                </a>
+            {% endfor %}
+
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('receptionist.patients_directory', page=current_page + 1, q=search_query, gender=gender_filter) }}" class="page-btn">Next &rarr;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

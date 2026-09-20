@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}New Medical Record - {{ patient.user.full_name }} - MediCare AI{% endblock %}
+{% block page_heading %}New Electronic Medical Record (EMR){% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <!-- Patient Context Banner -->
+    <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)); border-left: 4px solid var(--teal-primary);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <h2 style="margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--text-main);">
+                        {{ patient.user.full_name }}
+                    </h2>
+                    <span class="badge" style="background: rgba(45, 212, 191, 0.15); color: var(--teal-primary); border: 1px solid var(--teal-primary); font-family: monospace;">
+                        PAT-{{ "%05d"|format(patient.id) }}
+                    </span>
+                    <span class="badge badge-neutral" style="text-transform: capitalize;">
+                        {{ patient.gender.value if patient.gender else 'Other' }}
+                    </span>
+                    {% if patient.blood_group %}
+                        <span class="badge badge-danger" style="font-weight: 700;">{{ patient.blood_group }}</span>
+                    {% endif %}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                    <span><strong>DOB:</strong> {{ patient.dob }}</span>
+                    <span><strong>Phone:</strong> {{ patient.user.phone or 'N/A' }}</span>
+                    <span><strong>Emergency:</strong> {{ patient.emergency_contact_name or 'None' }} ({{ patient.emergency_contact_phone or '-' }})</span>
+                </div>
+            </div>
+            <a href="{{ url_for('doctor.patient_history', patient_id=patient.id) }}" class="btn btn-secondary btn-sm">
+                <span>⬅️</span> Patient Chart
+            </a>
+        </div>
+
+        {% if patient.allergies or patient.chronic_conditions %}
+        <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; flex-wrap: wrap; gap: 0.75rem;">
+            {% if patient.allergies %}
+            <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); padding: 0.3rem 0.75rem; border-radius: var(--radius-md); font-size: 0.8rem; color: #FCA5A5;">
+                <span>⚠️</span> <strong>Documented Allergies:</strong> {{ patient.allergies }}
+            </div>
+            {% endif %}
+            {% if patient.chronic_conditions %}
+            <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); padding: 0.3rem 0.75rem; border-radius: var(--radius-md); font-size: 0.8rem; color: #FCD34D;">
+                <span>⚕️</span> <strong>Chronic Conditions:</strong> {{ patient.chronic_conditions }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- EMR Form Card -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>📝</span> Clinical Consultation & Medical Record Entry</div>
+                <div class="card-subtitle">Document chief complaints, clinical diagnosis, vitals, allergy assessment, and treatment plan</div>
+            </div>
+        </div>
+
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- 1. Symptoms & Chief Complaints -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    <span>🩺</span> 1. Symptoms & Chief Complaints
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="symptoms">Reported Symptoms / Complaints <span style="color: #F87171;">*</span></label>
+                    <textarea id="symptoms" name="symptoms" class="form-control" rows="3" required placeholder="Describe onset, severity, duration, and patient-reported subjective complaints..."></textarea>
+                </div>
+            </div>
+
+            <!-- 2. Objective Vital Signs -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--azure-accent); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    <span>💓</span> 2. Objective Vital Signs
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_bp">Blood Pressure (mmHg)</label>
+                        <input type="text" id="vitals_bp" name="vitals_bp" class="form-control" placeholder="120/80">
+                        <span style="font-size: 0.7rem; color: var(--text-dim);">e.g. 120/80</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_pulse">Pulse Rate (bpm)</label>
+                        <input type="number" id="vitals_pulse" name="vitals_pulse" class="form-control" placeholder="72" min="30" max="250">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_temp">Temperature (°C)</label>
+                        <input type="number" step="0.1" id="vitals_temp" name="vitals_temp" class="form-control" placeholder="37.0" min="30" max="45">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_spo2">SpO2 (%)</label>
+                        <input type="number" id="vitals_spo2" name="vitals_spo2" class="form-control" placeholder="98" min="50" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_weight">Weight (kg)</label>
+                        <input type="number" step="0.1" id="vitals_weight" name="vitals_weight" class="form-control" placeholder="70.5" min="1" max="500">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_height">Height (cm)</label>
+                        <input type="number" step="0.1" id="vitals_height" name="vitals_height" class="form-control" placeholder="175" min="30" max="250">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vitals_respiratory_rate">Respiration (breaths/min)</label>
+                        <input type="number" id="vitals_respiratory_rate" name="vitals_respiratory_rate" class="form-control" placeholder="16" min="6" max="60">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Clinical Diagnosis -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #FBBF24; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    <span>🔬</span> 3. Clinical Assessment & Diagnosis
+                </h3>
+                <div class="form-row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="diagnosis">Primary Diagnosis <span style="color: #F87171;">*</span></label>
+                        <input type="text" id="diagnosis" name="diagnosis" class="form-control" required placeholder="e.g. Essential Hypertension, Type 2 Diabetes Mellitus, Acute Bronchitis">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="diagnosis_code">ICD-10 Code</label>
+                        <input type="text" id="diagnosis_code" name="diagnosis_code" class="form-control" placeholder="e.g. I10, E11.9, J20.9" value="R69">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Allergies & Adverse Reactions -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #F87171; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    <span>⚠️</span> 4. Encounter-Noted Allergies & Adverse Reactions
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="allergies">Newly Identified Allergies</label>
+                    <input type="text" id="allergies" name="allergies" class="form-control" placeholder="e.g. Penicillin, Sulfa drugs, Peanuts, Contrast dye (automatically updates patient profile)">
+                </div>
+            </div>
+
+            <!-- 5. Treatment Plan & Lifestyle Guidance -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #34D399; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    <span>📋</span> 5. Treatment Plan & Therapy Regimen
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="treatment_plan">Prescribed Treatment Plan</label>
+                    <textarea id="treatment_plan" name="treatment_plan" class="form-control" rows="3" placeholder="Dietary restrictions, therapeutic exercises, hydration protocols, precautions, physical therapy..."></textarea>
+                </div>
+            </div>
+
+            <!-- 6. Clinical Notes & Recommendations -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    <span>📝</span> 6. Physician Clinical Notes
+                </h3>
+                <div class="form-group">
+                    <label class="form-label" for="clinical_notes">Internal Clinical Observations & Notes</label>
+                    <textarea id="clinical_notes" name="clinical_notes" class="form-control" rows="2" placeholder="Differential diagnostic notes, progress observations, warning signs..."></textarea>
+                </div>
+            </div>
+
+            <!-- 7. Recommended Follow-Up Date -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #60A5FA; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;">
+                    <span>📅</span> 7. Follow-Up Consultation
+                </h3>
+                <div class="form-group" style="max-width: 300px;">
+                    <label class="form-label" for="follow_up_date">Recommended Follow-up Date</label>
+                    <input type="date" id="follow_up_date" name="follow_up_date" min="{{ today_date }}" class="form-control">
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+                <a href="{{ url_for('doctor.patient_history', patient_id=patient.id) }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <span>💾</span> Save & Finalize Medical Record
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

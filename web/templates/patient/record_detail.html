@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Medical Record #{{ record.id }} - MediCare AI{% endblock %}
+{% block page_heading %}Clinical Encounter Details{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto;">
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>📋</span> Electronic Medical Record #{{ record.id }}</div>
+                <div class="card-subtitle">Consulted on {{ record.visit_date.strftime('%B %d, %Y') }} with Dr. {{ record.doctor.user.full_name }}</div>
+            </div>
+            <a href="{{ url_for('patient.records') }}" class="btn btn-secondary btn-sm">
+                <span>⬅️</span> Back to Timeline
+            </a>
+        </div>
+
+        <!-- Encounter Summary Banner -->
+        <div style="padding: 1rem 1.25rem; background: rgba(30, 41, 59, 0.6); border-radius: var(--radius-md); border-left: 4px solid var(--teal-primary); margin-bottom: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Physician</div>
+                <div style="font-size: 1rem; font-weight: 700; color: var(--text-main);">Dr. {{ record.doctor.user.full_name }}</div>
+                <div style="font-size: 0.8rem; color: var(--teal-primary);">{{ record.doctor.specialization }} ({{ record.doctor.department.name if record.doctor.department else 'General' }})</div>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Consultation Date</div>
+                <div style="font-size: 1rem; font-weight: 700; color: var(--text-main);">{{ record.visit_date }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-dim);">Encounter ID: EMR-{{ "%05d"|format(record.id) }}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Primary Diagnosis</div>
+                <div style="font-size: 1.05rem; font-weight: 800; color: #FBBF24;">{{ record.diagnosis }}</div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- 1. Symptoms -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 0.5rem; text-transform: uppercase;">
+                    1. Reported Symptoms & Subjective Complaints
+                </h3>
+                <div style="background: var(--bg-surface); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); color: var(--text-main); line-height: 1.5;">
+                    {{ record.symptoms }}
+                </div>
+            </div>
+
+            <!-- 2. Objective Vital Signs -->
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--azure-accent); margin-bottom: 0.5rem; text-transform: uppercase;">
+                    2. Objective Vital Signs
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem;">
+                    <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Blood Pressure</div>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ record.vitals_bp or 'N/A' }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">mmHg</div>
+                    </div>
+                    <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Pulse Rate</div>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ record.vitals_pulse or 'N/A' }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">bpm</div>
+                    </div>
+                    <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Body Temperature</div>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ record.vitals_temp or 'N/A' }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">°C</div>
+                    </div>
+                    <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Oxygen Saturation</div>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ record.vitals_spo2 or 'N/A' }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">% SpO2</div>
+                    </div>
+                    {% if record.vitals_weight %}
+                    <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Weight</div>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ record.vitals_weight }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">kg</div>
+                    </div>
+                    {% endif %}
+                    {% if record.vitals_height %}
+                    <div style="background: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Height</div>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">{{ record.vitals_height }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim);">cm</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 3. Allergies & Adverse Reactions -->
+            {% if record.allergies %}
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #F87171; margin-bottom: 0.5rem; text-transform: uppercase;">
+                    3. Documented Allergies & Adverse Reactions
+                </h3>
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.75rem 1rem; border-radius: var(--radius-md); color: #FCA5A5; font-size: 0.9rem;">
+                    {{ record.allergies }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 4. Treatment Plan & Lifestyle Guidance -->
+            {% if record.treatment_plan %}
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #34D399; margin-bottom: 0.5rem; text-transform: uppercase;">
+                    4. Prescribed Treatment Plan & Therapy
+                </h3>
+                <div style="background: rgba(52, 211, 153, 0.08); border-left: 3px solid #34D399; padding: 0.85rem 1rem; border-radius: var(--radius-md); color: var(--text-main); font-size: 0.9rem; line-height: 1.5;">
+                    {{ record.treatment_plan }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 5. Clinical Notes -->
+            {% if record.clinical_notes %}
+            <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase;">
+                    5. Physician Clinical Notes & Directives
+                </h3>
+                <div style="background: var(--bg-surface); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 0.88rem; line-height: 1.5;">
+                    {{ record.clinical_notes }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 6. Follow-Up Date -->
+            {% if record.follow_up_date %}
+            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-md); padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div>
+                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #93C5FD; display: block;">Follow-Up Recommendation</span>
+                    <strong style="font-size: 1.05rem; color: #BFDBFE;">{{ record.follow_up_date.strftime('%A, %B %d, %Y') }}</strong>
+                </div>
+                <a href="{{ url_for('appointment.book', doctor_id=record.doctor_id) }}" class="btn btn-primary btn-sm">
+                    <span>📅</span> Book Follow-Up Now
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

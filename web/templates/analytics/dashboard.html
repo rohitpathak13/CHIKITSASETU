@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% block title %}Hospital Analytics & BI{% endblock %}
+{% block page_heading %}Executive Business Intelligence & Operational Analytics{% endblock %}
+
+{% block content %}
+<!-- Top Header & Timeframe Filter Ribbon -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <h2 style="font-size: 1.35rem; font-weight: 700; color: #F8FAFC; margin-bottom: 4px;">Hospital Performance Intelligence</h2>
+        <p style="font-size: 0.85rem; color: #94A3B8;">Real-time automated analytics derived directly from clinical and financial records.</p>
+    </div>
+    <div style="display: inline-flex; background: rgba(15, 23, 42, 0.75); border: 1px solid #334155; border-radius: 10px; padding: 4px; gap: 4px;">
+        <a href="{{ url_for('analytics.dashboard', timeframe='7') }}" class="btn-timeframe {% if timeframe == '7' %}active{% endif %}">7 Days</a>
+        <a href="{{ url_for('analytics.dashboard', timeframe='30') }}" class="btn-timeframe {% if timeframe == '30' %}active{% endif %}">30 Days</a>
+        <a href="{{ url_for('analytics.dashboard', timeframe='90') }}" class="btn-timeframe {% if timeframe == '90' %}active{% endif %}">90 Days</a>
+        <a href="{{ url_for('analytics.dashboard', timeframe='all') }}" class="btn-timeframe {% if timeframe == 'all' %}active{% endif %}">All Time</a>
+    </div>
+</div>
+
+<!-- 6 Master Executive KPI Cards -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 28px;">
+    <div class="stat-card">
+        <div class="stat-label">Total Patients</div>
+        <div class="stat-value" style="color: #38BDF8;">{{ summary_kpis.total_patients }}</div>
+        <div class="stat-desc">{{ summary_kpis.total_doctors }} active medical providers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Bed Occupancy Rate</div>
+        <div class="stat-value" style="color: {% if summary_kpis.bed_occupancy_rate > 85 %}#F87171{% elif summary_kpis.bed_occupancy_rate > 60 %}#FBBF24{% else %}#34D399{% endif %};">
+            {{ summary_kpis.bed_occupancy_rate }}%
+        </div>
+        <div class="stat-desc">{{ summary_kpis.occupied_beds }} occupied / {{ summary_kpis.total_beds }} capacity</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Billed Revenue (Gross)</div>
+        <div class="stat-value" style="color: #34D399;">${{ "%.2f"|format(summary_kpis.total_billed_revenue) }}</div>
+        <div class="stat-desc">Cash collected: ${{ "%.2f"|format(summary_kpis.total_collected_revenue) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Outpatient Consults</div>
+        <div class="stat-value" style="color: #818CF8;">{{ summary_kpis.total_appointments_30d }}</div>
+        <div class="stat-desc">{{ summary_kpis.completed_appointments_30d }} completed encounters</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Formulary Stock Health</div>
+        <div class="stat-value" style="color: {% if summary_kpis.pharmacy_low_stock_alerts > 0 %}#F87171{% else %}#34D399{% endif %};">
+            {{ summary_kpis.pharmacy_low_stock_alerts }} Alerts
+        </div>
+        <div class="stat-desc">{{ summary_kpis.pharmacy_expiring_alerts }} batches expiring soon</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">No-Show & Cancel Rate</div>
+        <div class="stat-value" style="color: #FBBF24;">{{ summary_kpis.no_show_rate }}%</div>
+        <div class="stat-desc">Cancellation rate: {{ summary_kpis.cancellation_rate }}%</div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- SECTION 1: Patient Demographics & Epidemiology -->
+<!-- ======================================================================= -->
+<div class="section-title-bar">
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: #E2E8F0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <span>👥</span> Patient Growth, Demographics & Epidemiology
+    </h3>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom: 24px;">
+    <!-- 1. Patient Growth -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>📈</span> 1. Patient Growth & Census Curve</div>
+            <span class="badge badge-info">Registration Velocity</span>
+        </div>
+        <div id="chart-patient-growth" style="width: 100%; min-height: 280px;"></div>
+    </div>
+
+    <!-- 5. Disease Distribution -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>🦠</span> 5. Clinical Disease Distribution</div>
+            <span class="badge badge-success">Top Diagnoses</span>
+        </div>
+        <div id="chart-disease-dist" style="width: 100%; min-height: 280px;"></div>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom: 32px;">
+    <!-- 6. Age Distribution -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>🎂</span> 6. Patient Age Cohort Demographics</div>
+            <span class="badge badge-info">Clinical Bins</span>
+        </div>
+        <div id="chart-age-dist" style="width: 100%; min-height: 260px;"></div>
+    </div>
+
+    <!-- 7. Gender Distribution -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>⚧️</span> 7. Patient Gender Ratio</div>
+            <span class="badge badge-info">Demographics</span>
+        </div>
+        <div id="chart-gender-dist" style="width: 100%; min-height: 260px;"></div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- SECTION 2: Outpatient Care & Provider Productivity -->
+<!-- ======================================================================= -->
+<div class="section-title-bar">
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: #E2E8F0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <span>🩺</span> Outpatient Workflow, Provider Load & Attendance
+    </h3>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom: 24px;">
+    <!-- 2. Appointment Trends -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>📅</span> 2. Appointment Volume & Status Trends</div>
+            <span class="badge badge-primary">OPD Cadence</span>
+        </div>
+        <div id="chart-appointment-trends" style="width: 100%; min-height: 280px;"></div>
+    </div>
+
+    <!-- 4. Doctor Workload -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>👨‍⚕️</span> 4. Physician Workload & Productivity</div>
+            <span class="badge badge-primary">Encounter Rankings</span>
+        </div>
+        <div id="chart-doctor-workload" style="width: 100%; min-height: 280px;"></div>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom: 32px;">
+    <!-- 14. Appointment Cancellation -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>❌</span> 14. Appointment Cancellation Rate</div>
+            <span class="badge badge-danger">Attrition Metric</span>
+        </div>
+        <div id="chart-cancellation" style="width: 100%; min-height: 240px;"></div>
+    </div>
+
+    <!-- 15. Appointment No-Show -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>⚠️</span> 15. Outpatient No-Show & ML Risk Tiers</div>
+            <span class="badge badge-warning">AI Predictive Risk</span>
+        </div>
+        <div id="chart-no-show" style="width: 100%; min-height: 240px;"></div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- SECTION 3: Inpatient Capacity & Bed Management -->
+<!-- ======================================================================= -->
+<div class="section-title-bar">
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: #E2E8F0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <span>🏥</span> Inpatient Census, Flow & Bed Management
+    </h3>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom: 24px;">
+    <!-- 10. Bed Occupancy Gauge -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>🛏️</span> 10A. Hospital Bed Occupancy Index</div>
+            <span class="badge badge-info">Capacity KPI</span>
+        </div>
+        <div id="chart-bed-gauge" style="width: 100%; min-height: 240px;"></div>
+    </div>
+
+    <!-- 10B. Ward Breakdown Bar -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>📊</span> 10B. Ward & Room Bed Allocation</div>
+            <span class="badge badge-info">Occupied vs Available</span>
+        </div>
+        <div id="chart-ward-bar" style="width: 100%; min-height: 240px;"></div>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom: 32px;">
+    <!-- 8. Admission Trends -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>📥</span> 8. Inpatient Admission Velocity</div>
+            <span class="badge badge-primary">Intake Trends</span>
+        </div>
+        <div id="chart-adm-trends" style="width: 100%; min-height: 260px;"></div>
+    </div>
+
+    <!-- 9. Discharge Trends -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>📤</span> 9. Inpatient Discharges & Stay Duration</div>
+            <span class="badge badge-success">Discharge Velocity</span>
+        </div>
+        <div id="chart-dis-trends" style="width: 100%; min-height: 260px;"></div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- SECTION 4: Diagnostic Laboratories & Pharmacy Formulary -->
+<!-- ======================================================================= -->
+<div class="section-title-bar">
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: #E2E8F0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <span>🔬</span> Diagnostic Laboratory & Pharmacy Inventory
+    </h3>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom: 32px;">
+    <!-- 12. Laboratory Test Trends -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>🧪</span> 12. Diagnostic Laboratory Test Volume</div>
+            <span class="badge badge-purple" style="background: rgba(139, 92, 246, 0.2); color: #C4B5FD; border: 1px solid rgba(139, 92, 246, 0.4);">Pathology Trends</span>
+        </div>
+        <div id="chart-lab-trends" style="width: 100%; min-height: 260px;"></div>
+    </div>
+
+    <!-- 13. Pharmacy Inventory -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>💊</span> 13. Pharmacy Inventory & Stock Valuation</div>
+            <span class="badge badge-success">Formulary Assets</span>
+        </div>
+        <div id="chart-pharmacy-inventory" style="width: 100%; min-height: 260px;"></div>
+    </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- SECTION 5: Financial Performance & Department Analytics -->
+<!-- ======================================================================= -->
+<div class="section-title-bar">
+    <h3 style="font-size: 1.1rem; font-weight: 700; color: #E2E8F0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <span>💰</span> Financial Performance & Department Operations
+    </h3>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom: 24px;">
+    <!-- 11A. Revenue Trends -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>💵</span> 11A. Revenue Timeline: Billed vs Collected</div>
+            <span class="badge badge-success">Cash Flow</span>
+        </div>
+        <div id="chart-revenue-trends" style="width: 100%; min-height: 280px;"></div>
+    </div>
+
+    <!-- 11B. Revenue Donut -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="card-title"><span>🥧</span> 11B. Revenue Cost Center Distribution</div>
+            <span class="badge badge-success">Financial Mix</span>
+        </div>
+        <div id="chart-revenue-donut" style="width: 100%; min-height: 280px;"></div>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom: 40px;">
+    <!-- 3. Department Statistics -->
+    <div class="chart-card" style="grid-column: 1 / -1;">
+        <div class="chart-header">
+            <div class="card-title"><span>🏢</span> 3. Cross-Department Operational Statistics</div>
+            <span class="badge badge-info">Staffing vs Clinical Workload</span>
+        </div>
+        <div id="chart-dept-stats" style="width: 100%; min-height: 280px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+    .btn-timeframe {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #94A3B8;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .btn-timeframe:hover {
+        color: #F8FAFC;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .btn-timeframe.active {
+        color: #FFFFFF;
+        background: #0D9488;
+        box-shadow: 0 2px 6px rgba(13, 148, 136, 0.35);
+    }
+    .section-title-bar {
+        border-bottom: 1px solid #1E293B;
+        margin-top: 16px;
+        margin-bottom: 16px;
+        padding-bottom: 4px;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Render all 15 Plotly interactive charts
+        renderPlotlyChart('chart-patient-growth', {{ chart_patient_growth|safe }});
+        renderPlotlyChart('chart-appointment-trends', {{ chart_appointment_trends|safe }});
+        renderPlotlyChart('chart-dept-stats', {{ chart_dept_stats|safe }});
+        renderPlotlyChart('chart-doctor-workload', {{ chart_doctor_workload|safe }});
+        renderPlotlyChart('chart-disease-dist', {{ chart_disease_dist|safe }});
+        renderPlotlyChart('chart-age-dist', {{ chart_age_dist|safe }});
+        renderPlotlyChart('chart-gender-dist', {{ chart_gender_dist|safe }});
+        renderPlotlyChart('chart-adm-trends', {{ chart_adm_trends|safe }});
+        renderPlotlyChart('chart-dis-trends', {{ chart_dis_trends|safe }});
+        renderPlotlyChart('chart-bed-gauge', {{ chart_bed_gauge|safe }});
+        renderPlotlyChart('chart-ward-bar', {{ chart_ward_bar|safe }});
+        renderPlotlyChart('chart-revenue-trends', {{ chart_revenue_trends|safe }});
+        renderPlotlyChart('chart-revenue-donut', {{ chart_revenue_donut|safe }});
+        renderPlotlyChart('chart-lab-trends', {{ chart_lab_trends|safe }});
+        renderPlotlyChart('chart-pharmacy-inventory', {{ chart_pharmacy_inventory|safe }});
+        renderPlotlyChart('chart-cancellation', {{ chart_cancellation|safe }});
+        renderPlotlyChart('chart-no-show', {{ chart_no_show|safe }});
+    });
+</script>
+{% endblock %}

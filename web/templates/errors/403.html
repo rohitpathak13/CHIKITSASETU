@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 Forbidden - MediCare AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 25%, #1F1528 0%, #080C14 100%);
+            padding: 1.5rem;
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        }
+        .error-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--bg-card);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: var(--radius-lg);
+            padding: 3rem 2.5rem;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.65);
+            text-align: center;
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .error-badge-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.25rem;
+        }
+        .error-code {
+            font-size: 3.75rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #EF4444;
+            letter-spacing: -0.04em;
+            margin-bottom: 0.5rem;
+        }
+        .badge-role {
+            display: inline-block;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            background: rgba(239, 68, 68, 0.15);
+            color: #F87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            margin-bottom: 1.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <div class="error-badge-icon">🔒</div>
+        <div class="error-code">403</div>
+        <div class="badge-role">Restricted Access Module</div>
+        <h1 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--text-main);">
+            Access Denied / Unauthorized Role
+        </h1>
+        <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.75rem;">
+            Your account does not possess the required RBAC role permissions to access this hospital department or patient dataset. 
+            All unauthorized attempts are securely recorded in the HIPAA audit logs.
+        </p>
+
+        {% if session.get("user_role") %}
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 1.75rem; font-size: 0.85rem;">
+                <span style="color: var(--text-muted);">Current Active Role:</span>
+                <strong style="color: var(--teal-light); text-transform: uppercase; margin-left: 0.35rem;">
+                    {{ session.get("user_role") }}
+                </strong>
+            </div>
+        {% endif %}
+
+        <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('index') }}" class="btn btn-primary" style="padding: 0.65rem 1.35rem;">
+                Return to My Dashboard
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary" style="padding: 0.65rem 1.35rem;">
+                Sign Out
+            </a>
+        </div>
+    </div>
+</body>
+</html>

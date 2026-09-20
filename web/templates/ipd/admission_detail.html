@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+{% block title %}Admission Chart #{{ admission.id }} - {{ admission.patient.user.first_name }} {{ admission.patient.user.last_name }}{% endblock %}
+{% block page_heading %}Inpatient Clinical Chart & Bed Allocation{% endblock %}
+
+{% block content %}
+<!-- Top Inpatient Banner -->
+<div class="card" style="margin-bottom: 2rem; border-left: 4px solid {% if admission.status == AdmissionStatusEnum.ADMITTED %}#EF4444{% else %}#10B981{% endif %}; background: rgba(30, 41, 59, 0.7);">
+    <div class="card-body" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+        <div style="display: flex; gap: 1.25rem; align-items: center;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #3B82F6, #1D4ED8); display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">
+                🏥
+            </div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <h2 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: #F8FAFC;">
+                        {{ admission.patient.user.first_name }} {{ admission.patient.user.last_name }}
+                    </h2>
+                    {% if admission.status == AdmissionStatusEnum.ADMITTED %}
+                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.8rem;">
+                        CURRENTLY ADMITTED
+                    </span>
+                    {% else %}
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem;">
+                        DISCHARGED
+                    </span>
+                    {% endif %}
+                    <span style="font-family: monospace; color: #94A3B8; font-size: 0.9rem;">
+                        MRN: {{ admission.patient.medical_record_number }}
+                    </span>
+                </div>
+                <div style="font-size: 0.85rem; color: #94A3B8; margin-top: 0.3rem;">
+                    Admission #{{ admission.id }} • Admitted on {{ admission.admission_date.strftime('%b %d, %Y at %H:%M') if admission.admission_date else 'N/A' }}
+                    • Stay Duration: <strong style="color: #38BDF8;">{{ admission.length_of_stay_days }} Day(s)</strong>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="{{ url_for('ipd.admissions') }}" class="btn btn-secondary" style="font-size: 0.85rem;">
+                <span>⬅️</span> All Admissions
+            </a>
+            {% if admission.status == AdmissionStatusEnum.ADMITTED and session.get('user_role') in ['admin', 'doctor', 'nurse'] %}
+            <button type="button" class="btn btn-secondary" onclick="openTransferModal()" style="font-size: 0.85rem; color: #F59E0B; border-color: rgba(245, 158, 11, 0.4);">
+                <span>🔄</span> Transfer Bed
+            </button>
+            <button type="button" class="btn btn-primary" onclick="openDischargeModal()" style="font-size: 0.85rem; background: #DC2626; border-color: #DC2626;">
+                <span>🚪</span> Discharge Patient
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Main Details Layout (2 Columns) -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Bed & Location Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>🛏️</span> Current Bed & Accommodation</div>
+        </div>
+        <div class="card-body" style="padding: 1.25rem;">
+            {% if admission.bed %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 0.75rem; border-radius: 6px;">
+                    <div style="font-size: 0.75rem; color: #94A3B8; text-transform: uppercase;">Bed Number</div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: #38BDF8;">
+                        Bed {{ admission.bed.bed_number }}
+                    </div>
+                </div>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 0.75rem; border-radius: 6px;">
+                    <div style="font-size: 0.75rem; color: #94A3B8; text-transform: uppercase;">Room Number</div>
+                    <div style="font-size: 1.2rem; font-weight: 700; color: #F8FAFC;">
+                        Room {{ admission.bed.room.room_number if admission.bed.room else 'N/A' }}
+                    </div>
+                </div>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 0.75rem; border-radius: 6px;">
+                    <div style="font-size: 0.75rem; color: #94A3B8; text-transform: uppercase;">Room Type / Ward</div>
+                    <div style="font-size: 0.95rem; font-weight: 600; color: #F1F5F9;">
+                        {{ admission.bed.room.room_type.value|upper if admission.bed.room else 'STANDARD' }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #94A3B8;">
+                        {{ admission.bed.ward.name if admission.bed.ward else (admission.bed.room.ward.name if admission.bed.room and admission.bed.room.ward else 'General Ward') }}
+                    </div>
+                </div>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 0.75rem; border-radius: 6px;">
+                    <div style="font-size: 0.75rem; color: #94A3B8; text-transform: uppercase;">Daily Rate</div>
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #10B981;">
+                        ${{ "%.2f"|format(admission.bed.daily_rate) }}/day
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div style="padding: 1rem; color: #94A3B8; text-align: center;">
+                No active bed allocated (Patient has been discharged or bed was released).
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1rem;">
+                <div style="font-size: 0.8rem; color: #94A3B8;">Department Assigned</div>
+                <div style="font-size: 1rem; font-weight: 600; color: #F8FAFC; margin-top: 2px;">
+                    {{ admission.department.name if admission.department else (admission.bed.room.department.name if admission.bed and admission.bed.room and admission.bed.room.department else 'General Medicine') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clinical Details Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>🩺</span> Clinical & Physician Details</div>
+        </div>
+        <div class="card-body" style="padding: 1.25rem;">
+            <div style="margin-bottom: 1rem;">
+                <div style="font-size: 0.8rem; color: #94A3B8;">Attending / Admitting Physician</div>
+                <div style="font-size: 1.05rem; font-weight: 600; color: #F8FAFC; margin-top: 2px;">
+                    Dr. {{ admission.doctor.user.first_name if admission.doctor and admission.doctor.user else 'Assigned Staff' }} {{ admission.doctor.user.last_name if admission.doctor and admission.doctor.user else '' }}
+                </div>
+                {% if admission.doctor and admission.doctor.specialization %}
+                <div style="font-size: 0.8rem; color: #38BDF8;">{{ admission.doctor.specialization }}</div>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <div style="font-size: 0.8rem; color: #94A3B8;">Admission Diagnosis / Reason</div>
+                <div style="font-size: 0.95rem; color: #F1F5F9; background: rgba(15, 23, 42, 0.6); padding: 0.6rem; border-radius: 6px; margin-top: 4px;">
+                    {{ admission.admission_reason }}
+                </div>
+            </div>
+
+            {% if admission.notes %}
+            <div style="margin-bottom: 1rem;">
+                <div style="font-size: 0.8rem; color: #94A3B8;">Admission Clinical Notes</div>
+                <div style="font-size: 0.85rem; color: #CBD5E1; background: rgba(15, 23, 42, 0.4); padding: 0.6rem; border-radius: 6px; margin-top: 4px; white-space: pre-wrap;">
+                    {{ admission.notes }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if admission.discharge_summary %}
+            <div style="margin-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1rem;">
+                <div style="font-size: 0.8rem; color: #10B981; font-weight: 600;">Discharge Clinical Summary</div>
+                <div style="font-size: 0.85rem; color: #E2E8F0; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.6rem; border-radius: 6px; margin-top: 4px;">
+                    {{ admission.discharge_summary }}
+                </div>
+                {% if admission.discharge_date %}
+                <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 4px;">
+                    Discharged on {{ admission.discharge_date.strftime('%b %d, %Y at %H:%M') }}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Bed Transfer History Timeline -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <div class="card-title"><span>🔄</span> Bed Transfer History Timeline</div>
+        <div class="card-subtitle">Complete audit trail of room & bed transfers for this admission</div>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Origin Bed</th>
+                    <th>Destination Bed</th>
+                    <th>Reason</th>
+                    <th>Transferred By</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in admission.transfers %}
+                <tr>
+                    <td style="font-size: 0.85rem; color: #E2E8F0;">
+                        {{ t.transferred_at.strftime('%b %d, %Y %H:%M') if t.transferred_at else 'N/A' }}
+                    </td>
+                    <td>
+                        <span class="badge" style="background: rgba(255,255,255,0.06);">
+                            Bed {{ t.from_bed.bed_number if t.from_bed else 'Initial' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399;">
+                            Bed {{ t.to_bed.bed_number if t.to_bed else 'N/A' }}
+                        </span>
+                    </td>
+                    <td style="color: #F1F5F9; font-size: 0.85rem;">
+                        {{ t.reason }}
+                    </td>
+                    <td style="font-size: 0.85rem; color: #94A3B8;">
+                        {{ t.transferred_by.first_name if t.transferred_by else 'Clinical Staff' }} {{ t.transferred_by.last_name if t.transferred_by else '' }}
+                    </td>
+                    <td style="font-size: 0.8rem; color: #94A3B8;">
+                        {{ t.notes or '--' }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 1.5rem; color: #94A3B8;">
+                        No bed transfers recorded for this admission. Patient remained in allocated bed.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Discharge Invoicing (if generated) -->
+{% if admission.bill %}
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <div class="card-title"><span>💳</span> Inpatient Discharge Billing & Invoices</div>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Created</th>
+                    <th>Subtotal</th>
+                    <th>Tax (5%)</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-family: monospace; font-weight: 700; color: #38BDF8;">
+                        {{ admission.bill.invoice_number if admission.bill.invoice_number else admission.bill.bill_number }}
+                    </td>
+                    <td>
+                        {{ admission.bill.created_at.strftime('%b %d, %Y') if admission.bill.created_at else 'N/A' }}
+                    </td>
+                    <td>${{ "%.2f"|format(admission.bill.subtotal) }}</td>
+                    <td>${{ "%.2f"|format(admission.bill.tax) }}</td>
+                    <td style="font-weight: 700; color: #10B981;">${{ "%.2f"|format(admission.bill.total_amount) }}</td>
+                    <td>
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #FBBF24;">
+                            {{ admission.bill.status.value|upper }}
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Patient's Chronological Admission History -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title"><span>📜</span> Patient Admission History (All Episodes)</div>
+        <div class="card-subtitle">Prior and current hospitalizations for {{ admission.patient.user.first_name }} {{ admission.patient.user.last_name }}</div>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Admission #</th>
+                    <th>Admitted</th>
+                    <th>Discharged</th>
+                    <th>Length of Stay</th>
+                    <th>Department</th>
+                    <th>Primary Diagnosis</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hist in patient_history %}
+                <tr {% if hist.id == admission.id %}style="background: rgba(56, 189, 248, 0.05);"{% endif %}>
+                    <td>
+                        <span style="font-family: monospace; font-weight: 600; color: #38BDF8;">
+                            #{{ hist.id }} {% if hist.id == admission.id %}(Current){% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {{ hist.admission_date.strftime('%b %d, %Y') if hist.admission_date else 'N/A' }}
+                    </td>
+                    <td>
+                        {{ hist.discharge_date.strftime('%b %d, %Y') if hist.discharge_date else '--' }}
+                    </td>
+                    <td>
+                        {{ hist.length_of_stay_days }} Day(s)
+                    </td>
+                    <td>
+                        {{ hist.department.name if hist.department else 'General' }}
+                    </td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ hist.admission_reason }}
+                    </td>
+                    <td>
+                        {% if hist.status == AdmissionStatusEnum.ADMITTED %}
+                        <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #F87171;">ADMITTED</span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399;">DISCHARGED</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        {% if hist.id != admission.id %}
+                        <a href="{{ url_for('ipd.admission_detail', admission_id=hist.id) }}" class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">
+                            View
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 1.5rem; color: #94A3B8;">
+                        No other admissions found for this patient.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- TRANSFER BED MODAL                                                    -->
+<!-- ===================================================================== -->
+<div id="transferModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); z-index: 999; justify-content: center; align-items: center; padding: 1rem;">
+    <div style="background: #1E293B; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; width: 100%; max-width: 520px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden;">
+        <div style="padding: 1.25rem 1.5rem; background: rgba(30, 41, 59, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-weight: 700; font-size: 1.15rem; color: #F8FAFC;">
+                <span>🔄</span> Inpatient Bed Transfer
+            </div>
+            <button type="button" onclick="closeTransferModal()" style="background: none; border: none; color: #94A3B8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <form action="{{ url_for('ipd.transfer_patient', admission_id=admission.id) }}" method="POST" style="padding: 1.5rem;">
+            <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px; font-size: 0.85rem; color: #FBBF24;">
+                Current Location: Bed {{ admission.bed.bed_number if admission.bed else 'N/A' }} (Room {{ admission.bed.room.room_number if admission.bed and admission.bed.room else 'N/A' }})
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #CBD5E1; margin-bottom: 0.4rem;">
+                    Target Bed * <span style="font-size: 0.75rem; color: #10B981;">(Occupied beds are blocked)</span>
+                </label>
+                <select name="to_bed_id" required style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.6rem;">
+                    <option value="">-- Choose Available Destination Bed --</option>
+                    {% for b in available_beds %}
+                    {% if admission.bed_id != b.id %}
+                    <option value="{{ b.id }}">
+                        Bed {{ b.bed_number }} (Room {{ b.room.room_number if b.room else 'N/A' }} • {{ b.room.department.name if b.room and b.room.department else 'General' }} • ${{ "%.2f"|format(b.daily_rate) }}/day)
+                    </option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                {% if available_beds|length == 0 %}
+                <div style="color: #EF4444; font-size: 0.8rem; margin-top: 0.3rem;">
+                    ⚠️ No available beds in the hospital currently.
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #CBD5E1; margin-bottom: 0.4rem;">Transfer Clinical Reason *</label>
+                <input type="text" name="reason" required placeholder="e.g. ICU step-down, Isolation requirement, Patient upgrade" style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.6rem;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #CBD5E1; margin-bottom: 0.4rem;">Release Current Bed As</label>
+                <select name="release_previous_as" style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.6rem;">
+                    <option value="maintenance" selected>MAINTENANCE (Recommended - Requires Decontamination)</option>
+                    <option value="available">AVAILABLE (Directly Ready)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeTransferModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="background: #D97706; border-color: #D97706;" {% if available_beds|length == 0 %}disabled{% endif %}>
+                    Confirm Transfer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- DISCHARGE MODAL                                                       -->
+<!-- ===================================================================== -->
+<div id="dischargeModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); z-index: 999; justify-content: center; align-items: center; padding: 1rem;">
+    <div style="background: #1E293B; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; width: 100%; max-width: 520px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden;">
+        <div style="padding: 1.25rem 1.5rem; background: rgba(30, 41, 59, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-weight: 700; font-size: 1.15rem; color: #F8FAFC;">
+                <span>🚪</span> Patient Inpatient Discharge
+            </div>
+            <button type="button" onclick="closeDischargeModal()" style="background: none; border: none; color: #94A3B8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <form action="{{ url_for('ipd.discharge_patient', admission_id=admission.id) }}" method="POST" style="padding: 1.5rem;">
+            <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 6px; font-size: 0.85rem; color: #F87171;">
+                Discharging: <strong>{{ admission.patient.user.first_name }} {{ admission.patient.user.last_name }}</strong>
+                <div style="font-size: 0.75rem; color: #CBD5E1; margin-top: 4px;">
+                    This calculates Length of Stay ({{ admission.length_of_stay_days }} day(s)), finalizes accommodation and clinical charges, generates an invoice, and transitions the bed to MAINTENANCE for sanitization.
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #CBD5E1; margin-bottom: 0.4rem;">Discharge Clinical Summary *</label>
+                <textarea name="discharge_summary" rows="3" required placeholder="Patient discharged in stable clinical condition..." style="width: 100%; background: #0F172A; border: 1px solid rgba(255,255,255,0.15); color: #F8FAFC; border-radius: 6px; padding: 0.6rem;">Discharged in stable clinical condition. Prescribed recovery medications and follow-up consultation in OPD.</textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeDischargeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="background: #DC2626; border-color: #DC2626;">
+                    Confirm Discharge & Generate Invoice
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openTransferModal() {
+    document.getElementById('transferModal').style.display = 'flex';
+}
+function closeTransferModal() {
+    document.getElementById('transferModal').style.display = 'none';
+}
+function openDischargeModal() {
+    document.getElementById('dischargeModal').style.display = 'flex';
+}
+function closeDischargeModal() {
+    document.getElementById('dischargeModal').style.display = 'none';
+}
+</script>
+{% endblock %}

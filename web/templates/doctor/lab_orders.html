@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}Lab Orders & Diagnostic Reports{% endblock %}
+{% block page_heading %}Clinical Laboratory Investigations & Reports{% endblock %}
+
+{% block content %}
+<!-- Metric Summary Cards -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-label">Total Ordered</div>
+        <div class="stat-value" style="color: var(--primary);">{{ counts.all }}</div>
+        <div class="stat-desc">All prescribed tests</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Awaiting Doctor Review</div>
+        <div class="stat-value" style="color: #F59E0B;">{{ counts.unreviewed }}</div>
+        <div class="stat-desc">Results ready for review</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">In-Progress</div>
+        <div class="stat-value" style="color: #8B5CF6;">{{ counts.ordered + counts.in_progress }}</div>
+        <div class="stat-desc">In laboratory pipeline</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Completed & Verified</div>
+        <div class="stat-value" style="color: #10B981;">{{ counts.completed }}</div>
+        <div class="stat-desc">Finished investigations</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title"><span>🔬</span> Outpatient & Inpatient Diagnostic Reports</div>
+            <div class="card-subtitle">Review pathology findings, sign off clinical impressions, and track turnaround</div>
+        </div>
+        <a href="{{ url_for('doctor.my_patients') }}" class="btn btn-primary btn-sm">
+            <span>➕</span> Order New Investigation
+        </a>
+    </div>
+
+    <!-- Search & Status Filter Controls -->
+    <div style="padding: 1rem 1.5rem; background: var(--bg-surface-alt, #0F172A); border-bottom: 1px solid var(--border-color, #334155);">
+        <form method="GET" action="{{ url_for('doctor.lab_orders') }}" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+            <input type="hidden" name="status" value="{{ status_filter }}">
+            <div style="flex: 1; min-width: 240px;">
+                <input type="text" name="q" value="{{ search_q }}" class="form-control" placeholder="Search patient name, MRN, or investigation code...">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+                <span>🔍</span> Search
+            </button>
+            {% if search_q or status_filter != 'all' %}
+            <a href="{{ url_for('doctor.lab_orders') }}" class="btn btn-secondary btn-sm">Reset</a>
+            {% endif %}
+        </form>
+
+        <!-- Status Filter Tabs -->
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;">
+            <a href="{{ url_for('doctor.lab_orders', status='all', q=search_q) }}" 
+               class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">
+                All ({{ counts.all }})
+            </a>
+            <a href="{{ url_for('doctor.lab_orders', status='unreviewed', q=search_q) }}" 
+               class="btn btn-sm {% if status_filter == 'unreviewed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                🚨 Needs My Review ({{ counts.unreviewed }})
+            </a>
+            <a href="{{ url_for('doctor.lab_orders', status='ordered', q=search_q) }}" 
+               class="btn btn-sm {% if status_filter == 'ordered' %}btn-primary{% else %}btn-secondary{% endif %}">
+                ⏳ Ordered ({{ counts.ordered }})
+            </a>
+            <a href="{{ url_for('doctor.lab_orders', status='completed', q=search_q) }}" 
+               class="btn btn-sm {% if status_filter == 'completed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                ✅ Completed ({{ counts.completed }})
+            </a>
+            <a href="{{ url_for('doctor.lab_orders', status='cancelled', q=search_q) }}" 
+               class="btn btn-sm {% if status_filter == 'cancelled' %}btn-primary{% else %}btn-secondary{% endif %}">
+                ❌ Cancelled ({{ counts.cancelled }})
+            </a>
+        </div>
+    </div>
+
+    <!-- Table of Orders -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Patient</th>
+                    <th>Investigation</th>
+                    <th>Priority</th>
+                    <th>Ordered Date</th>
+                    <th>Status</th>
+                    <th>Findings / Results</th>
+                    <th>Doctor Sign-Off</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr style="{% if order.result and order.result.critical_alert %}background: rgba(239, 68, 68, 0.08);{% endif %}">
+                    <td><strong>#{{ order.id }}</strong></td>
+                    <td>
+                        <a href="{{ url_for('patient.patient_detail', patient_id=order.patient_id) }}" style="font-weight: 700; color: var(--primary);">
+                            {{ order.patient.user.full_name }}
+                        </a>
+                        <div style="font-size: 0.75rem; color: var(--text-dim);">
+                            PAT-{{ "%05d"|format(order.patient_id) }}
+                        </div>
+                    </td>
+                    <td>
+                        <strong>{{ order.test.name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                            Code: <code>{{ order.test.test_code }}</code> • {{ order.test.sample_type }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if order.priority == 'stat' %}
+                            <span class="badge badge-danger">STAT</span>
+                        {% elif order.priority == 'urgent' %}
+                            <span class="badge badge-warning">URGENT</span>
+                        {% else %}
+                            <span class="badge badge-secondary">ROUTINE</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">
+                        {{ order.ordered_at.strftime('%Y-%m-%d %H:%M') if order.ordered_at else '-' }}
+                    </td>
+                    <td>
+                        <span class="badge {% if order.status.value == 'completed' %}badge-success{% elif order.status.value == 'cancelled' %}badge-danger{% elif order.status.value == 'ordered' %}badge-warning{% else %}badge-info{% endif %}">
+                            {{ order.status.value|upper }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if order.result %}
+                            <div style="font-weight: 700; font-size: 0.95rem; color: {% if order.result.critical_alert %}#EF4444{% elif order.result.is_abnormal %}#F59E0B{% else %}#10B981{% endif %};">
+                                {{ order.result.measured_value }} {{ order.result.unit }}
+                                {% if order.result.critical_alert %}
+                                    <span class="badge badge-danger" style="font-size: 0.65rem;">CRITICAL</span>
+                                {% elif order.result.is_abnormal %}
+                                    <span class="badge badge-warning" style="font-size: 0.65rem;">ABNORMAL</span>
+                                {% else %}
+                                    <span class="badge badge-success" style="font-size: 0.65rem;">NORMAL</span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-dim);">
+                                Ref: {{ order.test.reference_range_min or '0' }} - {{ order.test.reference_range_max or 'N/A' }} {{ order.test.unit }}
+                            </div>
+                            {% if order.result.result_text %}
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                                    {{ order.result.result_text }}
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">Pending Processing</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.doctor_reviewed %}
+                            <div style="color: #10B981; font-weight: 600; font-size: 0.85rem;">
+                                ✓ Signed Off
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-dim);">
+                                {{ order.doctor_reviewed_at.strftime('%Y-%m-%d %H:%M') if order.doctor_reviewed_at else '' }}
+                            </div>
+                        {% elif order.status.value == 'completed' %}
+                            <span class="badge badge-warning" style="font-size: 0.75rem;">
+                                🚨 Review Needed
+                            </span>
+                        {% else %}
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.status.value == 'completed' %}
+                            <button type="button" class="btn btn-primary btn-sm" data-modal-target="review-modal-{{ order.id }}">
+                                <span>🩺</span> Review & Sign
+                            </button>
+
+                            <!-- Review Modal -->
+                            <div class="modal-backdrop" id="review-modal-{{ order.id }}">
+                                <div class="modal-dialog">
+                                    <div class="card-header">
+                                        <div class="card-title">Physician Review: {{ order.test.name }}</div>
+                                        <button type="button" class="btn btn-secondary btn-sm" data-close-modal>&times;</button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('doctor.review_lab_result', order_id=order.id) }}">
+                                        <div style="background: var(--bg-surface-alt); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                                <span style="color: var(--text-muted);">Patient:</span>
+                                                <strong>{{ order.patient.user.full_name }} (PAT-{{ "%05d"|format(order.patient_id) }})</strong>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                                <span style="color: var(--text-muted);">Measured Finding:</span>
+                                                <strong style="color: {% if order.result.critical_alert %}#EF4444{% elif order.result.is_abnormal %}#F59E0B{% else %}#10B981{% endif %};">
+                                                    {{ order.result.measured_value }} {{ order.result.unit }}
+                                                    {% if order.result.critical_alert %}[CRITICAL ALERT]{% elif order.result.is_abnormal %}[ABNORMAL]{% else %}[NORMAL]{% endif %}
+                                                </strong>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                                <span style="color: var(--text-muted);">Standard Reference Interval:</span>
+                                                <span>{{ order.test.reference_range_min or '0' }} - {{ order.test.reference_range_max or 'N/A' }} {{ order.test.unit }}</span>
+                                            </div>
+                                            {% if order.result.technician_notes %}
+                                            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-dim);">
+                                                <em>Lab Notes: {{ order.result.technician_notes }}</em>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label">Physician Clinical Remarks / Treatment Plan *</label>
+                                            <textarea name="review_notes" class="form-control" rows="3" required placeholder="e.g. Findings reviewed. Hemoglobin stable. Continue oral iron therapy and retest in 4 weeks.">{{ order.doctor_review_notes or '' }}</textarea>
+                                        </div>
+
+                                        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                                            <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                                            <button type="submit" class="btn btn-primary">
+                                                <span>✓</span> Sign Off & Notify Patient
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        {% else %}
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">In Lab</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-dim);">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+                        <div>No laboratory orders found for the specified filter criteria.</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

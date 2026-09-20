@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Order Diagnostic Tests{% endblock %}
+{% block page_heading %}Order Laboratory Investigations{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title"><span>🧪</span> Diagnostic Lab Requisition</div>
+                <div class="card-subtitle">Prescribe pathology and clinical laboratory investigations for patient</div>
+            </div>
+            <a href="{{ url_for('patient.patient_detail', patient_id=patient.id) }}" class="btn btn-secondary btn-sm">
+                <span>←</span> Back to Patient
+            </a>
+        </div>
+
+        <!-- Patient Demographics Banner -->
+        <div style="background: var(--bg-surface-alt, #0F172A); padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color, #334155); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; align-items: center;">
+            <div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">
+                    {{ patient.user.full_name }}
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    MRN: <strong>PAT-{{ "%05d"|format(patient.id) }}</strong> • Gender: {{ patient.gender.value|capitalize if patient.gender else 'N/A' }} • DOB: {{ patient.dob or 'N/A' }}
+                </div>
+            </div>
+            <div>
+                {% if patient.blood_group %}
+                <span class="badge badge-info" style="font-size: 0.85rem; padding: 0.35rem 0.65rem;">
+                    Blood: {{ patient.blood_group }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('doctor.order_lab_test', patient_id=patient.id) }}" style="padding: 1.5rem;">
+            <!-- Urgency Priority Selection -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label" style="font-weight: 600;">Requisition Priority / Urgency *</label>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem 1rem; background: var(--bg-surface-alt, #0F172A); border: 1px solid var(--border-color, #334155); border-radius: 6px;">
+                        <input type="radio" name="priority" value="routine" checked>
+                        <span><strong>Routine</strong> (Standard Turnaround)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem 1rem; background: var(--bg-surface-alt, #0F172A); border: 1px solid var(--border-color, #334155); border-radius: 6px;">
+                        <input type="radio" name="priority" value="urgent">
+                        <span style="color: #F59E0B;"><strong>Urgent</strong> (Priority Queue)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem 1rem; background: var(--bg-surface-alt, #0F172A); border: 1px solid var(--border-color, #334155); border-radius: 6px;">
+                        <input type="radio" name="priority" value="stat">
+                        <span style="color: #EF4444;"><strong>STAT</strong> (Immediate Life-Safety)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Clinical Indication / Notes -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label">Clinical Indication & Instructions for Laboratory Staff</label>
+                <textarea name="clinical_notes" class="form-control" rows="2" placeholder="e.g. Rule out anemia, pre-operative screening, suspected electrolyte imbalance..."></textarea>
+            </div>
+
+            <!-- Test Selection with Live Search Filter -->
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <label class="form-label" style="font-weight: 600; margin: 0;">
+                        Select Diagnostic Investigations to Order *
+                    </label>
+                    <input type="text" id="testFilterInput" placeholder="Quick search test..." onkeyup="filterTests()" style="padding: 0.3rem 0.6rem; font-size: 0.85rem; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-surface-alt); color: var(--text-main); width: 200px;">
+                </div>
+
+                <div id="testSelectionList" style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color, #334155); border-radius: 6px; padding: 0.5rem; background: var(--bg-surface-alt, #0F172A);">
+                    {% for test in tests %}
+                    <label class="test-item-row" style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; border-radius: 4px; transition: background 0.15s;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <input type="checkbox" name="test_ids" value="{{ test.id }}" style="width: 1.15rem; height: 1.15rem;">
+                            <div>
+                                <span class="test-name" style="font-weight: 600; color: var(--text-main);">{{ test.name }}</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem;">(<code>{{ test.test_code }}</code>)</span>
+                                <div style="font-size: 0.75rem; color: var(--text-dim);">
+                                    Specimen: <span class="badge badge-secondary" style="font-size: 0.65rem;">{{ test.sample_type }}</span>
+                                    {% if test.reference_range_min is not none or test.reference_range_max is not none %}
+                                    • Normal Range: {{ test.reference_range_min or '0' }} - {{ test.reference_range_max or 'N/A' }} {{ test.unit or '' }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">
+                            ${{ test.cost }}
+                        </div>
+                    </label>
+                    {% else %}
+                    <div style="padding: 1.5rem; text-align: center; color: var(--text-dim);">
+                        No diagnostic tests currently registered in formulary.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <a href="{{ url_for('patient.patient_detail', patient_id=patient.id) }}" class="btn btn-secondary">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem;">
+                    <span>📤</span> Transmit Requisition to Laboratory
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterTests() {
+    const filter = document.getElementById("testFilterInput").value.toLowerCase();
+    const rows = document.querySelectorAll(".test-item-row");
+    rows.forEach(function(row) {
+        const text = row.innerText.toLowerCase();
+        if (text.includes(filter)) {
+            row.style.display = "flex";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+</script>
+{% endblock %}

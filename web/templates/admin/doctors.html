@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Manage Doctors - MediCare AI{% endblock %}
+{% block page_heading %}Physician & Consultant Directory{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div class="card-title">Medical Staff & Specialists ({{ total }} Registered)</div>
+            <div class="card-subtitle">Manage doctor profiles, clinical assignments, consultation fees, and licensing</div>
+        </div>
+        <button class="btn btn-primary" data-modal-target="create-doctor-modal">
+            <span>➕</span> Add Doctor
+        </button>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <form method="GET" action="{{ url_for('admin.manage_doctors') }}" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by name, specialization, license..." style="flex: 1; min-width: 220px;">
+        
+        <select name="dept" class="form-control" style="width: auto; min-width: 180px;">
+            <option value="">All Departments</option>
+            {% for d in departments %}
+                <option value="{{ d.id }}" {% if dept_id == d.id|string %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if q or dept_id %}
+            <a href="{{ url_for('admin.manage_doctors') }}" class="btn btn-secondary" style="color: var(--text-dim);">Clear</a>
+        {% endif %}
+    </form>
+
+    <!-- Doctors Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Doctor</th>
+                    <th>Department</th>
+                    <th>Specialization</th>
+                    <th>License</th>
+                    <th>Fee</th>
+                    <th>Room</th>
+                    <th>Availability</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in doctors %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: var(--text-main);">Dr. {{ doc.user.full_name }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ doc.user.email }} | {{ doc.qualification }}</div>
+                    </td>
+                    <td>
+                        {% if doc.department %}
+                            <span class="badge badge-info">{{ doc.department.name }}</span>
+                        {% else %}
+                            <span style="color: var(--text-dim);">Unassigned</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ doc.specialization }}</strong></td>
+                    <td><span style="font-family: monospace; font-size: 0.85rem;">{{ doc.license_number }}</span></td>
+                    <td style="color: var(--teal-primary); font-weight: 700;">₹{{ "%.2f"|format(doc.consultation_fee) }}</td>
+                    <td>{{ doc.room_number or '-' }}</td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">{{ doc.available_days }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                        No doctors found matching search criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pages > 1 %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Showing page {{ page }} of {{ pages }} ({{ total }} doctors)
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+            {% if page > 1 %}
+                <a href="{{ url_for('admin.manage_doctors', page=page-1, q=q, dept=dept_id) }}" class="btn btn-secondary btn-sm">&laquo; Prev</a>
+            {% endif %}
+            
+            <span class="btn btn-primary btn-sm" style="pointer-events: none;">{{ page }}</span>
+
+            {% if page < pages %}
+                <a href="{{ url_for('admin.manage_doctors', page=page+1, q=q, dept=dept_id) }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal: Add New Doctor -->
+<div class="modal-backdrop" id="create-doctor-modal">
+    <div class="modal-dialog" style="max-width: 600px;">
+        <div class="card-header" style="margin-bottom: 1rem;">
+            <div class="card-title">Register New Physician</div>
+            <button type="button" class="btn btn-secondary btn-sm" data-close-modal>&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin.create_doctor') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">First Name *</label>
+                    <input type="text" name="first_name" class="form-control" required placeholder="Arun">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name *</label>
+                    <input type="text" name="last_name" class="form-control" required placeholder="Verma">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" name="email" class="form-control" required placeholder="dr.verma@medicare.ai">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" name="phone" class="form-control" placeholder="+91 98765 00123">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Specialization *</label>
+                    <input type="text" name="specialization" class="form-control" required placeholder="Cardiology">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Medical License Number *</label>
+                    <input type="text" name="license_number" class="form-control" required placeholder="MCI-48921">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <select name="department_id" class="form-control">
+                        <option value="">-- None / General --</option>
+                        {% for d in departments %}
+                            <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Qualification</label>
+                    <input type="text" name="qualification" class="form-control" value="MBBS, MD" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Consultation Fee (₹)</label>
+                    <input type="number" step="0.01" name="consultation_fee" class="form-control" value="700.00" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">OPD Room</label>
+                    <input type="text" name="room_number" class="form-control" value="OPD-102">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Available Days</label>
+                <input type="text" name="available_days" class="form-control" value="Mon,Tue,Wed,Thu,Fri">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Initial Password</label>
+                <input type="password" name="password" class="form-control" value="Password123!" required>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Doctor</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

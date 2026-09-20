@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Prescription Records - Doctor Portal{% endblock %}
+{% block page_heading %}Doctor's Electronic Prescriptions{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Filter & Search Toolbar -->
+    <div class="card" style="padding: 1rem 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <!-- Status Tabs -->
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="{{ url_for('doctor.prescriptions_list', status='all', q=search_query) }}"
+                   class="btn btn-sm {% if current_status == 'all' or not current_status %}btn-primary{% else %}btn-secondary{% endif %}">
+                    All Records
+                </a>
+                <a href="{{ url_for('doctor.prescriptions_list', status='pending', q=search_query) }}"
+                   class="btn btn-sm {% if current_status == 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">
+                    Pending
+                </a>
+                <a href="{{ url_for('doctor.prescriptions_list', status='partially_dispensed', q=search_query) }}"
+                   class="btn btn-sm {% if current_status == 'partially_dispensed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                    Partially Dispensed
+                </a>
+                <a href="{{ url_for('doctor.prescriptions_list', status='dispensed', q=search_query) }}"
+                   class="btn btn-sm {% if current_status == 'dispensed' %}btn-primary{% else %}btn-secondary{% endif %}">
+                    Dispensed
+                </a>
+                <a href="{{ url_for('doctor.prescriptions_list', status='cancelled', q=search_query) }}"
+                   class="btn btn-sm {% if current_status == 'cancelled' %}btn-primary{% else %}btn-secondary{% endif %}">
+                    Cancelled
+                </a>
+            </div>
+
+            <!-- Search Bar -->
+            <form method="GET" action="{{ url_for('doctor.prescriptions_list') }}" style="display: flex; gap: 0.5rem;">
+                <input type="hidden" name="status" value="{{ current_status }}">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Search patient name, email..." value="{{ search_query }}" style="width: 220px;">
+                <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+                {% if search_query %}
+                    <a href="{{ url_for('doctor.prescriptions_list', status=current_status) }}" class="btn btn-secondary btn-sm">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Prescriptions Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><span>💊</span> Issued Prescriptions</div>
+            <span class="card-subtitle">{{ prescriptions|length }} record(s)</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Rx #</th>
+                        <th>Issued Date</th>
+                        <th>Patient</th>
+                        <th>Medication Regimen</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rx in prescriptions %}
+                    <tr>
+                        <td>
+                            <strong style="font-family: monospace;">#{{ rx.id }}</strong>
+                            {% if rx.medical_record_id %}
+                                <div style="font-size: 0.75rem; color: var(--text-dim);">EMR #{{ rx.medical_record_id }}</div>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.85rem; color: var(--text-muted);">
+                            {{ rx.created_at.strftime('%Y-%m-%d %H:%M') if rx.created_at else 'N/A' }}
+                        </td>
+                        <td>
+                            <strong>{{ rx.patient.user.full_name }}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-dim);">
+                                {{ rx.patient.user.email }} | {{ rx.patient.user.phone or 'No phone' }}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                {% for item in rx.items %}
+                                    <div style="font-size: 0.85rem;">
+                                        • <strong>{{ item.medicine.name }}</strong> ({{ item.dosage }}) - {{ item.frequency }}, {{ item.duration_days }} days [Qty: {{ item.quantity_prescribed }}]
+                                    </div>
+                                {% else %}
+                                    <span style="color: var(--text-dim); font-size: 0.85rem;">No items listed</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if rx.status.value == 'dispensed' %}badge-success{% elif rx.status.value == 'partially_dispensed' %}badge-warning{% elif rx.status.value == 'cancelled' %}badge-neutral{% else %}badge-info{% endif %}">
+                                {{ rx.status.value }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.4rem;">
+                                <a href="{{ url_for('doctor.prescription_detail', rx_id=rx.id) }}" class="btn btn-secondary btn-sm" title="View Prescription Chart">
+                                    <span>👁️</span> View
+                                </a>
+                                <a href="{{ url_for('doctor.patient_history', patient_id=rx.patient.id) }}" class="btn btn-secondary btn-sm" title="Patient Profile">
+                                    <span>📁</span> Chart
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                            No prescription records matching your selection.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
