@@ -1,8 +1,8 @@
-# MediCare AI - Advanced Hospital Management & Analytics System
+# CHIKITSASETU - Smart Hospital Management & Healthcare Analytics System
 ## System Architecture & Technical Specification Document
 
-> **Capstone Project Specification & Technical Blueprint**  
-> **Target Discipline:** Data Science & Healthcare Informatics  
+> **Comprehensive Project Specification & Technical Blueprint**  
+> **Target Discipline:** Healthcare Informatics, Clinical Operations & Predictive Machine Learning  
 > **Architectural Standard:** Tier-Decoupled Python Hybrid Architecture (Flask UI + FastAPI Service + Scikit-Learn ML Subsystem + PostgreSQL)
 
 ---
@@ -26,7 +26,7 @@
 
 ## 1. Executive Summary & Requirements Analysis
 
-Modern healthcare facilities struggle with fragmented software stacks where operational workflows (appointments, billing, inpatient admissions, electronic medical records) are disconnected from predictive machine learning and operational analytics. **MediCare AI** is designed to address this challenge by delivering an enterprise-grade hospital management platform with integrated real-time machine learning inference and interactive operational intelligence.
+Modern healthcare facilities struggle with fragmented software stacks where operational workflows (appointments, billing, inpatient admissions, electronic medical records) are disconnected from predictive machine learning and operational analytics. **CHIKITSASETU** is designed to address this challenge by delivering an enterprise-grade hospital management platform with integrated real-time machine learning inference and interactive operational intelligence.
 
 ### 1.1 Requirements Traceability Matrix
 
@@ -69,7 +69,7 @@ The system satisfies 30 functional and non-functional requirements without intro
 
 ## 2. High-Level System Architecture
 
-MediCare AI utilizes a **Hybrid Python Two-Tier Architecture** centered around a shared relational domain model in PostgreSQL.
+CHIKITSASETU utilizes a **Hybrid Python Two-Tier Architecture** centered around a shared relational domain model in PostgreSQL.
 
 ```
                               +-------------------------------------------+
@@ -930,4 +930,4 @@ docker compose up --build
 ```
 
 ---
-*Document prepared for MediCare AI Capstone Architecture Review.*
+*Document prepared for CHIKITSASETU System Architecture Review.*

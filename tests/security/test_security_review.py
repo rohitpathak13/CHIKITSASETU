@@ -11,7 +11,7 @@ def test_users(db_session):
     """Creates a distinct user per role for security and authorization testing."""
     # 1. Admin
     admin = User(
-        email="sec_admin@medicare.ai",
+        email="sec_admin@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.ADMIN,
         first_name="Sec",
@@ -20,7 +20,7 @@ def test_users(db_session):
     )
     # 2. Doctor
     doctor_user = User(
-        email="sec_doctor@medicare.ai",
+        email="sec_doctor@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.DOCTOR,
         first_name="Sec",
@@ -29,7 +29,7 @@ def test_users(db_session):
     )
     # 3. Patient 1
     patient_user_1 = User(
-        email="sec_patient1@medicare.ai",
+        email="sec_patient1@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.PATIENT,
         first_name="Patient",
@@ -38,7 +38,7 @@ def test_users(db_session):
     )
     # 4. Patient 2
     patient_user_2 = User(
-        email="sec_patient2@medicare.ai",
+        email="sec_patient2@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.PATIENT,
         first_name="Patient",
@@ -47,7 +47,7 @@ def test_users(db_session):
     )
     # 5. Receptionist
     receptionist = User(
-        email="sec_receptionist@medicare.ai",
+        email="sec_receptionist@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.RECEPTIONIST,
         first_name="Sec",
@@ -56,7 +56,7 @@ def test_users(db_session):
     )
     # 6. Deactivated User
     deactivated = User(
-        email="sec_deactivated@medicare.ai",
+        email="sec_deactivated@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.PATIENT,
         first_name="Inactive",
@@ -110,22 +110,22 @@ def auth_headers_for(user: User) -> dict:
 def test_auth_login_valid_and_invalid(fastapi_client, test_users):
     """Verifies authentication accepts valid credentials, rejects invalid, and locks deactivated."""
     # Valid
-    res_valid = fastapi_client.post("/api/v1/auth/login", json={"email": "sec_admin@medicare.ai", "password": "Password123!"})
+    res_valid = fastapi_client.post("/api/v1/auth/login", json={"email": "sec_admin@chikitsasetu.ai", "password": "Password123!"})
     assert res_valid.status_code == 200
     assert "access_token" in res_valid.json()
 
     # Invalid password
-    res_invalid = fastapi_client.post("/api/v1/auth/login", json={"email": "sec_admin@medicare.ai", "password": "WrongPassword!"})
+    res_invalid = fastapi_client.post("/api/v1/auth/login", json={"email": "sec_admin@chikitsasetu.ai", "password": "WrongPassword!"})
     assert res_invalid.status_code == 401
 
     # Deactivated account
-    res_deactivated = fastapi_client.post("/api/v1/auth/login", json={"email": "sec_deactivated@medicare.ai", "password": "Password123!"})
+    res_deactivated = fastapi_client.post("/api/v1/auth/login", json={"email": "sec_deactivated@chikitsasetu.ai", "password": "Password123!"})
     assert res_deactivated.status_code in (400, 401)
 
 
 def test_malformed_token_subject_handling(fastapi_client):
     """Verifies that non-integer / malformed token subject returns 401 and does not crash with 500."""
-    bad_token = create_access_token({"sub": "non-integer-guid-string", "role": "patient", "email": "test@medicare.ai"})
+    bad_token = create_access_token({"sub": "non-integer-guid-string", "role": "patient", "email": "test@chikitsasetu.ai"})
     res = fastapi_client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {bad_token}"})
     assert res.status_code == 401
     assert "invalid token" in res.text.lower() or "credentials" in res.text.lower()
@@ -234,7 +234,7 @@ def test_patient_registration_password_min_length(fastapi_client, test_users):
     """Ensures registration schema rejects weak passwords under 8 characters."""
     headers_admin = auth_headers_for(test_users["admin"])
     payload = {
-        "email": "weak_pass_patient@medicare.ai",
+        "email": "weak_pass_patient@chikitsasetu.ai",
         "password": "short",  # Only 5 chars
         "first_name": "Weak",
         "last_name": "Pass",

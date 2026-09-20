@@ -11,10 +11,10 @@ from core.security import get_password_hash
 
 
 def login_as_admin(flask_client, db_session):
-    admin = db_session.query(User).filter(User.email == "admin_mod_test@medicare.ai").first()
+    admin = db_session.query(User).filter(User.email == "admin_mod_test@chikitsasetu.ai").first()
     if not admin:
         admin = User(
-            email="admin_mod_test@medicare.ai",
+            email="admin_mod_test@chikitsasetu.ai",
             password_hash=get_password_hash("Password123!"),
             role=RoleEnum.ADMIN,
             first_name="Admin",
@@ -25,7 +25,7 @@ def login_as_admin(flask_client, db_session):
         db_session.commit()
 
     flask_client.post("/login", data={
-        "email": "admin_mod_test@medicare.ai",
+        "email": "admin_mod_test@chikitsasetu.ai",
         "password": "Password123!"
     })
     return admin
@@ -45,7 +45,7 @@ def test_admin_dashboard_metrics(flask_client, db_session):
 
     # Seed Doctor
     doc_user = User(
-        email="doc_kpi@medicare.ai",
+        email="doc_kpi@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.DOCTOR,
         first_name="Sanjay",
@@ -67,7 +67,7 @@ def test_admin_dashboard_metrics(flask_client, db_session):
 
     # Seed Staff
     staff_user = User(
-        email="staff_kpi@medicare.ai",
+        email="staff_kpi@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.NURSE,
         first_name="Kavita",
@@ -88,7 +88,7 @@ def test_admin_dashboard_metrics(flask_client, db_session):
 
     # Seed Patient
     pat_user = User(
-        email="pat_kpi@medicare.ai",
+        email="pat_kpi@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.PATIENT,
         first_name="Rohan",
@@ -227,13 +227,13 @@ def test_admin_manage_users(flask_client, db_session):
     # 3. Filter by role
     res_role = flask_client.get("/admin/users?role=admin")
     assert res_role.status_code == 200
-    assert b"admin_mod_test@medicare.ai" in res_role.data
+    assert b"admin_mod_test@chikitsasetu.ai" in res_role.data
 
     # 4. Provision new Doctor user via POST
     res_create = flask_client.post("/admin/users/create", data={
         "first_name": "Deepak",
         "last_name": "Chopra",
-        "email": "dr.deepak@medicare.ai",
+        "email": "dr.deepak@chikitsasetu.ai",
         "phone": "+91 98765 43299",
         "role": "doctor",
         "password": "Password123!",
@@ -245,7 +245,7 @@ def test_admin_manage_users(flask_client, db_session):
     assert res_create.status_code == 200
     assert b"provisioned successfully" in res_create.data
 
-    new_doc_user = db_session.query(User).filter(User.email == "dr.deepak@medicare.ai").first()
+    new_doc_user = db_session.query(User).filter(User.email == "dr.deepak@chikitsasetu.ai").first()
     assert new_doc_user is not None
     assert new_doc_user.role == RoleEnum.DOCTOR
     assert new_doc_user.doctor_profile is not None
@@ -255,7 +255,7 @@ def test_admin_manage_users(flask_client, db_session):
     res_dup = flask_client.post("/admin/users/create", data={
         "first_name": "Duplicate",
         "last_name": "Test",
-        "email": "dr.deepak@medicare.ai",
+        "email": "dr.deepak@chikitsasetu.ai",
         "role": "patient",
         "password": "Password123!"
     }, follow_redirects=True)
@@ -293,7 +293,7 @@ def test_admin_manage_doctors(flask_client, db_session):
     res_create = flask_client.post("/admin/doctors/create", data={
         "first_name": "Sunil",
         "last_name": "Gavaskar",
-        "email": "dr.sunil@medicare.ai",
+        "email": "dr.sunil@chikitsasetu.ai",
         "phone": "+91 98765 12345",
         "specialization": "Neurosurgeon",
         "qualification": "MBBS, MCh",
@@ -322,7 +322,7 @@ def test_admin_manage_doctors(flask_client, db_session):
     res_dup = flask_client.post("/admin/doctors/create", data={
         "first_name": "Clone",
         "last_name": "Doctor",
-        "email": "clone.doc@medicare.ai",
+        "email": "clone.doc@chikitsasetu.ai",
         "specialization": "Neurology",
         "license_number": "MCI-NEURO-99",
         "password": "Password123!"
@@ -360,7 +360,7 @@ def test_admin_manage_staff(flask_client, db_session):
     res_create = flask_client.post("/admin/staff/create", data={
         "first_name": "Pooja",
         "last_name": "Hegde",
-        "email": "pooja.pharm@medicare.ai",
+        "email": "pooja.pharm@chikitsasetu.ai",
         "phone": "+91 98765 88888",
         "employee_id": "EMP-PHARM-101",
         "role": "pharmacist",
@@ -387,7 +387,7 @@ def test_admin_manage_staff(flask_client, db_session):
     res_dup = flask_client.post("/admin/staff/create", data={
         "first_name": "Duplicate",
         "last_name": "Staff",
-        "email": "dup.staff@medicare.ai",
+        "email": "dup.staff@chikitsasetu.ai",
         "employee_id": "EMP-PHARM-101",
         "designation": "Pharmacist",
         "password": "Password123!"
@@ -574,10 +574,10 @@ def test_admin_audit_logs(flask_client, db_session):
 ])
 def test_non_admin_cannot_access_admin_module(flask_client, db_session, admin_endpoint):
     # Create doctor user
-    doctor = db_session.query(User).filter(User.email == "dr.forbidden@medicare.ai").first()
+    doctor = db_session.query(User).filter(User.email == "dr.forbidden@chikitsasetu.ai").first()
     if not doctor:
         doctor = User(
-            email="dr.forbidden@medicare.ai",
+            email="dr.forbidden@chikitsasetu.ai",
             password_hash=get_password_hash("Password123!"),
             role=RoleEnum.DOCTOR,
             first_name="Doctor",
@@ -588,7 +588,7 @@ def test_non_admin_cannot_access_admin_module(flask_client, db_session, admin_en
         db_session.commit()
 
     # Login as doctor
-    flask_client.post("/login", data={"email": "dr.forbidden@medicare.ai", "password": "Password123!"})
+    flask_client.post("/login", data={"email": "dr.forbidden@chikitsasetu.ai", "password": "Password123!"})
 
     # Attempt to access admin endpoint
     res = flask_client.get(admin_endpoint)

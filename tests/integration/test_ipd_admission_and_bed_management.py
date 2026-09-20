@@ -34,7 +34,7 @@ def ipd_fixture(db_session):
 
     # 2. Users & Profiles
     admin_user = User(
-        email="admin_ipd@medicare.ai",
+        email="admin_ipd@chikitsasetu.ai",
         password_hash=get_password_hash("AdminPass123!"),
         role=RoleEnum.ADMIN,
         first_name="IPD",
@@ -42,7 +42,7 @@ def ipd_fixture(db_session):
         is_active=True
     )
     doc_user = User(
-        email="doctor_ipd@medicare.ai",
+        email="doctor_ipd@chikitsasetu.ai",
         password_hash=get_password_hash("DocPass123!"),
         role=RoleEnum.DOCTOR,
         first_name="Gregory",
@@ -50,7 +50,7 @@ def ipd_fixture(db_session):
         is_active=True
     )
     nurse_user = User(
-        email="nurse_ipd@medicare.ai",
+        email="nurse_ipd@chikitsasetu.ai",
         password_hash=get_password_hash("NursePass123!"),
         role=RoleEnum.NURSE,
         first_name="Florence",
@@ -58,7 +58,7 @@ def ipd_fixture(db_session):
         is_active=True
     )
     pat1_user = User(
-        email="patient1_ipd@medicare.ai",
+        email="patient1_ipd@chikitsasetu.ai",
         password_hash=get_password_hash("PatPass123!"),
         role=RoleEnum.PATIENT,
         first_name="John",
@@ -66,7 +66,7 @@ def ipd_fixture(db_session):
         is_active=True
     )
     pat2_user = User(
-        email="patient2_ipd@medicare.ai",
+        email="patient2_ipd@chikitsasetu.ai",
         password_hash=get_password_hash("PatPass123!"),
         role=RoleEnum.PATIENT,
         first_name="Sherlock",

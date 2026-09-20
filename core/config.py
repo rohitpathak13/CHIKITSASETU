@@ -5,7 +5,8 @@ from typing import Optional
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Settings:
-    PROJECT_NAME: str = "MediCare AI"
+    PROJECT_NAME: str = "CHIKITSASETU"
+    PROJECT_TAGLINE: str = "Smart Hospital Management & Healthcare Analytics System"
     PROJECT_VERSION: str = "1.0.0"
     
     # Environment & Database
@@ -16,11 +17,15 @@ class Settings:
     POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres")
     POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
     POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
-    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "medicare_ai")
+    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "chikitsasetu")
     
     @property
     def POSTGRES_DATABASE_URL(self) -> str:
         return f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
+    @property
+    def SQLITE_PATH(self) -> Path:
+        return BASE_DIR / "chikitsasetu_dev.db"
 
     @property
     def DATABASE_URL(self) -> str:
@@ -28,7 +33,7 @@ class Settings:
         if custom_url:
             return custom_url
         if self.USE_SQLITE or os.getenv("TESTING") == "1":
-            return f"sqlite:///{BASE_DIR / 'medicare_dev.db'}"
+            return f"sqlite:///{self.SQLITE_PATH}"
         
         # Check if psycopg2 is available and PostgreSQL port is listening
         try:
@@ -40,12 +45,12 @@ class Settings:
             sock.close()
             if is_open:
                 return self.POSTGRES_DATABASE_URL
-            return f"sqlite:///{BASE_DIR / 'medicare_dev.db'}"
+            return f"sqlite:///{self.SQLITE_PATH}"
         except Exception:
-            return f"sqlite:///{BASE_DIR / 'medicare_dev.db'}"
+            return f"sqlite:///{self.SQLITE_PATH}"
 
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "medicare-super-secret-key-change-in-production-2026")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "chikitsasetu-super-secret-key-change-in-production-2026")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours for dev convenience
     

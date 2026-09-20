@@ -33,7 +33,7 @@ def prescription_fixture(db_session):
 
     # Doctor
     doc_user = User(
-        email="doc_rx@medicare.ai",
+        email="doc_rx@chikitsasetu.ai",
         password_hash=get_password_hash("DocPass123!"),
         role=RoleEnum.DOCTOR,
         first_name="Gregory",
@@ -53,7 +53,7 @@ def prescription_fixture(db_session):
 
     # Doctor 2
     doc2_user = User(
-        email="doc2_rx@medicare.ai",
+        email="doc2_rx@chikitsasetu.ai",
         password_hash=get_password_hash("DocPass123!"),
         role=RoleEnum.DOCTOR,
         first_name="James",
@@ -72,7 +72,7 @@ def prescription_fixture(db_session):
 
     # Patient 1
     pat1_user = User(
-        email="patient1_rx@medicare.ai",
+        email="patient1_rx@chikitsasetu.ai",
         password_hash=get_password_hash("PatPass123!"),
         role=RoleEnum.PATIENT,
         first_name="Alice",
@@ -87,7 +87,7 @@ def prescription_fixture(db_session):
 
     # Patient 2
     pat2_user = User(
-        email="patient2_rx@medicare.ai",
+        email="patient2_rx@chikitsasetu.ai",
         password_hash=get_password_hash("PatPass123!"),
         role=RoleEnum.PATIENT,
         first_name="Bob",
@@ -102,7 +102,7 @@ def prescription_fixture(db_session):
 
     # Pharmacist
     pharm_user = User(
-        email="pharmacist_rx@medicare.ai",
+        email="pharmacist_rx@chikitsasetu.ai",
         password_hash=get_password_hash("PharmPass123!"),
         role=RoleEnum.PHARMACIST,
         first_name="Walter",
@@ -112,7 +112,7 @@ def prescription_fixture(db_session):
 
     # Receptionist
     rec_user = User(
-        email="rec_rx@medicare.ai",
+        email="rec_rx@chikitsasetu.ai",
         password_hash=get_password_hash("RecPass123!"),
         role=RoleEnum.RECEPTIONIST,
         first_name="Pam",

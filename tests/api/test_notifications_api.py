@@ -23,7 +23,7 @@ def auth_users(db_session):
     """Creates a set of distinct authenticated users and their JWT auth headers."""
     # 1. Admin
     admin = User(
-        email="api_admin@medicare.ai",
+        email="api_admin@chikitsasetu.ai",
         password_hash=get_password_hash("AdminPass123!"),
         role=RoleEnum.ADMIN,
         first_name="Arthur",
@@ -32,7 +32,7 @@ def auth_users(db_session):
     )
     # 2. Pharmacist
     pharm = User(
-        email="api_pharm@medicare.ai",
+        email="api_pharm@chikitsasetu.ai",
         password_hash=get_password_hash("PharmPass123!"),
         role=RoleEnum.PHARMACIST,
         first_name="Geeta",
@@ -41,7 +41,7 @@ def auth_users(db_session):
     )
     # 3. Patient
     pat = User(
-        email="api_pat@medicare.ai",
+        email="api_pat@chikitsasetu.ai",
         password_hash=get_password_hash("PatientPass123!"),
         role=RoleEnum.PATIENT,
         first_name="Vikram",

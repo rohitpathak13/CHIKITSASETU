@@ -23,7 +23,7 @@ from ml.no_show_prediction.predictions.predictor import NoShowPredictorService
 
 def main():
     print("=" * 70)
-    print("[CHIKITSASETU / MediCare AI] Appointment No-Show ML Pipeline")
+    print("[CHIKITSASETU] Appointment No-Show ML Pipeline")
     print("=" * 70)
 
     # 1. Dataset Loading

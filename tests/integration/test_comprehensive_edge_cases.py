@@ -62,7 +62,7 @@ from core.services.pharmacy_service import (
 def base_clinical_setup(db_session):
     """Provides populated base users for each role."""
     admin = User(
-        email="edge_admin@medicare.ai",
+        email="edge_admin@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.ADMIN,
         first_name="Admin",
@@ -70,7 +70,7 @@ def base_clinical_setup(db_session):
         is_active=True
     )
     doc_user = User(
-        email="edge_doctor@medicare.ai",
+        email="edge_doctor@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.DOCTOR,
         first_name="Doc",
@@ -78,7 +78,7 @@ def base_clinical_setup(db_session):
         is_active=True
     )
     nurse_user = User(
-        email="edge_nurse@medicare.ai",
+        email="edge_nurse@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.NURSE,
         first_name="Nurse",
@@ -86,7 +86,7 @@ def base_clinical_setup(db_session):
         is_active=True
     )
     rec_user = User(
-        email="edge_receptionist@medicare.ai",
+        email="edge_receptionist@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.RECEPTIONIST,
         first_name="Rec",
@@ -94,7 +94,7 @@ def base_clinical_setup(db_session):
         is_active=True
     )
     pat1_user = User(
-        email="edge_patient1@medicare.ai",
+        email="edge_patient1@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.PATIENT,
         first_name="Pat1",
@@ -102,7 +102,7 @@ def base_clinical_setup(db_session):
         is_active=True
     )
     pat2_user = User(
-        email="edge_patient2@medicare.ai",
+        email="edge_patient2@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.PATIENT,
         first_name="Pat2",
@@ -171,7 +171,7 @@ def test_auth_empty_and_whitespace_credentials(fastapi_client):
 def test_auth_deactivated_user_cannot_login(fastapi_client, db_session):
     """Security Edge Case: Inactive user accounts are rejected."""
     deactivated = User(
-        email="deactivated_edge@medicare.ai",
+        email="deactivated_edge@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.PATIENT,
         first_name="Deactivated",
@@ -181,7 +181,7 @@ def test_auth_deactivated_user_cannot_login(fastapi_client, db_session):
     db_session.add(deactivated)
     db_session.commit()
 
-    res = fastapi_client.post("/api/v1/auth/login", json={"email": "deactivated_edge@medicare.ai", "password": "Password123!"})
+    res = fastapi_client.post("/api/v1/auth/login", json={"email": "deactivated_edge@chikitsasetu.ai", "password": "Password123!"})
     assert res.status_code in (400, 401)
 
 
@@ -223,7 +223,7 @@ def test_patient_duplicate_email_registration_rejected(fastapi_client, base_clin
     """Duplicate Operation: Registering a patient with an existing email returns 400."""
     admin_headers = token_for(base_clinical_setup["admin"])
     payload = {
-        "email": "edge_patient1@medicare.ai",  # Already exists
+        "email": "edge_patient1@chikitsasetu.ai",  # Already exists
         "password": "Password123!",
         "first_name": "Duplicate",
         "last_name": "Patient",
@@ -246,7 +246,7 @@ def test_patient_boundary_newborn_registration(fastapi_client, base_clinical_set
     """Boundary Condition: Patient born today (newborn, age 0) registers successfully."""
     admin_headers = token_for(base_clinical_setup["admin"])
     payload = {
-        "email": "newborn_edge@medicare.ai",
+        "email": "newborn_edge@chikitsasetu.ai",
         "password": "Password123!",
         "first_name": "Baby",
         "last_name": "Edge",
@@ -265,7 +265,7 @@ def test_patient_boundary_newborn_registration(fastapi_client, base_clinical_set
 def test_doctor_duplicate_license_number_rejected(db_session, base_clinical_setup):
     """Duplicate Operation: Doctor license number uniqueness constraint."""
     doc2_user = User(
-        email="doc2_license@medicare.ai",
+        email="doc2_license@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.DOCTOR,
         first_name="Doc2",

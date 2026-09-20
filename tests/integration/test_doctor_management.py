@@ -43,7 +43,7 @@ def test_doctor_dashboard_kpis_and_queues(flask_client, db_session):
     db_session.add(dept)
     db_session.flush()
 
-    doc_user = create_user(db_session, "doc_dash@medicare.ai", RoleEnum.DOCTOR, "Vikram", "Sarabhai")
+    doc_user = create_user(db_session, "doc_dash@chikitsasetu.ai", RoleEnum.DOCTOR, "Vikram", "Sarabhai")
     doc = Doctor(
         id=doc_user.id,
         department_id=dept.id,
@@ -129,7 +129,7 @@ def test_doctor_dashboard_kpis_and_queues(flask_client, db_session):
     db_session.commit()
 
     # Login as Doctor
-    login_user(flask_client, "doc_dash@medicare.ai")
+    login_user(flask_client, "doc_dash@chikitsasetu.ai")
     resp = flask_client.get("/doctor/")
     assert resp.status_code == 200
 
@@ -154,7 +154,7 @@ def test_doctor_profile_view_and_update(flask_client, db_session):
     db_session.add(dept)
     db_session.flush()
 
-    doc_user = create_user(db_session, "doc_prof@medicare.ai", RoleEnum.DOCTOR, "Ananya", "Sen", phone="+91 9123456789")
+    doc_user = create_user(db_session, "doc_prof@chikitsasetu.ai", RoleEnum.DOCTOR, "Ananya", "Sen", phone="+91 9123456789")
     doc = Doctor(
         id=doc_user.id,
         department_id=dept.id,
@@ -168,7 +168,7 @@ def test_doctor_profile_view_and_update(flask_client, db_session):
     db_session.add(doc)
     db_session.commit()
 
-    login_user(flask_client, "doc_prof@medicare.ai")
+    login_user(flask_client, "doc_prof@chikitsasetu.ai")
 
     # 1. GET Profile View
     resp = flask_client.get("/doctor/profile")
@@ -243,7 +243,7 @@ def test_doctor_schedule_date_and_status_filtering(flask_client, db_session):
     db_session.add(dept)
     db_session.flush()
 
-    doc_user = create_user(db_session, "doc_sched@medicare.ai", RoleEnum.DOCTOR, "Deepa", "Iyer")
+    doc_user = create_user(db_session, "doc_sched@chikitsasetu.ai", RoleEnum.DOCTOR, "Deepa", "Iyer")
     doc = Doctor(
         id=doc_user.id,
         department_id=dept.id,
@@ -282,7 +282,7 @@ def test_doctor_schedule_date_and_status_filtering(flask_client, db_session):
     db_session.add(appt_past)
     db_session.commit()
 
-    login_user(flask_client, "doc_sched@medicare.ai")
+    login_user(flask_client, "doc_sched@chikitsasetu.ai")
 
     # 1. Default schedule (defaults to today)
     resp = flask_client.get("/doctor/schedule")
@@ -332,7 +332,7 @@ def test_doctor_patient_list_outpatients_and_inpatients(flask_client, db_session
     db_session.add(dept)
     db_session.flush()
 
-    doc_user = create_user(db_session, "doc_pts@medicare.ai", RoleEnum.DOCTOR, "Harish", "Patel")
+    doc_user = create_user(db_session, "doc_pts@chikitsasetu.ai", RoleEnum.DOCTOR, "Harish", "Patel")
     doc = Doctor(
         id=doc_user.id,
         department_id=dept.id,
@@ -384,7 +384,7 @@ def test_doctor_patient_list_outpatients_and_inpatients(flask_client, db_session
     db_session.add(ip_adm)
     db_session.commit()
 
-    login_user(flask_client, "doc_pts@medicare.ai")
+    login_user(flask_client, "doc_pts@chikitsasetu.ai")
 
     # 1. All Patients
     resp = flask_client.get("/doctor/patients")
@@ -423,7 +423,7 @@ def test_doctor_patient_medical_history_access(flask_client, db_session):
     db_session.add(dept)
     db_session.flush()
 
-    doc_user = create_user(db_session, "doc_hist@medicare.ai", RoleEnum.DOCTOR, "Dr. Sunita", "Williams")
+    doc_user = create_user(db_session, "doc_hist@chikitsasetu.ai", RoleEnum.DOCTOR, "Dr. Sunita", "Williams")
     doc = Doctor(
         id=doc_user.id,
         department_id=dept.id,
@@ -488,7 +488,7 @@ def test_doctor_patient_medical_history_access(flask_client, db_session):
     db_session.add(pb)
     db_session.commit()
 
-    login_user(flask_client, "doc_hist@medicare.ai")
+    login_user(flask_client, "doc_hist@chikitsasetu.ai")
 
     # 1. Doctor can view Patient A's medical history
     resp_pa = flask_client.get(f"/doctor/patient/{pa.id}/history")
@@ -506,8 +506,8 @@ def test_doctor_patient_medical_history_access(flask_client, db_session):
     assert resp_pb.status_code == 403
 
     # 3. Admin CAN view Patient B's history
-    create_user(db_session, "admin_hist@medicare.ai", RoleEnum.ADMIN, "Admin", "Overwatch")
-    login_user(flask_client, "admin_hist@medicare.ai")
+    create_user(db_session, "admin_hist@chikitsasetu.ai", RoleEnum.ADMIN, "Admin", "Overwatch")
+    login_user(flask_client, "admin_hist@chikitsasetu.ai")
     resp_admin = flask_client.get(f"/doctor/patient/{pb.id}/history")
     assert resp_admin.status_code == 200
 
@@ -517,7 +517,7 @@ def test_doctor_patient_medical_history_access(flask_client, db_session):
 # =====================================================================
 
 def test_doctor_management_rbac_permissions(flask_client, db_session):
-    doc_user = create_user(db_session, "rbac_doc@medicare.ai", RoleEnum.DOCTOR, "Doctor", "Who")
+    doc_user = create_user(db_session, "rbac_doc@chikitsasetu.ai", RoleEnum.DOCTOR, "Doctor", "Who")
     doc = Doctor(
         id=doc_user.id,
         specialization="General",
@@ -527,29 +527,29 @@ def test_doctor_management_rbac_permissions(flask_client, db_session):
     )
     db_session.add(doc)
 
-    pat_user = create_user(db_session, "rbac_patient@medicare.ai", RoleEnum.PATIENT, "Patient", "User")
+    pat_user = create_user(db_session, "rbac_patient@chikitsasetu.ai", RoleEnum.PATIENT, "Patient", "User")
     pat = Patient(id=pat_user.id, dob=date(1990, 1, 1), gender=GenderEnum.MALE)
     db_session.add(pat)
 
-    pharm_user = create_user(db_session, "rbac_pharm_doc@medicare.ai", RoleEnum.PHARMACIST, "Pharm", "User")
-    lab_user = create_user(db_session, "rbac_lab_doc@medicare.ai", RoleEnum.LAB_TECHNICIAN, "Lab", "User")
+    pharm_user = create_user(db_session, "rbac_pharm_doc@chikitsasetu.ai", RoleEnum.PHARMACIST, "Pharm", "User")
+    lab_user = create_user(db_session, "rbac_lab_doc@chikitsasetu.ai", RoleEnum.LAB_TECHNICIAN, "Lab", "User")
     db_session.commit()
 
     # 1. Patient role attempting to access doctor workbench routes -> 403 Forbidden
-    login_user(flask_client, "rbac_patient@medicare.ai")
+    login_user(flask_client, "rbac_patient@chikitsasetu.ai")
     assert flask_client.get("/doctor/").status_code == 403
     assert flask_client.get("/doctor/schedule").status_code == 403
     assert flask_client.get("/doctor/profile").status_code == 403
     assert flask_client.get("/doctor/patients").status_code == 403
 
     # 2. Pharmacist role attempting to access doctor workbench -> 403 Forbidden
-    login_user(flask_client, "rbac_pharm_doc@medicare.ai")
+    login_user(flask_client, "rbac_pharm_doc@chikitsasetu.ai")
     assert flask_client.get("/doctor/").status_code == 403
     assert flask_client.get("/doctor/schedule").status_code == 403
     assert flask_client.get("/doctor/profile").status_code == 403
 
     # 3. Lab Tech role attempting to access doctor workbench -> 403 Forbidden
-    login_user(flask_client, "rbac_lab_doc@medicare.ai")
+    login_user(flask_client, "rbac_lab_doc@chikitsasetu.ai")
     assert flask_client.get("/doctor/").status_code == 403
     assert flask_client.get("/doctor/schedule").status_code == 403
 

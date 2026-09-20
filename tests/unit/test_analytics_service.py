@@ -194,7 +194,7 @@ def test_patient_demographics_and_growth_accuracy(db_session):
     today = date.today()
     # Create 3 patients of known ages and genders
     # Patient 1: 8 years old (Pediatric), Male
-    u1 = User(email="p1@medicare.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Child", last_name="One")
+    u1 = User(email="p1@chikitsasetu.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Child", last_name="One")
     db_session.add(u1)
     db_session.flush()
     p1 = Patient(id=u1.id, dob=today - timedelta(days=8 * 365 + 2), gender=GenderEnum.MALE)
@@ -202,7 +202,7 @@ def test_patient_demographics_and_growth_accuracy(db_session):
     db_session.add(p1)
 
     # Patient 2: 25 years old (Young Adult), Female
-    u2 = User(email="p2@medicare.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Adult", last_name="Two")
+    u2 = User(email="p2@chikitsasetu.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Adult", last_name="Two")
     db_session.add(u2)
     db_session.flush()
     p2 = Patient(id=u2.id, dob=today - timedelta(days=25 * 365 + 6), gender=GenderEnum.FEMALE)
@@ -210,7 +210,7 @@ def test_patient_demographics_and_growth_accuracy(db_session):
     db_session.add(p2)
 
     # Patient 3: 70 years old (Senior), Female
-    u3 = User(email="p3@medicare.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Senior", last_name="Three")
+    u3 = User(email="p3@chikitsasetu.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Senior", last_name="Three")
     db_session.add(u3)
     db_session.flush()
     p3 = Patient(id=u3.id, dob=today - timedelta(days=70 * 365 + 17), gender=GenderEnum.FEMALE)
@@ -250,8 +250,8 @@ def test_appointment_cancellation_and_no_show_accuracy(db_session):
     Tests appointment status breakdowns, cancellation rate %, no-show rate %, and ML risk buckets.
     """
     # Create doctor and patient
-    u_doc = User(email="doc@medicare.ai", password_hash="hash", role=RoleEnum.DOCTOR, first_name="Dev", last_name="Doc")
-    u_pat = User(email="pat@medicare.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Pat", last_name="One")
+    u_doc = User(email="doc@chikitsasetu.ai", password_hash="hash", role=RoleEnum.DOCTOR, first_name="Dev", last_name="Doc")
+    u_pat = User(email="pat@chikitsasetu.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Pat", last_name="One")
     db_session.add_all([u_doc, u_pat])
     db_session.flush()
 
@@ -325,8 +325,8 @@ def test_bed_occupancy_and_inpatient_trends_accuracy(db_session):
     assert bo["ward_breakdown"][0]["occupancy_rate"] == 25.0
 
     # Inpatient Admissions & Discharges
-    u_pat = User(email="ipd_pat@medicare.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Inpatient", last_name="User")
-    u_doc = User(email="ipd_doc@medicare.ai", password_hash="hash", role=RoleEnum.DOCTOR, first_name="Dr", last_name="Surgeon")
+    u_pat = User(email="ipd_pat@chikitsasetu.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Inpatient", last_name="User")
+    u_doc = User(email="ipd_doc@chikitsasetu.ai", password_hash="hash", role=RoleEnum.DOCTOR, first_name="Dr", last_name="Surgeon")
     db_session.add_all([u_pat, u_doc])
     db_session.flush()
     pat = Patient(id=u_pat.id, dob=date(1985, 5, 5), gender=GenderEnum.FEMALE)
@@ -365,7 +365,7 @@ def test_revenue_trends_and_cost_centers_accuracy(db_session):
     """
     Tests revenue metrics: total billed, cash collected, outstanding balance, and 7-component breakdown.
     """
-    u_pat = User(email="rev_pat@medicare.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Rev", last_name="Client")
+    u_pat = User(email="rev_pat@chikitsasetu.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Rev", last_name="Client")
     db_session.add(u_pat)
     db_session.flush()
     pat = Patient(id=u_pat.id, dob=date(1992, 1, 1), gender=GenderEnum.MALE)
@@ -438,8 +438,8 @@ def test_pharmacy_and_laboratory_analytics_accuracy(db_session):
     db_session.add_all([b1, b2])
 
     # 2. Laboratory setup
-    u_pat = User(email="lab_pat@medicare.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Lab", last_name="Patient")
-    u_doc = User(email="lab_doc@medicare.ai", password_hash="hash", role=RoleEnum.DOCTOR, first_name="Lab", last_name="Doctor")
+    u_pat = User(email="lab_pat@chikitsasetu.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Lab", last_name="Patient")
+    u_doc = User(email="lab_doc@chikitsasetu.ai", password_hash="hash", role=RoleEnum.DOCTOR, first_name="Lab", last_name="Doctor")
     db_session.add_all([u_pat, u_doc])
     db_session.flush()
     pat = Patient(id=u_pat.id, dob=date(1990, 1, 1), gender=GenderEnum.FEMALE)

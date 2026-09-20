@@ -7,7 +7,7 @@ from core.services import audit_service
 @pytest.fixture
 def doctor_user(db_session):
     doc = User(
-        email="doctor_api_test@medicare.ai",
+        email="doctor_api_test@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.DOCTOR,
         first_name="Doctor",
@@ -28,7 +28,7 @@ def doctor_auth_headers(doctor_user):
 @pytest.fixture
 def patient_user(db_session):
     pat = User(
-        email="patient_api_test@medicare.ai",
+        email="patient_api_test@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.PATIENT,
         first_name="Patient",
@@ -154,7 +154,7 @@ def test_end_to_end_login_logout_and_patient_auditing(fastapi_client, admin_auth
     # 1. Login via REST API
     login_res = fastapi_client.post(
         "/api/v1/auth/login",
-        json={"email": "test_admin@medicare.ai", "password": "Password123!"}
+        json={"email": "test_admin@chikitsasetu.ai", "password": "Password123!"}
     )
     assert login_res.status_code == 200
 

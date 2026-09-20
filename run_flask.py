@@ -1,5 +1,5 @@
 """
-MediCare AI - Flask Application Entrypoint
+CHIKITSASETU - Flask Application Entrypoint
 Run this script to start the multi-role operational web portal.
 Usage: python run_flask.py
 """
@@ -16,7 +16,7 @@ app = create_app()
 
 if __name__ == "__main__":
     print(f"==================================================")
-    print(f" MediCare AI - Multi-Role Clinical Web Portal     ")
+    print(f" CHIKITSASETU - Multi-Role Clinical Web Portal     ")
     print(f" URL: http://127.0.0.1:{settings.FLASK_PORT}                      ")
     print(f" Environment: {settings.ENV}                      ")
     print(f"==================================================")

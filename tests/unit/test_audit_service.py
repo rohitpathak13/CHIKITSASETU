@@ -67,7 +67,7 @@ def test_log_all_10_actions(db_session):
     10. admission/discharge
     """
     user = User(
-        email="doctor_audit@medicare.ai",
+        email="doctor_audit@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.DOCTOR,
         first_name="Audit",
@@ -212,7 +212,7 @@ def test_log_all_10_actions(db_session):
 def test_search_and_filter_audit_logs(db_session):
     """Verifies searching and filtering by action, resource, date, user, and text."""
     admin = User(
-        email="admin_auditor@medicare.ai",
+        email="admin_auditor@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.ADMIN,
         first_name="Chief",
@@ -220,7 +220,7 @@ def test_search_and_filter_audit_logs(db_session):
         is_active=True
     )
     nurse = User(
-        email="nurse_auditor@medicare.ai",
+        email="nurse_auditor@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.NURSE,
         first_name="Nurse",

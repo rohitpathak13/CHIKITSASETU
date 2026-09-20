@@ -62,7 +62,7 @@ def seed():
 
     # 1. Admin
     admin_user = User(
-        email="admin@medicare.ai",
+        email="admin@chikitsasetu.ai",
         password_hash=password_hash,
         role=RoleEnum.ADMIN,
         role_id=role_map[RoleEnum.ADMIN.value].id,
@@ -85,11 +85,11 @@ def seed():
 
     # 3. Doctors
     doctors_data = [
-        ("dr.sharma@medicare.ai", "Rajesh", "Sharma", dept_cardio.id, "Interventional Cardiology", "MD, DM (Cardio)", "LIC-CARD-9081", "Room 101", 800.00),
-        ("dr.chen@medicare.ai", "Mei", "Chen", dept_neuro.id, "Neurology & Stroke", "MD, DNB (Neuro)", "LIC-NEUR-4421", "Room 102", 900.00),
-        ("dr.patel@medicare.ai", "Ananya", "Patel", dept_peds.id, "Pediatric Critical Care", "MBBS, MD (Peds)", "LIC-PEDS-3129", "Room 103", 600.00),
-        ("dr.adams@medicare.ai", "Robert", "Adams", dept_ortho.id, "Orthopedic & Trauma Surgery", "MS (Ortho), FRCS", "LIC-ORTH-7712", "Room 104", 750.00),
-        ("dr.smith@medicare.ai", "Emily", "Smith", dept_gen.id, "Internal Medicine", "MD (Internal Med)", "LIC-GEN-1029", "Room 105", 500.00),
+        ("dr.sharma@chikitsasetu.ai", "Rajesh", "Sharma", dept_cardio.id, "Interventional Cardiology", "MD, DM (Cardio)", "LIC-CARD-9081", "Room 101", 800.00),
+        ("dr.chen@chikitsasetu.ai", "Mei", "Chen", dept_neuro.id, "Neurology & Stroke", "MD, DNB (Neuro)", "LIC-NEUR-4421", "Room 102", 900.00),
+        ("dr.patel@chikitsasetu.ai", "Ananya", "Patel", dept_peds.id, "Pediatric Critical Care", "MBBS, MD (Peds)", "LIC-PEDS-3129", "Room 103", 600.00),
+        ("dr.adams@chikitsasetu.ai", "Robert", "Adams", dept_ortho.id, "Orthopedic & Trauma Surgery", "MS (Ortho), FRCS", "LIC-ORTH-7712", "Room 104", 750.00),
+        ("dr.smith@chikitsasetu.ai", "Emily", "Smith", dept_gen.id, "Internal Medicine", "MD (Internal Med)", "LIC-GEN-1029", "Room 105", 500.00),
     ]
 
     doctor_objs = []
@@ -130,11 +130,11 @@ def seed():
 
     # 4. Staff (Receptionist, Nurses, Pharmacist, Lab Tech)
     staff_data = [
-        ("reception@medicare.ai", "Elena", "Rostova", RoleEnum.RECEPTIONIST, "EMP-REC-01", "Chief Receptionist & Registrar", dept_gen.id),
-        ("nurse.mary@medicare.ai", "Mary", "Watson", RoleEnum.NURSE, "EMP-NUR-01", "ICU Charge Nurse", dept_cardio.id),
-        ("nurse.david@medicare.ai", "David", "Kim", RoleEnum.NURSE, "EMP-NUR-02", "Inpatient Floor Nurse", dept_gen.id),
-        ("pharmacy@medicare.ai", "James", "Wilson", RoleEnum.PHARMACIST, "EMP-PHAR-01", "Supervising Hospital Pharmacist", None),
-        ("lab@medicare.ai", "Rachel", "Green", RoleEnum.LAB_TECH, "EMP-LAB-01", "Chief Diagnostic Pathologist", None),
+        ("reception@chikitsasetu.ai", "Elena", "Rostova", RoleEnum.RECEPTIONIST, "EMP-REC-01", "Chief Receptionist & Registrar", dept_gen.id),
+        ("nurse.mary@chikitsasetu.ai", "Mary", "Watson", RoleEnum.NURSE, "EMP-NUR-01", "ICU Charge Nurse", dept_cardio.id),
+        ("nurse.david@chikitsasetu.ai", "David", "Kim", RoleEnum.NURSE, "EMP-NUR-02", "Inpatient Floor Nurse", dept_gen.id),
+        ("pharmacy@chikitsasetu.ai", "James", "Wilson", RoleEnum.PHARMACIST, "EMP-PHAR-01", "Supervising Hospital Pharmacist", None),
+        ("lab@chikitsasetu.ai", "Rachel", "Green", RoleEnum.LAB_TECH, "EMP-LAB-01", "Chief Diagnostic Pathologist", None),
     ]
 
     staff_objs = {}

@@ -42,8 +42,8 @@ def login_user(flask_client, email, password="Password123!"):
 # =====================================================================
 
 def test_patient_registration_success(flask_client, db_session):
-    staff = create_user(db_session, "receptionist_reg@medicare.ai", RoleEnum.RECEPTIONIST, "Rita", "Desk")
-    login_user(flask_client, "receptionist_reg@medicare.ai")
+    staff = create_user(db_session, "receptionist_reg@chikitsasetu.ai", RoleEnum.RECEPTIONIST, "Rita", "Desk")
+    login_user(flask_client, "receptionist_reg@chikitsasetu.ai")
 
     reg_data = {
         "email": "new_patient_reg@test.ai",
@@ -93,8 +93,8 @@ def test_patient_registration_success(flask_client, db_session):
 
 
 def test_patient_registration_validations(flask_client, db_session):
-    create_user(db_session, "admin_val@medicare.ai", RoleEnum.ADMIN, "Super", "Admin")
-    login_user(flask_client, "admin_val@medicare.ai")
+    create_user(db_session, "admin_val@chikitsasetu.ai", RoleEnum.ADMIN, "Super", "Admin")
+    login_user(flask_client, "admin_val@chikitsasetu.ai")
 
     # 1. Invalid Email
     bad_email = {
@@ -163,8 +163,8 @@ def test_patient_registration_validations(flask_client, db_session):
 # =====================================================================
 
 def test_patient_directory_search_and_filtering(flask_client, db_session):
-    create_user(db_session, "doc_dir@medicare.ai", RoleEnum.DOCTOR, "Dr. Sanjay", "Gupta")
-    login_user(flask_client, "doc_dir@medicare.ai")
+    create_user(db_session, "doc_dir@chikitsasetu.ai", RoleEnum.DOCTOR, "Dr. Sanjay", "Gupta")
+    login_user(flask_client, "doc_dir@chikitsasetu.ai")
 
     # Seed 3 distinct patients
     u1 = create_user(db_session, "search_p1@test.ai", RoleEnum.PATIENT, "Vikram", "Patel", phone="+91 9111111111")
@@ -213,8 +213,8 @@ def test_patient_directory_search_and_filtering(flask_client, db_session):
 
 
 def test_patient_directory_pagination(flask_client, db_session):
-    create_user(db_session, "nurse_page@medicare.ai", RoleEnum.NURSE, "Sister", "Mary")
-    login_user(flask_client, "nurse_page@medicare.ai")
+    create_user(db_session, "nurse_page@chikitsasetu.ai", RoleEnum.NURSE, "Sister", "Mary")
+    login_user(flask_client, "nurse_page@chikitsasetu.ai")
 
     # Seed 12 patients
     for i in range(1, 13):
@@ -244,7 +244,7 @@ def test_patient_360_detail_view_full_history(flask_client, db_session):
     db_session.add(dept)
     db_session.flush()
 
-    doc_user = create_user(db_session, "doc_360@medicare.ai", RoleEnum.DOCTOR, "Arun", "Kumar")
+    doc_user = create_user(db_session, "doc_360@chikitsasetu.ai", RoleEnum.DOCTOR, "Arun", "Kumar")
     doc = Doctor(
         id=doc_user.id,
         department_id=dept.id,
@@ -257,7 +257,7 @@ def test_patient_360_detail_view_full_history(flask_client, db_session):
     db_session.flush()
 
     # Setup Patient with Demographics & Emergency Contact
-    pt_user = create_user(db_session, "patient_360@medicare.ai", RoleEnum.PATIENT, "Sunita", "Rao", phone="+91 9876543210")
+    pt_user = create_user(db_session, "patient_360@chikitsasetu.ai", RoleEnum.PATIENT, "Sunita", "Rao", phone="+91 9876543210")
     
     insurance = Insurance(
         policy_number="POL-MED-9988",
@@ -421,7 +421,7 @@ def test_patient_360_detail_view_full_history(flask_client, db_session):
     db_session.commit()
 
     # Login as Staff (Doctor) and view 360-degree patient chart
-    login_user(flask_client, "doc_360@medicare.ai")
+    login_user(flask_client, "doc_360@chikitsasetu.ai")
     resp = flask_client.get(f"/patient/{pt.id}")
     assert resp.status_code == 200
 
@@ -473,8 +473,8 @@ def test_patient_360_detail_view_full_history(flask_client, db_session):
 # =====================================================================
 
 def test_edit_patient_by_staff(flask_client, db_session):
-    create_user(db_session, "admin_editor@medicare.ai", RoleEnum.ADMIN, "Boss", "Admin")
-    login_user(flask_client, "admin_editor@medicare.ai")
+    create_user(db_session, "admin_editor@chikitsasetu.ai", RoleEnum.ADMIN, "Boss", "Admin")
+    login_user(flask_client, "admin_editor@chikitsasetu.ai")
 
     u = create_user(db_session, "patient_edit_staff@test.ai", RoleEnum.PATIENT, "Rohan", "Kapoor", phone="+91 1111111111")
     p = Patient(id=u.id, dob=date(1993, 4, 12), gender=GenderEnum.MALE, blood_group="O+")

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "[docker-entrypoint] Starting MediCare AI container service: $1"
+echo "[docker-entrypoint] Starting CHIKITSASETU container service: $1"
 
 # Database connection parameters from environment
 DB_HOST="${POSTGRES_SERVER:-db}"

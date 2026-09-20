@@ -40,8 +40,8 @@ openapi_tags = [
 ]
 
 app = FastAPI(
-    title="MediCare AI - Hospital Management & Clinical Intelligence REST API",
-    description="Enterprise-grade versioned REST API engine with automated OpenAPI documentation, integrated clinical machine learning, and pure-service business logic.",
+    title="CHIKITSASETU API",
+    description="Advanced Hospital Management, Healthcare Analytics and AI/ML API",
     version=settings.PROJECT_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -104,7 +104,7 @@ def on_startup():
 @app.get("/")
 def root():
     return {
-        "service": "MediCare AI REST & ML Engine",
+        "service": "CHIKITSASETU REST & ML Engine",
         "status": "operational",
         "version": settings.PROJECT_VERSION,
         "docs": "/docs",

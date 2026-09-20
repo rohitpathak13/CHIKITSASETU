@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - MediCare AI</title>
+    <title>Sign In - CHIKITSASETU</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     <style>
@@ -43,9 +43,9 @@
 <body>
     <div class="login-card">
         <div style="text-align: center; margin-bottom: 2rem;">
-            <div class="logo-badge" style="margin: 0 auto 0.75rem; width: 48px; height: 48px; font-size: 1.5rem;">M+</div>
-            <h1 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">MediCare <span style="color: var(--teal-primary);">AI</span></h1>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Advanced Hospital Management & Analytics</p>
+            <div class="logo-badge" style="margin: 0 auto 0.75rem; width: 48px; height: 48px; font-size: 1.5rem;">CS</div>
+            <h1 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">CHIKITSA<span style="color: var(--teal-primary);">SETU</span></h1>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Smart Hospital Management & Healthcare Analytics System</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -67,7 +67,7 @@
 
             <div class="form-group">
                 <label class="form-label">Email Address</label>
-                <input type="email" name="email" id="email-field" class="form-control" placeholder="name@medicare.ai" value="{{ email or '' }}" required autofocus>
+                <input type="email" name="email" id="email-field" class="form-control" placeholder="name@chikitsasetu.ai" value="{{ email or '' }}" required autofocus>
             </div>
 
             <div class="form-group">
@@ -89,12 +89,12 @@
                 1-Click Role Quick Fill (Password: Password123!)
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                <button type="button" class="demo-chip" onclick="fillCreds('admin@medicare.ai')">👑 Admin</button>
-                <button type="button" class="demo-chip" onclick="fillCreds('dr.sharma@medicare.ai')">🩺 Doctor</button>
-                <button type="button" class="demo-chip" onclick="fillCreds('reception@medicare.ai')">📋 Reception</button>
-                <button type="button" class="demo-chip" onclick="fillCreds('nurse.mary@medicare.ai')">🛏️ Nurse</button>
-                <button type="button" class="demo-chip" onclick="fillCreds('pharmacy@medicare.ai')">💊 Pharmacy</button>
-                <button type="button" class="demo-chip" onclick="fillCreds('lab@medicare.ai')">🔬 Lab Tech</button>
+                <button type="button" class="demo-chip" onclick="fillCreds('admin@chikitsasetu.ai')">👑 Admin</button>
+                <button type="button" class="demo-chip" onclick="fillCreds('dr.sharma@chikitsasetu.ai')">🩺 Doctor</button>
+                <button type="button" class="demo-chip" onclick="fillCreds('reception@chikitsasetu.ai')">📋 Reception</button>
+                <button type="button" class="demo-chip" onclick="fillCreds('nurse.mary@chikitsasetu.ai')">🛏️ Nurse</button>
+                <button type="button" class="demo-chip" onclick="fillCreds('pharmacy@chikitsasetu.ai')">💊 Pharmacy</button>
+                <button type="button" class="demo-chip" onclick="fillCreds('lab@chikitsasetu.ai')">🔬 Lab Tech</button>
                 <button type="button" class="demo-chip" onclick="fillCreds('john.doe@example.com')">👤 Patient</button>
             </div>
         </div>

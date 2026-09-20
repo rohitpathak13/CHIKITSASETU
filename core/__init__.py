@@ -1,4 +1,4 @@
 """
-MediCare AI Core Package
+CHIKITSASETU Core Package
 Shared Domain Models, Database Connections, Configurations, and Security Primitives.
 """

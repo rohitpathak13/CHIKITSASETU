@@ -5,7 +5,7 @@ from core.security import get_password_hash
 def test_flask_login_page_renders(flask_client):
     res = flask_client.get("/login")
     assert res.status_code == 200
-    assert b"Sign In - MediCare AI" in res.data
+    assert b"Sign In - CHIKITSASETU" in res.data
     assert b"1-Click Role Quick Fill" in res.data
 
 def test_flask_unauthorized_access_redirects(flask_client):
@@ -14,10 +14,10 @@ def test_flask_unauthorized_access_redirects(flask_client):
     assert "/login" in res.headers["Location"]
 
 def test_flask_admin_login_and_access(flask_client, db_session):
-    admin = db_session.query(User).filter(User.email == "admin@medicare.ai").first()
+    admin = db_session.query(User).filter(User.email == "admin@chikitsasetu.ai").first()
     if not admin:
         admin = User(
-            email="admin@medicare.ai",
+            email="admin@chikitsasetu.ai",
             password_hash=get_password_hash("Password123!"),
             role=RoleEnum.ADMIN,
             first_name="Admin",
@@ -28,7 +28,7 @@ def test_flask_admin_login_and_access(flask_client, db_session):
         db_session.commit()
 
     login_res = flask_client.post("/login", data={
-        "email": "admin@medicare.ai",
+        "email": "admin@chikitsasetu.ai",
         "password": "Password123!"
     }, follow_redirects=True)
 

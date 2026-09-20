@@ -29,7 +29,7 @@ from core.security import get_password_hash
 def test_users(db_session):
     """Creates isolated test users with distinct roles."""
     doc = User(
-        email="notif_doc@medicare.ai",
+        email="notif_doc@chikitsasetu.ai",
         password_hash=get_password_hash("DocPass123!"),
         role=RoleEnum.DOCTOR,
         first_name="Priya",
@@ -37,7 +37,7 @@ def test_users(db_session):
         is_active=True
     )
     pat = User(
-        email="notif_pat@medicare.ai",
+        email="notif_pat@chikitsasetu.ai",
         password_hash=get_password_hash("PatPass123!"),
         role=RoleEnum.PATIENT,
         first_name="Ramesh",
@@ -45,7 +45,7 @@ def test_users(db_session):
         is_active=True
     )
     pharm = User(
-        email="notif_pharm@medicare.ai",
+        email="notif_pharm@chikitsasetu.ai",
         password_hash=get_password_hash("PharmPass123!"),
         role=RoleEnum.PHARMACIST,
         first_name="Sunil",
@@ -53,7 +53,7 @@ def test_users(db_session):
         is_active=True
     )
     nurse = User(
-        email="notif_nurse@medicare.ai",
+        email="notif_nurse@chikitsasetu.ai",
         password_hash=get_password_hash("NursePass123!"),
         role=RoleEnum.NURSE,
         first_name="Anjali",
@@ -61,7 +61,7 @@ def test_users(db_session):
         is_active=True
     )
     rec = User(
-        email="notif_rec@medicare.ai",
+        email="notif_rec@chikitsasetu.ai",
         password_hash=get_password_hash("RecPass123!"),
         role=RoleEnum.RECEPTIONIST,
         first_name="Deepak",
@@ -93,7 +93,7 @@ def test_notification_creation_and_attributes(db_session, test_users):
     notif = NotificationService.create_notification(
         db=db_session,
         user_id=pat.id,
-        title="Welcome to MediCare AI",
+        title="Welcome to CHIKITSASETU",
         message="Your patient portal account has been configured.",
         type=NotificationTypeEnum.SYSTEM,
         priority=NotificationPriorityEnum.NORMAL,
@@ -112,7 +112,7 @@ def test_notification_creation_and_attributes(db_session, test_users):
 
     # Test serialization
     data = notif.to_dict()
-    assert data["title"] == "Welcome to MediCare AI"
+    assert data["title"] == "Welcome to CHIKITSASETU"
     assert data["metadata"]["onboarding_step"] == 1
     assert data["action_url"] == "/patient/dashboard"
 

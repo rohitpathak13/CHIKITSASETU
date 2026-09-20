@@ -8,7 +8,7 @@ def test_pharmacy_stock_reorder(flask_client, db_session):
     """Tests 1-click batch reordering when stock is low."""
     # Create pharmacist
     pharm = User(
-        email="pharmacist_reorder@medicare.ai",
+        email="pharmacist_reorder@chikitsasetu.ai",
         password_hash=get_password_hash("Pass123!"),
         role=RoleEnum.PHARMACIST,
         first_name="David",
@@ -64,7 +64,7 @@ def test_pharmacy_stock_reorder(flask_client, db_session):
 def test_receptionist_patient_directory_search(flask_client, db_session):
     """Tests receptionist patient directory lookup and search filter."""
     rec = User(
-        email="reception_dir@medicare.ai",
+        email="reception_dir@chikitsasetu.ai",
         password_hash=get_password_hash("Pass123!"),
         role=RoleEnum.RECEPTIONIST,
         first_name="Clara",

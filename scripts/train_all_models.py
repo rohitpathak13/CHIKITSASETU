@@ -7,7 +7,7 @@ from ml.train.train_no_show import train as train_no_show
 
 def main():
     print("==================================================")
-    print(" MediCare AI - Retraining All Predictive ML Models ")
+    print(" CHIKITSASETU - Retraining All Predictive ML Models ")
     print("==================================================")
     train_readmission()
     print("--------------------------------------------------")

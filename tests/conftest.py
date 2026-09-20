@@ -75,10 +75,10 @@ def fastapi_client():
 @pytest.fixture(scope="function")
 def admin_user(db_session):
     """Fixture ensuring an admin user exists and returns the user object."""
-    admin = db_session.query(User).filter(User.email == "test_admin@medicare.ai").first()
+    admin = db_session.query(User).filter(User.email == "test_admin@chikitsasetu.ai").first()
     if not admin:
         admin = User(
-            email="test_admin@medicare.ai",
+            email="test_admin@chikitsasetu.ai",
             password_hash=get_password_hash("Password123!"),
             role=RoleEnum.ADMIN,
             first_name="Test",

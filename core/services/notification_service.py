@@ -1,5 +1,5 @@
 """
-Comprehensive In-App Notification Service for MediCare AI.
+Comprehensive In-App Notification Service for CHIKITSASETU.
 Encapsulates role-based visibility, notification creation, unread tracking,
 bulk status updates, history retrieval, and operational domain generators:
 - Appointment Reminders

@@ -48,7 +48,7 @@ def setup_clinical_fixtures(db: Session):
         db.commit()
 
     # 2. Doctor (Available Mon, Tue, Wed, Thu, Fri)
-    doc_user = create_user_helper(db, "dr.verma@medicare.ai", RoleEnum.DOCTOR, "Sunil", "Verma", "9111111111")
+    doc_user = create_user_helper(db, "dr.verma@chikitsasetu.ai", RoleEnum.DOCTOR, "Sunil", "Verma", "9111111111")
     doctor = db.query(Doctor).filter(Doctor.id == doc_user.id).first()
     if not doctor:
         doctor = Doctor(
@@ -65,7 +65,7 @@ def setup_clinical_fixtures(db: Session):
         db.commit()
 
     # 3. Patient
-    pat_user = create_user_helper(db, "patient.vikram@medicare.ai", RoleEnum.PATIENT, "Vikram", "Seth", "9222222222")
+    pat_user = create_user_helper(db, "patient.vikram@chikitsasetu.ai", RoleEnum.PATIENT, "Vikram", "Seth", "9222222222")
     patient = db.query(Patient).filter(Patient.id == pat_user.id).first()
     if not patient:
         patient = Patient(
@@ -83,7 +83,7 @@ def setup_clinical_fixtures(db: Session):
         db.commit()
 
     # 4. Second Patient (for isolation & collision tests)
-    pat2_user = create_user_helper(db, "patient.priya@medicare.ai", RoleEnum.PATIENT, "Priya", "Sharma", "9444444444")
+    pat2_user = create_user_helper(db, "patient.priya@chikitsasetu.ai", RoleEnum.PATIENT, "Priya", "Sharma", "9444444444")
     patient2 = db.query(Patient).filter(Patient.id == pat2_user.id).first()
     if not patient2:
         patient2 = Patient(
@@ -99,8 +99,8 @@ def setup_clinical_fixtures(db: Session):
         db.commit()
 
     # 5. Admin & Receptionist
-    admin_user = create_user_helper(db, "admin.appt@medicare.ai", RoleEnum.ADMIN, "Super", "Admin")
-    rec_user = create_user_helper(db, "rec.appt@medicare.ai", RoleEnum.RECEPTIONIST, "Rekha", "Desk")
+    admin_user = create_user_helper(db, "admin.appt@chikitsasetu.ai", RoleEnum.ADMIN, "Super", "Admin")
+    rec_user = create_user_helper(db, "rec.appt@chikitsasetu.ai", RoleEnum.RECEPTIONIST, "Rekha", "Desk")
 
     return {
         "dept": dept,
@@ -219,7 +219,7 @@ def test_service_prevent_duplicate_booking_for_patient(db_session):
     patient = fixtures["patient"]
 
     # Create a second doctor in the same or another department
-    doc2_user = create_user_helper(db_session, "dr.kapoor@medicare.ai", RoleEnum.DOCTOR, "Anita", "Kapoor")
+    doc2_user = create_user_helper(db_session, "dr.kapoor@chikitsasetu.ai", RoleEnum.DOCTOR, "Anita", "Kapoor")
     doctor2 = Doctor(
         id=doc2_user.id,
         department_id=fixtures["dept"].id,

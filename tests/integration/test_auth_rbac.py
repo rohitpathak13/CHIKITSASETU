@@ -40,7 +40,7 @@ def test_password_hashing_security():
     assert verify_password("WrongPassword!", hashed) is False
 
     # Verify model methods
-    user = User(email="hash_test@medicare.ai", role=RoleEnum.PATIENT, first_name="Hash", last_name="Tester")
+    user = User(email="hash_test@chikitsasetu.ai", role=RoleEnum.PATIENT, first_name="Hash", last_name="Tester")
     user.set_password(raw_pass)
     assert user.check_password(raw_pass) is True
     assert user.check_password("InvalidPass") is False
@@ -51,13 +51,13 @@ def test_password_hashing_security():
 # =====================================================================
 
 @pytest.mark.parametrize("role,email,expected_dashboard_endpoint", [
-    (RoleEnum.ADMIN, "admin_user@medicare.ai", "/admin/"),
-    (RoleEnum.DOCTOR, "doctor_user@medicare.ai", "/doctor/"),
-    (RoleEnum.RECEPTIONIST, "rec_user@medicare.ai", "/receptionist/"),
-    (RoleEnum.NURSE, "nurse_user@medicare.ai", "/nurse/"),
-    (RoleEnum.PHARMACIST, "pharm_user@medicare.ai", "/pharmacy/"),
-    (RoleEnum.LAB_TECH, "lab_user@medicare.ai", "/laboratory/"),
-    (RoleEnum.PATIENT, "pat_user@medicare.ai", "/patient/"),
+    (RoleEnum.ADMIN, "admin_user@chikitsasetu.ai", "/admin/"),
+    (RoleEnum.DOCTOR, "doctor_user@chikitsasetu.ai", "/doctor/"),
+    (RoleEnum.RECEPTIONIST, "rec_user@chikitsasetu.ai", "/receptionist/"),
+    (RoleEnum.NURSE, "nurse_user@chikitsasetu.ai", "/nurse/"),
+    (RoleEnum.PHARMACIST, "pharm_user@chikitsasetu.ai", "/pharmacy/"),
+    (RoleEnum.LAB_TECH, "lab_user@chikitsasetu.ai", "/laboratory/"),
+    (RoleEnum.PATIENT, "pat_user@chikitsasetu.ai", "/patient/"),
 ])
 def test_valid_login_all_roles(flask_client, db_session, role, email, expected_dashboard_endpoint):
     create_test_user(db_session, email=email, role=role, password="Password123!", first_name="Role", last_name=role.value)
@@ -94,10 +94,10 @@ def test_valid_login_all_roles(flask_client, db_session, role, email, expected_d
 # =====================================================================
 
 def test_invalid_password_returns_401(flask_client, db_session):
-    create_test_user(db_session, email="dr.login_fail@medicare.ai", role=RoleEnum.DOCTOR)
+    create_test_user(db_session, email="dr.login_fail@chikitsasetu.ai", role=RoleEnum.DOCTOR)
 
     res = flask_client.post("/login", data={
-        "email": "dr.login_fail@medicare.ai",
+        "email": "dr.login_fail@chikitsasetu.ai",
         "password": "CompletelyWrongPassword!"
     })
 
@@ -112,12 +112,12 @@ def test_invalid_password_returns_401(flask_client, db_session):
         AuditLog.action == "USER_LOGIN_FAILED"
     ).order_by(AuditLog.timestamp.desc()).first()
     assert audit is not None
-    assert "dr.login_fail@medicare.ai" in audit.details_json
+    assert "dr.login_fail@chikitsasetu.ai" in audit.details_json
 
 
 def test_nonexistent_email_returns_401(flask_client, db_session):
     res = flask_client.post("/login", data={
-        "email": "does_not_exist@medicare.ai",
+        "email": "does_not_exist@chikitsasetu.ai",
         "password": "Password123!"
     })
 
@@ -129,10 +129,10 @@ def test_nonexistent_email_returns_401(flask_client, db_session):
 
 
 def test_deactivated_user_login_blocked(flask_client, db_session):
-    create_test_user(db_session, email="deactivated@medicare.ai", role=RoleEnum.PATIENT, is_active=False)
+    create_test_user(db_session, email="deactivated@chikitsasetu.ai", role=RoleEnum.PATIENT, is_active=False)
 
     res = flask_client.post("/login", data={
-        "email": "deactivated@medicare.ai",
+        "email": "deactivated@chikitsasetu.ai",
         "password": "Password123!"
     })
 
@@ -170,11 +170,11 @@ def test_unauthenticated_access_redirects_to_login(flask_client, protected_route
 
 
 def test_safe_redirect_after_login(flask_client, db_session):
-    create_test_user(db_session, email="redirect_user@medicare.ai", role=RoleEnum.ADMIN)
+    create_test_user(db_session, email="redirect_user@chikitsasetu.ai", role=RoleEnum.ADMIN)
 
     # Login with a safe internal next parameter
     res = flask_client.post("/login", data={
-        "email": "redirect_user@medicare.ai",
+        "email": "redirect_user@chikitsasetu.ai",
         "password": "Password123!",
         "next": "/admin/audits"
     }, follow_redirects=False)
@@ -185,12 +185,12 @@ def test_safe_redirect_after_login(flask_client, db_session):
 
 
 def test_open_redirect_vulnerability_prevented(flask_client, db_session):
-    create_test_user(db_session, email="open_redirect@medicare.ai", role=RoleEnum.ADMIN)
+    create_test_user(db_session, email="open_redirect@chikitsasetu.ai", role=RoleEnum.ADMIN)
 
     # Attempt malicious redirect targets
     for malicious_url in ["https://malicious-site.com", "//evil.com", "javascript:alert(1)"]:
         res = flask_client.post("/login", data={
-            "email": "open_redirect@medicare.ai",
+            "email": "open_redirect@chikitsasetu.ai",
             "password": "Password123!",
             "next": malicious_url
         }, follow_redirects=False)
@@ -209,12 +209,12 @@ def test_open_redirect_vulnerability_prevented(flask_client, db_session):
 
 def test_role_based_access_violations(flask_client, db_session):
     # Create users
-    patient = create_test_user(db_session, email="rbac_pat@medicare.ai", role=RoleEnum.PATIENT)
-    doctor = create_test_user(db_session, email="rbac_doc@medicare.ai", role=RoleEnum.DOCTOR)
-    nurse = create_test_user(db_session, email="rbac_nurse@medicare.ai", role=RoleEnum.NURSE)
+    patient = create_test_user(db_session, email="rbac_pat@chikitsasetu.ai", role=RoleEnum.PATIENT)
+    doctor = create_test_user(db_session, email="rbac_doc@chikitsasetu.ai", role=RoleEnum.DOCTOR)
+    nurse = create_test_user(db_session, email="rbac_nurse@chikitsasetu.ai", role=RoleEnum.NURSE)
 
     # 1. Patient attempts to access Admin portal -> 403 Forbidden
-    flask_client.post("/login", data={"email": "rbac_pat@medicare.ai", "password": "Password123!"})
+    flask_client.post("/login", data={"email": "rbac_pat@chikitsasetu.ai", "password": "Password123!"})
     res_pat_admin = flask_client.get("/admin/")
     assert res_pat_admin.status_code == 403
     assert b"403" in res_pat_admin.data
@@ -227,7 +227,7 @@ def test_role_based_access_violations(flask_client, db_session):
     flask_client.get("/logout")
 
     # 2. Doctor attempts to access Admin portal -> 403 Forbidden
-    flask_client.post("/login", data={"email": "rbac_doc@medicare.ai", "password": "Password123!"})
+    flask_client.post("/login", data={"email": "rbac_doc@chikitsasetu.ai", "password": "Password123!"})
     res_doc_admin = flask_client.get("/admin/")
     assert res_doc_admin.status_code == 403
 
@@ -238,7 +238,7 @@ def test_role_based_access_violations(flask_client, db_session):
     flask_client.get("/logout")
 
     # 3. Nurse attempts to access Pharmacy portal -> 403 Forbidden
-    flask_client.post("/login", data={"email": "rbac_nurse@medicare.ai", "password": "Password123!"})
+    flask_client.post("/login", data={"email": "rbac_nurse@chikitsasetu.ai", "password": "Password123!"})
     res_nurse_pharm = flask_client.get("/pharmacy/")
     assert res_nurse_pharm.status_code == 403
 
@@ -254,10 +254,10 @@ def test_role_based_access_violations(flask_client, db_session):
 
 
 def test_authorized_role_access(flask_client, db_session):
-    admin = create_test_user(db_session, email="authorized_admin@medicare.ai", role=RoleEnum.ADMIN)
+    admin = create_test_user(db_session, email="authorized_admin@chikitsasetu.ai", role=RoleEnum.ADMIN)
 
     # Admin has access to admin portal
-    flask_client.post("/login", data={"email": "authorized_admin@medicare.ai", "password": "Password123!"})
+    flask_client.post("/login", data={"email": "authorized_admin@chikitsasetu.ai", "password": "Password123!"})
     res = flask_client.get("/admin/")
     assert res.status_code == 200
     assert b"System Overview" in res.data or b"Dashboard" in res.data
@@ -276,10 +276,10 @@ def test_authorized_role_access(flask_client, db_session):
 # =====================================================================
 
 def test_logout_clears_session_and_audits(flask_client, db_session):
-    create_test_user(db_session, email="logout_test@medicare.ai", role=RoleEnum.DOCTOR)
+    create_test_user(db_session, email="logout_test@chikitsasetu.ai", role=RoleEnum.DOCTOR)
 
     # Login
-    flask_client.post("/login", data={"email": "logout_test@medicare.ai", "password": "Password123!"})
+    flask_client.post("/login", data={"email": "logout_test@chikitsasetu.ai", "password": "Password123!"})
     with flask_client.session_transaction() as sess:
         assert "user_id" in sess
 
@@ -412,7 +412,7 @@ def test_decorator_helper_functions(flask_client, db_session):
     assert normalize_role("LAB_TECHNICIAN") == "lab_tech"
     assert normalize_role("doctor") == "doctor"
 
-    user = create_test_user(db_session, email="helper_doc@medicare.ai", role=RoleEnum.DOCTOR)
+    user = create_test_user(db_session, email="helper_doc@chikitsasetu.ai", role=RoleEnum.DOCTOR)
 
     # In test context with no session
     with flask_client.application.test_request_context():
@@ -431,4 +431,4 @@ def test_decorator_helper_functions(flask_client, db_session):
         assert has_role("admin") is False
         curr_user = get_current_user()
         assert curr_user is not None
-        assert curr_user.email == "helper_doc@medicare.ai"
+        assert curr_user.email == "helper_doc@chikitsasetu.ai"

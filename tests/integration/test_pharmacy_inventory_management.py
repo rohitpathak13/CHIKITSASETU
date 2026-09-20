@@ -32,28 +32,28 @@ def pharmacy_fixture(db_session):
     - 1 Receptionist user
     """
     admin_user = User(
-        email="admin_pharm@medicare.ai",
+        email="admin_pharm@chikitsasetu.ai",
         password_hash=get_password_hash("AdminPass123!"),
         role=RoleEnum.ADMIN,
         first_name="Chief",
         last_name="Administrator"
     )
     pharm_user = User(
-        email="pharmacist_inv@medicare.ai",
+        email="pharmacist_inv@chikitsasetu.ai",
         password_hash=get_password_hash("PharmPass123!"),
         role=RoleEnum.PHARMACIST,
         first_name="Severus",
         last_name="Snape"
     )
     doc_user = User(
-        email="doctor_inv@medicare.ai",
+        email="doctor_inv@chikitsasetu.ai",
         password_hash=get_password_hash("DocPass123!"),
         role=RoleEnum.DOCTOR,
         first_name="Leonard",
         last_name="McCoy"
     )
     pat_user = User(
-        email="patient_inv@medicare.ai",
+        email="patient_inv@chikitsasetu.ai",
         password_hash=get_password_hash("PatPass123!"),
         role=RoleEnum.PATIENT,
         first_name="Arthur",
@@ -61,7 +61,7 @@ def pharmacy_fixture(db_session):
         phone="555-7788"
     )
     rec_user = User(
-        email="rec_inv@medicare.ai",
+        email="rec_inv@chikitsasetu.ai",
         password_hash=get_password_hash("RecPass123!"),
         role=RoleEnum.RECEPTIONIST,
         first_name="Janice",

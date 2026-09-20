@@ -23,14 +23,14 @@ def test_inpatient_discharge_auto_billing(db_session):
     """
     # 1. Setup Doctor & Patient
     doc_user = User(
-        email="dr_discharge@medicare.ai",
+        email="dr_discharge@chikitsasetu.ai",
         password_hash=get_password_hash("Pass123!"),
         role=RoleEnum.DOCTOR,
         first_name="Arthur",
         last_name="Conan"
     )
     pat_user = User(
-        email="patient_discharge@medicare.ai",
+        email="patient_discharge@chikitsasetu.ai",
         password_hash=get_password_hash("Pass123!"),
         role=RoleEnum.PATIENT,
         first_name="Robert",

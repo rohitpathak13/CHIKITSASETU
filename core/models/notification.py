@@ -1,5 +1,5 @@
 """
-In-App Notification Data Models and Enumerations for MediCare AI.
+In-App Notification Data Models and Enumerations for CHIKITSASETU.
 Supports appointment reminders, lab results, low medicine stock, medicine expiry,
 pending payments, admission/discharge events, and role-based visibility.
 """

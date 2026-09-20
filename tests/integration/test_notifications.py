@@ -11,7 +11,7 @@ def test_notification_workflow(flask_client, db_session):
     """
     # 1. Create test user
     user = User(
-        email="notify_user@medicare.ai",
+        email="notify_user@chikitsasetu.ai",
         password_hash=get_password_hash("Password123!"),
         role=RoleEnum.DOCTOR,
         first_name="Helen",

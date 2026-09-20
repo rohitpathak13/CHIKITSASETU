@@ -25,7 +25,7 @@ from ml.risk_prediction.predictions.predictor import PatientRiskPredictor
 
 def main():
     print("=" * 70)
-    print("[CHIKITSASETU / MediCare AI] Patient Risk ML Pipeline")
+    print("[CHIKITSASETU] Patient Risk ML Pipeline")
     print("=" * 70)
 
     # 1. Dataset Generation & Loading

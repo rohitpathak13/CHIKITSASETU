@@ -87,7 +87,7 @@ def test_api_v1_auth(fastapi_client, admin_user):
 def test_api_v1_patients(fastapi_client, admin_auth_headers):
     # Create Patient
     create_payload = {
-        "email": "rest_pat_01@medicare.ai",
+        "email": "rest_pat_01@chikitsasetu.ai",
         "first_name": "Rest",
         "last_name": "Patient",
         "dob": "1994-06-15",
@@ -100,7 +100,7 @@ def test_api_v1_patients(fastapi_client, admin_auth_headers):
     assert res_create.status_code == 201
     pat_data = res_create.json()
     pat_id = pat_data["user_id"]
-    assert pat_data["email"] == "rest_pat_01@medicare.ai"
+    assert pat_data["email"] == "rest_pat_01@chikitsasetu.ai"
 
     # List Patients
     res_list = fastapi_client.get("/api/v1/patients/", headers=admin_auth_headers)
@@ -137,7 +137,7 @@ def test_api_v1_doctors(fastapi_client, admin_auth_headers, db_session):
 
     # Create Doctor
     doc_payload = {
-        "email": "rest_doc_01@medicare.ai",
+        "email": "rest_doc_01@chikitsasetu.ai",
         "first_name": "Cardio",
         "last_name": "Specialist",
         "department_id": dept.id,
@@ -179,8 +179,8 @@ def test_api_v1_doctors(fastapi_client, admin_auth_headers, db_session):
 
 def test_api_v1_appointments(fastapi_client, admin_auth_headers, db_session):
     # Seed patient and doctor
-    u_p = User(email="app_pat@medicare.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="App", last_name="Pat")
-    u_d = User(email="app_doc@medicare.ai", password_hash="h", role=RoleEnum.DOCTOR, first_name="App", last_name="Doc")
+    u_p = User(email="app_pat@chikitsasetu.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="App", last_name="Pat")
+    u_d = User(email="app_doc@chikitsasetu.ai", password_hash="h", role=RoleEnum.DOCTOR, first_name="App", last_name="Doc")
     db_session.add_all([u_p, u_d])
     db_session.flush()
 
@@ -225,7 +225,7 @@ def test_api_v1_appointments(fastapi_client, admin_auth_headers, db_session):
 # ===========================================================================
 
 def test_api_v1_medical_records(fastapi_client, admin_auth_headers, db_session):
-    u_p = User(email="emr_pat@medicare.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="EMR", last_name="Pat")
+    u_p = User(email="emr_pat@chikitsasetu.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="EMR", last_name="Pat")
     db_session.add(u_p)
     db_session.flush()
     pat = Patient(id=u_p.id, dob=date(1988, 4, 12), gender=GenderEnum.MALE)
@@ -299,7 +299,7 @@ def test_api_v1_pharmacy_and_prescriptions(fastapi_client, admin_auth_headers, d
     assert stats_res.json()["total_stock_units"] >= 100
 
     # 4. Prescriptions: Create Prescription
-    u_p = User(email="rx_pat@medicare.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="Rx", last_name="User")
+    u_p = User(email="rx_pat@chikitsasetu.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="Rx", last_name="User")
     db_session.add(u_p)
     db_session.flush()
     pat = Patient(id=u_p.id, dob=date(1992, 2, 2), gender=GenderEnum.FEMALE)
@@ -336,7 +336,7 @@ def test_api_v1_pharmacy_and_prescriptions(fastapi_client, admin_auth_headers, d
 # ===========================================================================
 
 def test_api_v1_laboratory(fastapi_client, admin_auth_headers, db_session):
-    u_p = User(email="lab_user@medicare.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="Lab", last_name="TestPat")
+    u_p = User(email="lab_user@chikitsasetu.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="Lab", last_name="TestPat")
     db_session.add(u_p)
     db_session.flush()
     pat = Patient(id=u_p.id, dob=date(1985, 8, 8), gender=GenderEnum.MALE)
@@ -394,7 +394,7 @@ def test_api_v1_admissions(fastapi_client, admin_auth_headers, db_session):
     b2 = Bed(room_id=room.id, bed_number="SURG-201-B", status=BedStatusEnum.AVAILABLE)
     db_session.add_all([b1, b2])
 
-    u_p = User(email="ipd_user@medicare.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="IPD", last_name="Candidate")
+    u_p = User(email="ipd_user@chikitsasetu.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="IPD", last_name="Candidate")
     db_session.add(u_p)
     db_session.flush()
     pat = Patient(id=u_p.id, dob=date(1975, 11, 20), gender=GenderEnum.MALE)
@@ -439,7 +439,7 @@ def test_api_v1_admissions(fastapi_client, admin_auth_headers, db_session):
 # ===========================================================================
 
 def test_api_v1_billing(fastapi_client, admin_auth_headers, db_session):
-    u_p = User(email="bill_user@medicare.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="Bill", last_name="Customer")
+    u_p = User(email="bill_user@chikitsasetu.ai", password_hash="h", role=RoleEnum.PATIENT, first_name="Bill", last_name="Customer")
     db_session.add(u_p)
     db_session.flush()
     pat = Patient(id=u_p.id, dob=date(1989, 9, 9), gender=GenderEnum.FEMALE)

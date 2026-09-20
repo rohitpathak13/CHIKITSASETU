@@ -21,8 +21,8 @@ venv.bak/
 *.bak
 *.sqlite
 *.sqlite3
-medicare_dev.db
-medicare_dev.db.bak
+chikitsasetu_dev.db
+chikitsasetu_dev.db.bak
 
 # Testing & Coverage
 .pytest_cache/

@@ -1,5 +1,5 @@
 """
-MediCare AI - FastAPI Service Entrypoint
+CHIKITSASETU - FastAPI Service Entrypoint
 Run this script to launch the high-speed REST API & ML Inference Service.
 Usage: python run_fastapi.py
 """
@@ -14,7 +14,7 @@ from core.config import settings
 
 if __name__ == "__main__":
     print(f"==================================================")
-    print(f" MediCare AI - REST & Machine Learning Engine     ")
+    print(f" CHIKITSASETU - REST & Machine Learning Engine     ")
     print(f" API Docs (Swagger): http://127.0.0.1:{settings.FASTAPI_PORT}/docs")
     print(f" ReDoc Docs:         http://127.0.0.1:{settings.FASTAPI_PORT}/redoc")
     print(f"==================================================")

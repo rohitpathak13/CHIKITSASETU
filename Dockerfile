@@ -1,5 +1,5 @@
 # ==============================================================================
-# MediCare AI - Multi-Stage Container Architecture
+# CHIKITSASETU - Multi-Stage Container Architecture
 # Base Image: Python 3.11 Slim
 # Targets: api (FastAPI REST & ML), web (Flask Web Portal & Dashboards)
 # ==============================================================================

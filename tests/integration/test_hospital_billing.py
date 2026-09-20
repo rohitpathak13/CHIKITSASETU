@@ -511,7 +511,7 @@ def test_web_billing_routes_and_invoice_page(flask_client, db_session):
     # 4. View Professional Invoice Page
     inv_res = flask_client.get(f"/billing/invoice/{new_bill.id}")
     assert inv_res.status_code == 200
-    assert b"MediCare" in inv_res.data
+    assert b"CHIKITSASETU" in inv_res.data
     assert b"TAX INVOICE" in inv_res.data
     assert b"Billed Patient" in inv_res.data
     assert b"Kavita Shah" in inv_res.data

@@ -27,7 +27,7 @@ def lab_setup(db_session):
 
     # 1. Doctor
     doc_user = User(
-        email="doctor.pathology@medicare.ai",
+        email="doctor.pathology@chikitsasetu.ai",
         role=RoleEnum.DOCTOR,
         first_name="Gregory",
         last_name="House"
@@ -86,7 +86,7 @@ def lab_setup(db_session):
 
     # 4. Lab Technician
     tech_user = User(
-        email="tech.lab@medicare.ai",
+        email="tech.lab@chikitsasetu.ai",
         role=RoleEnum.LAB_TECH,
         first_name="Dexter",
         last_name="Morgan"

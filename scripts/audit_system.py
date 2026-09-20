@@ -1,5 +1,5 @@
 """
-MediCare AI - Automated Production-Readiness Scanner
+CHIKITSASETU - Automated Production-Readiness Scanner
 Audits:
 1. Jinja2 templates for broken url_for() endpoints and broken static asset paths
 2. Python imports and undefined symbol references
@@ -133,7 +133,7 @@ def audit_imports():
 
 if __name__ == "__main__":
     print("==================================================")
-    print(" MediCare AI - Production Readiness Audit Scanner ")
+    print(" CHIKITSASETU - Production Readiness Audit Scanner ")
     print("==================================================")
     audit_imports()
     audit_sqlalchemy_models()

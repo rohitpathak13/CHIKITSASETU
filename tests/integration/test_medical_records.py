@@ -47,7 +47,7 @@ def setup_emr_fixtures(db: Session):
         db.commit()
 
     # Doctor 1
-    doc_user = create_user_helper(db, "dr.sharma@medicare.ai", RoleEnum.DOCTOR, "Alok", "Sharma")
+    doc_user = create_user_helper(db, "dr.sharma@chikitsasetu.ai", RoleEnum.DOCTOR, "Alok", "Sharma")
     doctor = db.query(Doctor).filter(Doctor.id == doc_user.id).first()
     if not doctor:
         doctor = Doctor(
@@ -64,7 +64,7 @@ def setup_emr_fixtures(db: Session):
         db.commit()
 
     # Doctor 2 (for unauthorized edit tests)
-    doc2_user = create_user_helper(db, "dr.nair@medicare.ai", RoleEnum.DOCTOR, "Ravi", "Nair")
+    doc2_user = create_user_helper(db, "dr.nair@chikitsasetu.ai", RoleEnum.DOCTOR, "Ravi", "Nair")
     doctor2 = db.query(Doctor).filter(Doctor.id == doc2_user.id).first()
     if not doctor2:
         doctor2 = Doctor(
@@ -80,7 +80,7 @@ def setup_emr_fixtures(db: Session):
         db.commit()
 
     # Patient 1
-    pat1_user = create_user_helper(db, "pat.rohit@medicare.ai", RoleEnum.PATIENT, "Rohit", "Verma")
+    pat1_user = create_user_helper(db, "pat.rohit@chikitsasetu.ai", RoleEnum.PATIENT, "Rohit", "Verma")
     patient1 = db.query(Patient).filter(Patient.id == pat1_user.id).first()
     if not patient1:
         patient1 = Patient(
@@ -97,7 +97,7 @@ def setup_emr_fixtures(db: Session):
         db.commit()
 
     # Patient 2 (for cross-patient access boundary tests)
-    pat2_user = create_user_helper(db, "pat.meera@medicare.ai", RoleEnum.PATIENT, "Meera", "Sen")
+    pat2_user = create_user_helper(db, "pat.meera@chikitsasetu.ai", RoleEnum.PATIENT, "Meera", "Sen")
     patient2 = db.query(Patient).filter(Patient.id == pat2_user.id).first()
     if not patient2:
         patient2 = Patient(
@@ -113,10 +113,10 @@ def setup_emr_fixtures(db: Session):
         db.commit()
 
     # Admin
-    admin_user = create_user_helper(db, "admin.emr@medicare.ai", RoleEnum.ADMIN, "Admin", "Chief")
+    admin_user = create_user_helper(db, "admin.emr@chikitsasetu.ai", RoleEnum.ADMIN, "Admin", "Chief")
 
     # Pharmacist (unauthorized role)
-    pharm_user = create_user_helper(db, "pharm.emr@medicare.ai", RoleEnum.PHARMACIST, "Prakash", "Chemist")
+    pharm_user = create_user_helper(db, "pharm.emr@chikitsasetu.ai", RoleEnum.PHARMACIST, "Prakash", "Chemist")
 
     return {
         "dept": dept,

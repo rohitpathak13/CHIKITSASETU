@@ -1,5 +1,5 @@
 /**
- * MediCare AI - Enterprise Hospital Management System
+ * CHIKITSASETU - Enterprise Hospital Management System
  * Vanilla JavaScript UI Controllers (Accessible, Responsive & Interactive)
  */
 

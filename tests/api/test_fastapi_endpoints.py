@@ -78,7 +78,7 @@ def test_fastapi_clinical_record_creation(fastapi_client, admin_auth_headers, db
     from datetime import date
 
     user = User(
-        email="fastapi_pat@medicare.ai",
+        email="fastapi_pat@chikitsasetu.ai",
         password_hash="hashed",
         role=RoleEnum.PATIENT,
         first_name="Fast",

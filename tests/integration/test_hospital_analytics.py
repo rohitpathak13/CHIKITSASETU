@@ -101,7 +101,7 @@ def test_flask_analytics_rbac_unauthorized_role(flask_client, db_session):
     """
     Verifies that non-authorized roles (such as patients) receive 403 Forbidden.
     """
-    u_pat = User(email="patient_unauth@medicare.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Unauth", last_name="Patient")
+    u_pat = User(email="patient_unauth@chikitsasetu.ai", password_hash="hash", role=RoleEnum.PATIENT, first_name="Unauth", last_name="Patient")
     db_session.add(u_pat)
     db_session.commit()
 

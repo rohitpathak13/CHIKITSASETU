@@ -1,5 +1,5 @@
 """
-MediCare AI - Container Verification Test Script
+CHIKITSASETU - Container Verification Test Script
 Tests running Docker containers: Flask, FastAPI, PostgreSQL, and OpenAPI Docs.
 """
 import sys
@@ -40,15 +40,16 @@ def test_flask_portal():
     resp = opener.open("http://127.0.0.1:5050/login")
     assert resp.status == 200, f"Login page returned {resp.status}"
     html = resp.read().decode("utf-8")
-    assert "Sign In - MediCare AI" in html, "Missing login page title"
+    assert "Sign In - CHIKITSASETU" in html, "Missing login page title"
 
     # Extract CSRF token
     token_match = re.search(r'name="csrf_token"\s+value="([^"]+)"', html)
     token = token_match.group(1) if token_match else ""
 
     # Login as admin
+    admin_email = "admin@chikitsasetu.ai"
     post_data = urllib.parse.urlencode({
-        "email": "admin@medicare.ai",
+        "email": admin_email,
         "password": "Password123!",
         "csrf_token": token
     }).encode("utf-8")
@@ -57,13 +58,13 @@ def test_flask_portal():
     login_html = login_resp.read().decode("utf-8")
     assert login_resp.status == 200, f"Admin portal returned {login_resp.status}"
     assert "System Overview" in login_html or "Administration" in login_html, "Failed to reach admin dashboard"
-    print("  -> PASSED: Flask portal login successful. Authenticated as Admin (admin@medicare.ai)")
+    print(f"  -> PASSED: Flask portal login successful. Authenticated as Admin ({admin_email})")
 
 def test_postgres_direct():
     print("[4/4] Testing PostgreSQL Direct Connection via psycopg2 at localhost:5433 ...")
     import psycopg2
     conn = psycopg2.connect(
-        dbname="medicare_ai",
+        dbname="chikitsasetu",
         user="postgres",
         password="postgres_secure_2026",
         host="localhost",
@@ -82,7 +83,7 @@ def test_postgres_direct():
 
 if __name__ == "__main__":
     print("==================================================")
-    print(" MediCare AI - Container Verification Test Suite  ")
+    print(" CHIKITSASETU - Container Verification Test Suite  ")
     print("==================================================")
     try:
         test_fastapi()

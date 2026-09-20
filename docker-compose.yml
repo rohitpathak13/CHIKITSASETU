@@ -4,10 +4,10 @@ services:
   # ============================================================================
   db:
     image: postgres:15-alpine
-    container_name: medicare_db
+    container_name: chikitsasetu_db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-medicare_ai}
+      POSTGRES_DB: ${POSTGRES_DB:-chikitsasetu}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
@@ -15,9 +15,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - medicare_net
+      - chikitsasetu_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-medicare_ai}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-chikitsasetu}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -31,25 +31,25 @@ services:
       context: .
       dockerfile: Dockerfile
       target: api
-    container_name: medicare_api
+    container_name: chikitsasetu_api
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
       ENV: ${ENV:-development}
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-medicare_ai}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-chikitsasetu}
       POSTGRES_SERVER: db
       POSTGRES_PORT: "5432"
-      POSTGRES_DB: ${POSTGRES_DB:-medicare_ai}
+      POSTGRES_DB: ${POSTGRES_DB:-chikitsasetu}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       FASTAPI_PORT: 8000
-      SECRET_KEY: ${SECRET_KEY:-medicare-super-secret-key-change-in-production-2026}
+      SECRET_KEY: ${SECRET_KEY:-chikitsasetu-super-secret-key-change-in-production-2026}
     ports:
       - "${FASTAPI_HOST_PORT:-8000}:8000"
     networks:
-      - medicare_net
+      - chikitsasetu_net
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
       interval: 10s
@@ -65,7 +65,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: web
-    container_name: medicare_web
+    container_name: chikitsasetu_web
     restart: unless-stopped
     depends_on:
       db:
@@ -74,18 +74,18 @@ services:
         condition: service_healthy
     environment:
       ENV: ${ENV:-development}
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-medicare_ai}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-chikitsasetu}
       POSTGRES_SERVER: db
       POSTGRES_PORT: "5432"
-      POSTGRES_DB: ${POSTGRES_DB:-medicare_ai}
+      POSTGRES_DB: ${POSTGRES_DB:-chikitsasetu}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       FLASK_PORT: 5000
-      SECRET_KEY: ${SECRET_KEY:-medicare-super-secret-key-change-in-production-2026}
+      SECRET_KEY: ${SECRET_KEY:-chikitsasetu-super-secret-key-change-in-production-2026}
     ports:
       - "${FLASK_HOST_PORT:-5000}:5000"
     networks:
-      - medicare_net
+      - chikitsasetu_net
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/login || exit 1"]
       interval: 10s
@@ -104,5 +104,5 @@ volumes:
 # Networks
 # ==============================================================================
 networks:
-  medicare_net:
+  chikitsasetu_net:
     driver: bridge

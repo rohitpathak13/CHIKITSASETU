@@ -5,16 +5,24 @@ import requests
 
 def test_servers():
     print("==================================================")
-    print(" MediCare AI - Multi-Server Startup Verification  ")
+    print(" CHIKITSASETU - Multi-Server Startup Verification  ")
     print("==================================================")
 
+    import os
+    env = os.environ.copy()
+    env["USE_SQLITE"] = "true"
+    flask_port = 5055
+    fastapi_port = 8005
+    env["FLASK_PORT"] = str(flask_port)
+    env["FASTAPI_PORT"] = str(fastapi_port)
+
     # 1. Start Flask process
-    print("[*] Launching Flask Web Application (run_flask.py)...")
-    flask_proc = subprocess.Popen([sys.executable, "run_flask.py"])
+    print(f"[*] Launching Flask Web Application (run_flask.py on :{flask_port})...")
+    flask_proc = subprocess.Popen([sys.executable, "run_flask.py"], env=env)
 
     # 2. Start FastAPI process
-    print("[*] Launching FastAPI REST Engine (run_fastapi.py)...")
-    fastapi_proc = subprocess.Popen([sys.executable, "run_fastapi.py"])
+    print(f"[*] Launching FastAPI REST Engine (run_fastapi.py on :{fastapi_port})...")
+    fastapi_proc = subprocess.Popen([sys.executable, "run_fastapi.py"], env=env)
 
     flask_ok = False
     fastapi_ok = False
@@ -24,7 +32,7 @@ def test_servers():
         # Polling loop up to 10 seconds for Flask
         for attempt in range(10):
             try:
-                r = requests.get("http://127.0.0.1:5000/login", timeout=2)
+                r = requests.get(f"http://127.0.0.1:{flask_port}/login", timeout=2)
                 if r.status_code == 200:
                     print(f"[+] Flask HTTP Status: {r.status_code} (Login page rendered: {len(r.content)} bytes)")
                     flask_ok = True
@@ -35,7 +43,7 @@ def test_servers():
         # Polling loop up to 10 seconds for FastAPI
         for attempt in range(10):
             try:
-                r = requests.get("http://127.0.0.1:8000/", timeout=2)
+                r = requests.get(f"http://127.0.0.1:{fastapi_port}/", timeout=2)
                 if r.status_code == 200:
                     print(f"[+] FastAPI HTTP Status: {r.status_code} (Root payload: {r.json()})")
                     fastapi_ok = True
@@ -45,7 +53,7 @@ def test_servers():
 
         # Check FastAPI Swagger Docs
         try:
-            r = requests.get("http://127.0.0.1:8000/docs", timeout=2)
+            r = requests.get(f"http://127.0.0.1:{fastapi_port}/docs", timeout=2)
             if r.status_code == 200:
                 print(f"[+] FastAPI Swagger Docs Status: {r.status_code} (OpenAPI UI active)")
                 fastapi_docs_ok = True

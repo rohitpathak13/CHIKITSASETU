@@ -17,7 +17,7 @@ def test_full_clinical_lifecycle(db_session):
     db_session.flush()
 
     doc_user = User(
-        email="doctor.integration@medicare.ai",
+        email="doctor.integration@chikitsasetu.ai",
         role=RoleEnum.DOCTOR,
         first_name="Marcus",
         last_name="Welby"
