@@ -3,6 +3,26 @@
 {% block page_heading %}Executive Administration & Hospital Operations{% endblock %}
 
 {% block content %}
+<!-- Executive Hospital Facility Hero Banner -->
+<div class="hero-banner" style="background-image: url('{{ url_for('static', filename='images/hero/hospital-hero.jpg') }}');">
+    <div class="hero-banner-overlay"></div>
+    <div class="hero-banner-content">
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(13, 148, 136, 0.25); border: 1px solid rgba(45, 212, 191, 0.4); padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; color: #5EEAD4; margin-bottom: 0.85rem;">
+            <span>🏥</span> SMART HOSPITAL COMMAND CENTER
+        </div>
+        <h1 class="hero-banner-title">Welcome to CHIKITSASETU Clinical Operations</h1>
+        <p class="hero-banner-text">Unified real-time clinical monitoring, AI attendance risk triage, bed allocation management, and departmental administration.</p>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="{{ url_for('admin.manage_doctors') }}" class="btn btn-primary btn-sm">
+                <span>🩺</span> Directory of Physicians
+            </a>
+            <a href="{{ url_for('admin.manage_departments') }}" class="btn btn-secondary btn-sm" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);">
+                <span>🏢</span> Clinical Departments
+            </a>
+        </div>
+    </div>
+</div>
+
 <!-- Executive Operational KPI Grid (All 8 Core Metrics + Activity) -->
 <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
     <div class="stat-card">
@@ -160,6 +180,47 @@
             <a href="{{ url_for('analytics.dashboard') }}" class="btn btn-secondary" style="justify-content: flex-start;">
                 <span>📈</span> Hospital BI & ML Risk Prediction Engine
             </a>
+        </div>
+<!-- Core Clinical Service Divisions -->
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Hospital Clinical Service Divisions</div>
+            <div class="card-subtitle">Operational facilities, diagnostic pathology, and precision healthcare units</div>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; padding-top: 0.5rem;">
+        <div class="service-card">
+            <img src="{{ url_for('static', filename='images/services/appointment.jpg') }}" alt="OPD Scheduling" class="service-card-media">
+            <div class="service-card-body">
+                <div class="service-card-title">Outpatient Clinics</div>
+                <div class="service-card-desc">AI-assisted appointment roster with predictive attendance triage.</div>
+                <a href="{{ url_for('appointment.index') }}" class="btn btn-secondary btn-sm" style="margin-top: auto;">View Appointments →</a>
+            </div>
+        </div>
+        <div class="service-card">
+            <img src="{{ url_for('static', filename='images/services/laboratory.jpg') }}" alt="Pathology Laboratory" class="service-card-media">
+            <div class="service-card-body">
+                <div class="service-card-title">Diagnostics Lab</div>
+                <div class="service-card-desc">Automated pathology, specimen accessioning, and diagnostic orders.</div>
+                <a href="{{ url_for('laboratory.dashboard') }}" class="btn btn-secondary btn-sm" style="margin-top: auto;">Explore Lab →</a>
+            </div>
+        </div>
+        <div class="service-card">
+            <img src="{{ url_for('static', filename='images/services/pharmacy.jpg') }}" alt="Hospital Pharmacy" class="service-card-media">
+            <div class="service-card-body">
+                <div class="service-card-title">Pharmacy & Drugs</div>
+                <div class="service-card-desc">Batch inventory tracking, barcode dispensing, and stock reordering.</div>
+                <a href="{{ url_for('pharmacy.dashboard') }}" class="btn btn-secondary btn-sm" style="margin-top: auto;">Pharmacy Console →</a>
+            </div>
+        </div>
+        <div class="service-card">
+            <img src="{{ url_for('static', filename='images/services/ambulance.jpg') }}" alt="Emergency Services" class="service-card-media">
+            <div class="service-card-body">
+                <div class="service-card-title">Inpatient & Emergency</div>
+                <div class="service-card-desc">24/7 bed management, emergency triage, and critical care wards.</div>
+                <a href="{{ url_for('ipd.dashboard') }}" class="btn btn-secondary btn-sm" style="margin-top: auto;">Inpatient Wards →</a>
+            </div>
         </div>
     </div>
 </div>

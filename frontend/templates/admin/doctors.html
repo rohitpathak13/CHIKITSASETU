@@ -49,8 +49,14 @@
                 {% for doc in doctors %}
                 <tr>
                     <td>
-                        <div style="font-weight: 700; color: var(--text-main);">Dr. {{ doc.user.full_name }}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ doc.user.email }} | {{ doc.qualification }}</div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            {% set doc_idx = (loop.index0 % 4) + 1 %}
+                            <img src="{{ url_for('static', filename='images/doctors/doctor-' ~ doc_idx ~ '.jpg') }}" alt="Dr. {{ doc.user.full_name }}" class="doctor-avatar-thumb">
+                            <div>
+                                <div style="font-weight: 700; color: var(--text-main);">Dr. {{ doc.user.full_name }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ doc.user.email }} | {{ doc.qualification }}</div>
+                            </div>
+                        </div>
                     </td>
                     <td>
                         {% if doc.department %}

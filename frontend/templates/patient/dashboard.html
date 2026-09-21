@@ -54,10 +54,11 @@
                     {% else %}
                     <tr>
                         <td colspan="4">
-                            <div class="empty-state" style="padding: 2rem 1rem;">
-                                <div class="empty-state-icon">📅</div>
+                            <div class="empty-state" style="padding: 2.5rem 1rem;">
+                                <img src="{{ url_for('static', filename='images/ui/empty-state.png') }}" alt="No Appointments" class="empty-state-img">
                                 <div class="empty-state-title">No Appointments Scheduled</div>
-                                <div class="empty-state-text">You currently do not have any upcoming medical appointments.</div>
+                                <div class="empty-state-text">You currently do not have any upcoming clinical consultations.</div>
+                                <a href="{{ url_for('patient.appointments') }}" class="btn btn-primary btn-sm" style="margin-top: 1rem;">Book Consultation</a>
                             </div>
                         </td>
                     </tr>
@@ -77,6 +78,50 @@
             <div><strong>Allergies:</strong> <span style="color: #F87171;">{{ profile.allergies if profile and profile.allergies else 'None Documented' }}</span></div>
             <div><strong>Chronic Conditions:</strong> {{ profile.chronic_conditions if profile and profile.chronic_conditions else 'None Documented' }}</div>
             <div><strong>Emergency Contact:</strong> {{ profile.emergency_contact_name if profile and profile.emergency_contact_name else 'Not set' }} ({{ profile.emergency_contact_phone if profile and profile.emergency_contact_phone else 'N/A' }})</div>
+        </div>
+    </div>
+</div>
+
+<!-- Patient Hospital Services Navigation -->
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Available Hospital Clinical Services</div>
+            <div class="card-subtitle">Direct access to clinical departments, lab tests, and hospital pharmacy</div>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.25rem; padding-top: 0.5rem;">
+        <div class="service-card">
+            <img src="{{ url_for('static', filename='images/services/appointment.jpg') }}" alt="OPD Consultation" class="service-card-media">
+            <div class="service-card-body">
+                <div class="service-card-title">OPD Appointments</div>
+                <div class="service-card-desc">Schedule specialist consultations across cardiology, neurology, and pediatrics.</div>
+                <a href="{{ url_for('patient.appointments') }}" class="btn btn-secondary btn-sm" style="margin-top: auto;">My Appointments →</a>
+            </div>
+        </div>
+        <div class="service-card">
+            <img src="{{ url_for('static', filename='images/services/laboratory.jpg') }}" alt="Diagnostic Reports" class="service-card-media">
+            <div class="service-card-body">
+                <div class="service-card-title">Laboratory Tests</div>
+                <div class="service-card-desc">Access blood panels, pathology results, and diagnostic imaging reports.</div>
+                <a href="{{ url_for('patient.lab_reports') }}" class="btn btn-secondary btn-sm" style="margin-top: auto;">View Reports →</a>
+            </div>
+        </div>
+        <div class="service-card">
+            <img src="{{ url_for('static', filename='images/services/pharmacy.jpg') }}" alt="Hospital Pharmacy" class="service-card-media">
+            <div class="service-card-body">
+                <div class="service-card-title">Prescriptions</div>
+                <div class="service-card-desc">Review prescribed medications, dosage schedules, and refills.</div>
+                <a href="{{ url_for('patient.prescriptions') }}" class="btn btn-secondary btn-sm" style="margin-top: auto;">My Prescriptions →</a>
+            </div>
+        </div>
+        <div class="service-card">
+            <img src="{{ url_for('static', filename='images/services/ambulance.jpg') }}" alt="Emergency Services" class="service-card-media">
+            <div class="service-card-body">
+                <div class="service-card-title">24/7 Emergency Care</div>
+                <div class="service-card-desc">Round-the-clock ambulance dispatch and emergency trauma response.</div>
+                <a href="{{ url_for('patient.billing') }}" class="btn btn-secondary btn-sm" style="margin-top: auto;">Hospital Helpdesk →</a>
+            </div>
         </div>
     </div>
 </div>

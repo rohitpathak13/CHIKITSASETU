@@ -16,12 +16,24 @@
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
         {% for dept in departments %}
-        <div class="card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle);">
-            <div class="card-header" style="padding-bottom: 0.5rem;">
-                <div>
-                    <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">
-                        {{ dept.name }}
-                    </div>
+        {% set dept_img = 'emergency.jpg' %}
+        {% if dept.code == 'CARD' or 'Cardio' in dept.name %}
+            {% set dept_img = 'cardiology.jpg' %}
+        {% elif dept.code == 'NEUR' or 'Neuro' in dept.name %}
+            {% set dept_img = 'neurology.jpg' %}
+        {% elif dept.code == 'ORTH' or 'Ortho' in dept.name %}
+            {% set dept_img = 'orthopedics.jpg' %}
+        {% elif dept.code == 'PED' or 'Pediatric' in dept.name %}
+            {% set dept_img = 'pediatrics.jpg' %}
+        {% endif %}
+        <div class="card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 0; overflow: hidden;">
+            <img src="{{ url_for('static', filename='images/departments/' + dept_img) }}" alt="{{ dept.name }}" class="department-card-cover">
+            <div style="padding: 1.25rem;">
+                <div class="card-header" style="padding: 0 0 0.5rem 0;">
+                    <div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">
+                            {{ dept.name }}
+                        </div>
                     <span class="badge badge-info" style="font-family: monospace; font-size: 0.75rem; margin-top: 0.25rem;">
                         CODE: {{ dept.code }}
                     </span>
@@ -46,7 +58,8 @@
                 </div>
             </div>
         </div>
-        {% endfor %}
+    </div>
+    {% endfor %}
     </div>
 </div>
 
