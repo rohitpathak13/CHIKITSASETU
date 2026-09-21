@@ -64,11 +64,11 @@ def test_postgres_direct():
     print("[4/4] Testing PostgreSQL Direct Connection via psycopg2 at localhost:5433 ...")
     import psycopg2
     conn = psycopg2.connect(
-        dbname="chikitsasetu",
-        user="postgres",
-        password="postgres_secure_2026",
-        host="localhost",
-        port=5433
+        dbname=os.getenv("POSTGRES_DB", "chikitsasetu"),
+        user=os.getenv("POSTGRES_USER", "postgres"),
+        password=os.getenv("POSTGRES_PASSWORD", "postgres_secure_2026"),
+        host=os.getenv("POSTGRES_SERVER", "localhost"),
+        port=int(os.getenv("POSTGRES_HOST_PORT", "5433"))
     )
     cur = conn.cursor()
     cur.execute("SELECT count(*) FROM users;")
