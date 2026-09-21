@@ -19,7 +19,8 @@ from core.models.billing import (
     Bill, BillItem, Payment, Insurance,
     BillStatusEnum, PaymentStatusEnum, ItemTypeEnum, PaymentMethodEnum
 )
-from core.models.audit import AuditLog, Notification, NotificationTypeEnum
+from core.models.audit import AuditLog
+from core.models.notification import Notification, NotificationTypeEnum
 
 
 # =====================================================================

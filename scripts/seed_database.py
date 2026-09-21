@@ -1,6 +1,10 @@
 import os
+import sys
 from datetime import datetime, date, timedelta, timezone
 from decimal import Decimal
+
+# Ensure project root is on sys.path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Ensure database models are registered
 from core.database import init_db, SessionLocal

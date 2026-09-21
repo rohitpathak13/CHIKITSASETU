@@ -32,21 +32,35 @@
     </div>
     <div class="stat-card">
         <div class="stat-label">Bed Occupancy</div>
-        <div class="stat-value" style="color: {% if occupancy_rate > 85 %}#EF4444{% elif occupancy_rate > 60 %}#FBBF24{% else %}#10B981{% endif %};">
+        {% if occupancy_rate > 85 %}
+            <div class="stat-value" style="color: #EF4444;">
+        {% elif occupancy_rate > 60 %}
+            <div class="stat-value" style="color: #FBBF24;">
+        {% else %}
+            <div class="stat-value" style="color: #10B981;">
+        {% endif %}
             {{ occupancy_rate }}%
         </div>
         <div class="stat-desc">{{ occupied_beds }} of {{ total_beds }} beds occupied</div>
     </div>
     <div class="stat-card">
         <div class="stat-label">Pending Invoices</div>
-        <div class="stat-value" style="color: {% if pending_bills > 0 %}#F59E0B{% else %}#10B981{% endif %};">
+        {% if pending_bills > 0 %}
+            <div class="stat-value" style="color: #F59E0B;">
+        {% else %}
+            <div class="stat-value" style="color: #10B981;">
+        {% endif %}
             {{ pending_bills }}
         </div>
         <div class="stat-desc">Unpaid or partially paid bills</div>
     </div>
     <div class="stat-card">
         <div class="stat-label">Low-Stock Medicines</div>
-        <div class="stat-value" style="color: {% if low_stock_medicines > 0 %}#EF4444{% else %}#10B981{% endif %};">
+        {% if low_stock_medicines > 0 %}
+            <div class="stat-value" style="color: #EF4444;">
+        {% else %}
+            <div class="stat-value" style="color: #10B981;">
+        {% endif %}
             {{ low_stock_medicines }}
         </div>
         <div class="stat-desc">Critical inventory below reorder</div>

@@ -38,7 +38,13 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ url_for('appointment.reschedule', appointment_id=appointment.id) }}" id="rescheduleForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <form method="POST" action="{{ url_for('appointment.reschedule', appointment_id=appointment.id) }}" id="rescheduleForm"
+              data-doctor-id="{{ appointment.doctor_id }}"
+              data-appointment-id="{{ appointment.id }}"
+              data-slots-url="{{ url_for('appointment.api_doctor_slots') }}"
+              data-current-slot="{{ appointment.appointment_datetime.strftime('%H:%M') if appointment.appointment_datetime else '' }}"
+              data-current-date="{{ appointment.appointment_datetime.strftime('%Y-%m-%d') if appointment.appointment_datetime else '' }}"
+              style="display: flex; flex-direction: column; gap: 1.5rem;">
             <!-- 1. New Date & Time Slot Selection -->
             <div>
                 <h3 style="font-size: 1rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
@@ -130,40 +136,53 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const doctorId = {{ appointment.doctor_id }};
-    const currentAppointmentId = {{ appointment.id }};
-    const currentSlot = "{{ appointment.appointment_datetime.strftime('%H:%M') if appointment.appointment_datetime else '' }}";
+    const form = document.getElementById('rescheduleForm');
+    if (!form) return;
+
+    const doctorId = form.dataset.doctorId || '';
+    const currentAppointmentId = form.dataset.appointmentId || '';
+    const slotsUrl = form.dataset.slotsUrl || '';
+    const currentSlot = form.dataset.currentSlot || '';
+    const currentDateStr = form.dataset.currentDate || '';
+
     const dateInput = document.getElementById('appointment_date');
     const slotNotice = document.getElementById('slotNotice');
     const selectedSlotInput = document.getElementById('selectedTimeSlot');
     const slotChips = document.querySelectorAll('.slot-chip');
-    const submitBtn = document.getElementById('submitRescheduleBtn');
 
     async function fetchSlots() {
+        if (!dateInput) return;
         const apptDate = dateInput.value;
-        if (!apptDate) return;
+        if (!apptDate || !doctorId || !slotsUrl) return;
 
         resetSlots();
 
         try {
-            const resp = await fetch(`{{ url_for('appointment.api_doctor_slots') }}?doctor_id=${doctorId}&date=${apptDate}`);
+            const query = new URLSearchParams({ doctor_id: doctorId, date: apptDate });
+            const resp = await fetch(`${slotsUrl}?${query.toString()}`);
+            if (!resp.ok) {
+                console.error('Failed to fetch doctor slots:', resp.statusText);
+                return;
+            }
             const data = await resp.json();
+
+            if (!slotNotice) return;
 
             if (!data.is_available) {
                 slotNotice.style.display = 'block';
                 slotNotice.style.color = '#F87171';
-                slotNotice.textContent = `⚠️ Dr. is not on duty on this day (${data.weekday}). Regular schedule: ${data.available_days}.`;
+                slotNotice.textContent = `⚠️ Dr. is not on duty on this day (${data.weekday || 'N/A'}). Regular schedule: ${data.available_days || 'Not available'}.`;
                 slotChips.forEach(chip => chip.classList.add('disabled'));
                 return;
             }
 
             slotNotice.style.display = 'block';
             slotNotice.style.color = '#34D399';
-            slotNotice.textContent = `✓ Doctor available. ${data.free_slots.length} consultation slots open.`;
+            const openCount = Array.isArray(data.free_slots) ? data.free_slots.length : 0;
+            slotNotice.textContent = `✓ Doctor available. ${openCount} consultation slots open.`;
 
             const booked = new Set(data.booked_slots || []);
             // Current appointment's slot on its current date shouldn't block itself
-            const currentDateStr = "{{ appointment.appointment_datetime.strftime('%Y-%m-%d') if appointment.appointment_datetime else '' }}";
             if (apptDate === currentDateStr && currentSlot) {
                 booked.delete(currentSlot);
             }
@@ -184,7 +203,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetSlots() {
-        selectedSlotInput.value = '';
+        if (selectedSlotInput) {
+            selectedSlotInput.value = '';
+        }
         slotChips.forEach(chip => {
             chip.classList.remove('active', 'disabled');
         });
@@ -195,17 +216,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (chip.classList.contains('disabled')) return;
             slotChips.forEach(c => c.classList.remove('active'));
             chip.classList.add('active');
-            selectedSlotInput.value = chip.getAttribute('data-slot');
+            if (selectedSlotInput) {
+                selectedSlotInput.value = chip.getAttribute('data-slot') || '';
+            }
         });
     });
 
-    dateInput.addEventListener('change', fetchSlots);
+    if (dateInput) {
+        dateInput.addEventListener('change', fetchSlots);
+        // Initial fetch on page load
+        fetchSlots();
+    }
 
-    // Initial fetch
-    fetchSlots();
-
-    document.getElementById('rescheduleForm').addEventListener('submit', (e) => {
-        if (!selectedSlotInput.value) {
+    form.addEventListener('submit', (e) => {
+        if (!selectedSlotInput || !selectedSlotInput.value) {
             e.preventDefault();
             alert('Please select an available consultation time slot.');
         }

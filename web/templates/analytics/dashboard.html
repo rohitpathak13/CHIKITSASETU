@@ -26,7 +26,13 @@
     </div>
     <div class="stat-card">
         <div class="stat-label">Bed Occupancy Rate</div>
-        <div class="stat-value" style="color: {% if summary_kpis.bed_occupancy_rate > 85 %}#F87171{% elif summary_kpis.bed_occupancy_rate > 60 %}#FBBF24{% else %}#34D399{% endif %};">
+        {% if summary_kpis.bed_occupancy_rate > 85 %}
+            <div class="stat-value" style="color: #F87171;">
+        {% elif summary_kpis.bed_occupancy_rate > 60 %}
+            <div class="stat-value" style="color: #FBBF24;">
+        {% else %}
+            <div class="stat-value" style="color: #34D399;">
+        {% endif %}
             {{ summary_kpis.bed_occupancy_rate }}%
         </div>
         <div class="stat-desc">{{ summary_kpis.occupied_beds }} occupied / {{ summary_kpis.total_beds }} capacity</div>
@@ -43,7 +49,11 @@
     </div>
     <div class="stat-card">
         <div class="stat-label">Formulary Stock Health</div>
-        <div class="stat-value" style="color: {% if summary_kpis.pharmacy_low_stock_alerts > 0 %}#F87171{% else %}#34D399{% endif %};">
+        {% if summary_kpis.pharmacy_low_stock_alerts > 0 %}
+            <div class="stat-value" style="color: #F87171;">
+        {% else %}
+            <div class="stat-value" style="color: #34D399;">
+        {% endif %}
             {{ summary_kpis.pharmacy_low_stock_alerts }} Alerts
         </div>
         <div class="stat-desc">{{ summary_kpis.pharmacy_expiring_alerts }} batches expiring soon</div>

@@ -15,7 +15,9 @@
             </a>
         </div>
 
-        <form method="POST" action="{{ url_for('appointment.book') }}" id="appointmentBookingForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <form method="POST" action="{{ url_for('appointment.book') }}" id="appointmentBookingForm"
+              data-slots-url="{{ url_for('appointment.api_doctor_slots') }}"
+              style="display: flex; flex-direction: column; gap: 1.5rem;">
             <!-- 1. Patient Selection -->
             <div>
                 <h3 style="font-size: 1rem; font-weight: 700; color: var(--teal-primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.5rem;">
@@ -201,12 +203,15 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchSlots() {
         const docId = docSelect.value;
         const apptDate = dateInput.value;
-        if (!docId || !apptDate) return;
+        const form = document.getElementById('appointmentBookingForm');
+        const slotsUrl = form ? form.dataset.slotsUrl : '';
+        if (!docId || !apptDate || !slotsUrl) return;
 
         resetSlots();
 
         try {
-            const resp = await fetch(`{{ url_for('appointment.api_doctor_slots') }}?doctor_id=${docId}&date=${apptDate}`);
+            const query = new URLSearchParams({ doctor_id: docId, date: apptDate });
+            const resp = await fetch(`${slotsUrl}?${query.toString()}`);
             const data = await resp.json();
 
             if (!data.is_available) {
