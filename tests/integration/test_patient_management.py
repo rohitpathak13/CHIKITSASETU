@@ -1,14 +1,14 @@
 import pytest
 from datetime import datetime, date, timezone
 from decimal import Decimal
-from core.models import (
+from backend.models import (
     User, Doctor, Patient, Department, Appointment,
     MedicalRecord, Diagnosis, Prescription, PrescriptionItem, Medicine,
     LabTest, LabOrder, LabResult, Bill, Payment, Insurance, AuditLog,
     RoleEnum, GenderEnum, AppointmentStatusEnum, PrescriptionStatusEnum,
     LabOrderStatusEnum, BillStatusEnum, PaymentMethodEnum
 )
-from core.security import get_password_hash
+from backend.security import get_password_hash
 
 
 # =====================================================================

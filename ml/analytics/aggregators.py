@@ -5,7 +5,7 @@ Exposes domain-specific and cross-departmental aggregators powered by Pandas and
 Integrates with core.services.analytics_service.
 """
 
-from core.services.analytics_service import (
+from backend.services.analytics_service import (
     get_patient_growth_data,
     get_appointment_trends_data,
     get_department_statistics_data,

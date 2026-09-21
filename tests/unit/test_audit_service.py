@@ -2,10 +2,10 @@ import pytest
 from datetime import datetime, date, timedelta, timezone
 from decimal import Decimal
 
-from core.models import User, RoleEnum, Patient, PatientProfile
-from core.models.audit import AuditLog
-from core.security import get_password_hash
-from core.services import audit_service
+from backend.models import User, RoleEnum, Patient, PatientProfile
+from backend.models.audit import AuditLog
+from backend.security import get_password_hash
+from backend.services import audit_service
 
 
 def test_sanitize_metadata_redacts_sensitive_keys():

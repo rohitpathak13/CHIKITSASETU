@@ -1,9 +1,9 @@
 import pytest
 from datetime import date, datetime, timezone, timedelta
-from core.models import User, RoleEnum, GenderEnum, Patient, PatientProfile, Doctor, DoctorProfile, Department, LabOrder, LabTest, MedicalRecord
-from core.security import get_password_hash, create_access_token, validate_password_strength
-from core.services import audit_service
-from web import create_app as create_flask_app
+from backend.models import User, RoleEnum, GenderEnum, Patient, PatientProfile, Doctor, DoctorProfile, Department, LabOrder, LabTest, MedicalRecord
+from backend.security import get_password_hash, create_access_token, validate_password_strength
+from backend.services import audit_service
+from backend.app import create_app as create_flask_app
 
 
 @pytest.fixture

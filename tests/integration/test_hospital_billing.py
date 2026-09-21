@@ -15,12 +15,12 @@ import pytest
 from decimal import Decimal
 from datetime import datetime, date, timezone, timedelta
 
-from core.models import (
+from backend.models import (
     User, Role, RoleEnum, GenderEnum, Patient, PatientProfile,
     Bill, BillItem, Payment, Insurance,
     BillStatusEnum, PaymentStatusEnum, ItemTypeEnum, PaymentMethodEnum
 )
-from core.services import billing_service
+from backend.services import billing_service
 
 
 # =====================================================================

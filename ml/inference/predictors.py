@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import Dict, Any, Tuple, List, Optional
-from core.config import settings
+from backend.config import settings
 
 class ReadmissionPredictor:
     """

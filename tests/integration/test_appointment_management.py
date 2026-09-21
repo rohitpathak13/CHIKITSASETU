@@ -3,12 +3,12 @@ from datetime import datetime, date, timezone, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from core.models import (
+from backend.models import (
     User, Doctor, Patient, Department, Appointment, AuditLog,
     RoleEnum, GenderEnum, AppointmentStatusEnum
 )
-from core.security import get_password_hash
-from core.services.appointment_service import (
+from backend.security import get_password_hash
+from backend.services.appointment_service import (
     book_appointment, reschedule_appointment, cancel_appointment,
     complete_appointment, update_appointment_status, get_available_slots,
     AppointmentServiceError, DuplicateBookingError, DoctorUnavailableError,

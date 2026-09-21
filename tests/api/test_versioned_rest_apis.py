@@ -7,7 +7,7 @@ import pytest
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
-from core.models import (
+from backend.models import (
     User, Patient, Doctor, Department, Room, Bed, Medicine, LabTest,
     RoleEnum, GenderEnum, RoomTypeEnum, BedStatusEnum
 )

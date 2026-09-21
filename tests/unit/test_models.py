@@ -1,7 +1,7 @@
 import pytest
 from datetime import date, timedelta
 from decimal import Decimal
-from core.models import (
+from backend.models import (
     User, RoleEnum, Medicine, MedicineBatch,
     Ward, Bed, WardTypeEnum, BedStatusEnum,
     Invoice, InvoiceItem, Payment, ItemTypeEnum, InvoiceStatusEnum, PaymentMethodEnum

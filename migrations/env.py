@@ -10,9 +10,9 @@ from alembic import context
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from core.config import settings
-from core.database import Base
-import core.models  # Ensure all models are registered on metadata
+from backend.config import settings
+from backend.database import Base
+import backend.models  # Ensure all models are registered on metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

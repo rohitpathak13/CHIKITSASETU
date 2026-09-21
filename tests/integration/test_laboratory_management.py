@@ -2,13 +2,13 @@ import pytest
 from datetime import datetime, date, timedelta, timezone
 from decimal import Decimal
 
-from core.models import (
+from backend.models import (
     User, DoctorProfile, PatientProfile, Department,
     LabTest, LabTestType, LabOrder, LabResult,
     Notification, NotificationTypeEnum,
     RoleEnum, GenderEnum, LabOrderStatusEnum
 )
-from core.services.laboratory_service import (
+from backend.services.laboratory_service import (
     order_lab_tests, receive_and_collect_sample, start_processing_order,
     enter_lab_result, doctor_review_lab_result, cancel_lab_order,
     get_lab_order_detail, list_lab_orders, get_patient_lab_history,

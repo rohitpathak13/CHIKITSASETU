@@ -14,15 +14,15 @@ single & bulk mark-as-read updates, history pagination, and 6 domain-specific ge
 import pytest
 from datetime import datetime, date, timedelta, timezone
 
-from core.models.user import User, RoleEnum
-from core.models.notification import (
+from backend.models.user import User, RoleEnum
+from backend.models.notification import (
     Notification,
     NotificationTypeEnum,
     NotificationPriorityEnum
 )
-from core.models.pharmacy import Medicine, MedicineInventory
-from core.services.notification_service import NotificationService
-from core.security import get_password_hash
+from backend.models.pharmacy import Medicine, MedicineInventory
+from backend.services.notification_service import NotificationService
+from backend.security import get_password_hash
 
 
 @pytest.fixture

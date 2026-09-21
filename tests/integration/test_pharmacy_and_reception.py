@@ -1,8 +1,8 @@
 import pytest
 from datetime import date, timedelta
 from decimal import Decimal
-from core.models import User, Medicine, MedicineBatch, PatientProfile, RoleEnum, GenderEnum
-from core.security import get_password_hash
+from backend.models import User, Medicine, MedicineBatch, PatientProfile, RoleEnum, GenderEnum
+from backend.security import get_password_hash
 
 def test_pharmacy_stock_reorder(flask_client, db_session):
     """Tests 1-click batch reordering when stock is low."""

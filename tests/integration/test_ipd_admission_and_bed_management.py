@@ -2,14 +2,14 @@ import pytest
 from datetime import datetime, date, timezone, timedelta
 from decimal import Decimal
 
-from core.models import (
+from backend.models import (
     User, RoleEnum, Patient, PatientProfile, Doctor, Staff, Department,
     Room, Ward, Bed, Admission, BedTransfer, Invoice,
     RoomTypeEnum, WardTypeEnum, BedStatusEnum, AdmissionStatusEnum, GenderEnum, AuditLog
 )
-from core.security import get_password_hash, create_access_token
-from core.services import inpatient_service
-from core.services.inpatient_service import (
+from backend.security import get_password_hash, create_access_token
+from backend.services import inpatient_service
+from backend.services.inpatient_service import (
     admit_patient, transfer_bed, discharge_patient, update_bed_status,
     get_ipd_dashboard_stats, get_bed_availability, get_admission_detail,
     get_patient_admission_history, list_admissions,

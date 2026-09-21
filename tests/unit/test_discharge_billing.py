@@ -1,15 +1,15 @@
 import pytest
 from datetime import datetime, date, timedelta, timezone
 from decimal import Decimal
-from core.models import (
+from backend.models import (
     User, DoctorProfile, PatientProfile, Department, Ward, Bed,
     Admission, Medicine, MedicineBatch, Prescription, PrescriptionItem,
     LabTestType, LabOrder, LabResult, Invoice, InvoiceItem, Notification, MedicalRecord,
     RoleEnum, GenderEnum, WardTypeEnum, BedStatusEnum, AdmissionStatusEnum,
     InvoiceStatusEnum, ItemTypeEnum, PrescriptionStatusEnum, LabOrderStatusEnum
 )
-from core.security import get_password_hash
-from core.services.discharge_billing import process_inpatient_discharge_and_billing
+from backend.security import get_password_hash
+from backend.services.discharge_billing import process_inpatient_discharge_and_billing
 
 def test_inpatient_discharge_auto_billing(db_session):
     """

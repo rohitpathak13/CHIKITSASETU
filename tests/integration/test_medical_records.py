@@ -3,13 +3,13 @@ from datetime import datetime, date, timezone, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from core.models import (
+from backend.models import (
     User, Doctor, Patient, Department, Appointment, MedicalRecord, Diagnosis,
     Prescription, PrescriptionItem, LabOrder, LabTestType, Medicine, Admission, Room, Bed,
     AuditLog, RoleEnum, GenderEnum, AppointmentStatusEnum, PrescriptionStatusEnum
 )
-from core.security import get_password_hash
-from core.services.medical_record_service import (
+from backend.security import get_password_hash
+from backend.services.medical_record_service import (
     create_medical_record, update_medical_record, get_patient_medical_timeline,
     get_medical_record_detail, validate_vitals,
     MedicalRecordServiceError, InvalidMedicalRecordDataError,

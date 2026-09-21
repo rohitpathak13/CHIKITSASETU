@@ -38,14 +38,14 @@ while True:
 EOF
 
 echo "[docker-entrypoint] Ensuring database schema and tables exist..."
-python -c "from core.database import init_db; init_db()"
+python -c "from backend.database import init_db; init_db()"
 
 echo "[docker-entrypoint] Checking for existing master seed records..."
 python - <<EOF
 import sys
 try:
-    from core.database import SessionLocal
-    from core.models import User
+    from backend.database import SessionLocal
+    from backend.models import User
     db = SessionLocal()
     user_count = db.query(User).count()
     db.close()
@@ -62,10 +62,10 @@ EOF
 
 if [ "$1" = "api" ]; then
     echo "[docker-entrypoint] Launching FastAPI ASGI engine via Uvicorn..."
-    exec uvicorn api.main:app --host 0.0.0.0 --port "${FASTAPI_PORT:-8000}" --workers "${UVICORN_WORKERS:-2}"
+    exec uvicorn backend.fastapi_service.main:app --host 0.0.0.0 --port "${FASTAPI_PORT:-8000}" --workers "${UVICORN_WORKERS:-2}"
 elif [ "$1" = "web" ]; then
     echo "[docker-entrypoint] Launching Flask WSGI portal via Gunicorn..."
-    exec gunicorn -w "${GUNICORN_WORKERS:-4}" -b "0.0.0.0:${FLASK_PORT:-5000}" "web:create_app()"
+    exec gunicorn -w "${GUNICORN_WORKERS:-4}" -b "0.0.0.0:${FLASK_PORT:-5000}" "backend:create_app()"
 else
     echo "[docker-entrypoint] Executing custom command: $@"
     exec "$@"

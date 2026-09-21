@@ -1,14 +1,14 @@
 import pytest
 from datetime import datetime, date, timezone, timedelta
 from decimal import Decimal
-from core.models import (
+from backend.models import (
     User, Doctor, Patient, Department, Room, Bed, Appointment,
     MedicalRecord, Diagnosis, Prescription, PrescriptionItem, Medicine,
     LabTest, LabOrder, LabResult, Admission, AuditLog,
     RoleEnum, GenderEnum, AppointmentStatusEnum, PrescriptionStatusEnum,
     LabOrderStatusEnum, RoomTypeEnum, BedStatusEnum, AdmissionStatusEnum
 )
-from core.security import get_password_hash
+from backend.security import get_password_hash
 
 
 def create_user(db_session, email, role, first_name="Test", last_name="User", phone=None):

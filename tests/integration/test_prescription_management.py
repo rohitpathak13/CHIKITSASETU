@@ -2,13 +2,13 @@ import pytest
 from datetime import date, timedelta
 from decimal import Decimal
 
-from core.models import (
+from backend.models import (
     User, RoleEnum, Patient, PatientProfile, Doctor, Department,
     Medicine, MedicineBatch, Prescription, PrescriptionItem,
     PrescriptionStatusEnum, AuditLog, Notification, GenderEnum
 )
-from core.security import get_password_hash
-from core.services.prescription_service import (
+from backend.security import get_password_hash
+from backend.services.prescription_service import (
     create_prescription, dispense_prescription, cancel_prescription,
     get_prescription_detail, list_prescriptions,
     InvalidPrescriptionDataError, PrescriptionServiceError,

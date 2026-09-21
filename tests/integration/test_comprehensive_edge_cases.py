@@ -7,7 +7,7 @@ import pytest
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
-from core.models import (
+from backend.models import (
     User, RoleEnum, GenderEnum, Patient, PatientProfile, Doctor, DoctorProfile,
     Staff, Department, Appointment, AppointmentStatusEnum,
     MedicalRecord, Prescription, PrescriptionItem, PrescriptionStatusEnum,
@@ -17,38 +17,38 @@ from core.models import (
     Bill, BillItem, Payment, BillStatusEnum, PaymentStatusEnum, ItemTypeEnum, PaymentMethodEnum,
     Notification, NotificationTypeEnum, AuditLog
 )
-from core.security import get_password_hash, create_access_token
-from core.services import (
+from backend.security import get_password_hash, create_access_token
+from backend.services import (
     appointment_service, inpatient_service, billing_service,
     notification_service, audit_service, analytics_service,
     prescription_service, laboratory_service, pharmacy_service,
     medical_record_service
 )
-from core.services.notification_service import NotificationService
-from core.services.inpatient_service import (
+from backend.services.notification_service import NotificationService
+from backend.services.inpatient_service import (
     admit_patient, transfer_bed, discharge_patient,
     BedUnavailableError, PatientAlreadyAdmittedError, AdmissionNotFoundError,
     BedNotFoundError, InvalidAdmissionDataError
 )
-from core.services.billing_service import (
+from backend.services.billing_service import (
     record_payment, create_bill, BillNotFoundError,
     InvalidBillDataError, PaymentExceedsBalanceError
 )
-from core.services.prescription_service import (
+from backend.services.prescription_service import (
     create_prescription, dispense_prescription,
     InvalidPrescriptionDataError, PrescriptionNotFoundError,
     InventoryShortageError
 )
-from core.services.appointment_service import (
+from backend.services.appointment_service import (
     book_appointment, reschedule_appointment, cancel_appointment,
     DuplicateBookingError, AppointmentNotFoundError, AppointmentStateError,
     InvalidAppointmentDataError
 )
-from core.services.laboratory_service import (
+from backend.services.laboratory_service import (
     order_lab_tests, cancel_lab_order, receive_and_collect_sample,
     InvalidLabDataError, LabOrderNotFoundError, LabInvalidStateTransitionError
 )
-from core.services.pharmacy_service import (
+from backend.services.pharmacy_service import (
     create_medicine, stock_in, stock_out,
     InvalidInventoryDataError, InsufficientInventoryError, MedicineNotFoundError, BatchNotFoundError
 )

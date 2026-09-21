@@ -1,9 +1,9 @@
 import pytest
 from datetime import date
 from flask import session
-from core.models import User, RoleEnum, Patient, AuditLog
-from core.security import get_password_hash, verify_password
-from web.decorators import (
+from backend.models import User, RoleEnum, Patient, AuditLog
+from backend.security import get_password_hash, verify_password
+from backend.utils.decorators import (
     normalize_role, get_current_user, get_current_role,
     is_authenticated, has_role
 )

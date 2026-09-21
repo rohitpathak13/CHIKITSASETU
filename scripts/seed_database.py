@@ -7,8 +7,8 @@ from decimal import Decimal
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Ensure database models are registered
-from core.database import init_db, SessionLocal
-from core.models import (
+from backend.database import init_db, SessionLocal
+from backend.models import (
     Role, User, Doctor, Patient, Staff,
     DoctorProfile, PatientProfile, StaffProfile,
     RoleEnum, GenderEnum,
@@ -20,7 +20,7 @@ from core.models import (
     BillStatusEnum, InvoiceStatusEnum, ItemTypeEnum, PaymentMethodEnum,
     AuditLog, Notification, NotificationTypeEnum
 )
-from core.security import get_password_hash
+from backend.security import get_password_hash
 
 
 def seed():

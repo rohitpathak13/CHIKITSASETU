@@ -1,13 +1,13 @@
 import pytest
 from datetime import datetime, date, timezone
 from decimal import Decimal
-from core.models import (
+from backend.models import (
     User, Doctor, Patient, Staff, Department, Room, Bed,
     Appointment, Admission, Bill, Medicine, MedicineInventory, AuditLog,
     RoleEnum, GenderEnum, RoomTypeEnum, BedStatusEnum, BillStatusEnum,
     AppointmentStatusEnum, AdmissionStatusEnum
 )
-from core.security import get_password_hash
+from backend.security import get_password_hash
 
 
 def login_as_admin(flask_client, db_session):

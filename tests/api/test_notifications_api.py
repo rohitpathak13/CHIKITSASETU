@@ -13,9 +13,9 @@ status transitions, and operational scanner execution.
 """
 
 import pytest
-from core.models import User, RoleEnum, Notification, NotificationTypeEnum, NotificationPriorityEnum
-from core.security import get_password_hash, create_access_token
-from core.services.notification_service import NotificationService
+from backend.models import User, RoleEnum, Notification, NotificationTypeEnum, NotificationPriorityEnum
+from backend.security import get_password_hash, create_access_token
+from backend.services.notification_service import NotificationService
 
 
 @pytest.fixture

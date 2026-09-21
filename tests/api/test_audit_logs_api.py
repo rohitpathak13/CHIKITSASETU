@@ -1,7 +1,7 @@
 import pytest
-from core.models import User, RoleEnum
-from core.security import get_password_hash, create_access_token
-from core.services import audit_service
+from backend.models import User, RoleEnum
+from backend.security import get_password_hash, create_access_token
+from backend.services import audit_service
 
 
 @pytest.fixture

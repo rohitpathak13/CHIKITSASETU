@@ -1,6 +1,6 @@
 import pytest
-from core.models import User, Notification, RoleEnum, NotificationTypeEnum
-from core.security import get_password_hash
+from backend.models import User, Notification, RoleEnum, NotificationTypeEnum
+from backend.security import get_password_hash
 
 def test_notification_workflow(flask_client, db_session):
     """

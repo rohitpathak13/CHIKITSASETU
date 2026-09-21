@@ -21,7 +21,7 @@ issues_found = []
 
 def audit_templates_and_routes():
     print("\n--- [1] Auditing Flask Templates & url_for References ---")
-    from web import create_app
+    from backend.app import create_app
     app = create_app()
     view_functions = set(app.view_functions.keys())
     # Add static
@@ -76,8 +76,8 @@ def audit_templates_and_routes():
 
 def audit_sqlalchemy_models():
     print("\n--- [2] Auditing Database Models & Relationships ---")
-    import core.models
-    from core.database import Base
+    import backend.models
+    from backend.database import Base
     
     table_count = len(Base.metadata.tables)
     print(f"Registered SQLAlchemy Tables: {table_count}")
@@ -104,7 +104,7 @@ def audit_sqlalchemy_models():
 
 def audit_fastapi_endpoints():
     print("\n--- [3] Auditing FastAPI Routes & Endpoints ---")
-    from api.main import app
+    from backend.fastapi_service.main import app
     
     api_routes = [r for r in app.routes if hasattr(r, 'methods')]
     print(f"Total registered FastAPI routes: {len(api_routes)}")

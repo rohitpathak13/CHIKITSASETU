@@ -11,9 +11,9 @@ os.environ["USE_SQLITE"] = "true"
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from core.database import Base
-from core.models import User, RoleEnum
-from core.security import get_password_hash, create_access_token
+from backend.database import Base
+from backend.models import User, RoleEnum
+from backend.security import get_password_hash, create_access_token
 
 # Dedicated isolated in-memory database for testing
 test_engine = create_engine(
@@ -23,10 +23,10 @@ test_engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=test_engine)
 
-import core.database
-core.database.engine = test_engine
-core.database.SessionLocal.configure(bind=test_engine, expire_on_commit=False)
-core.database.db_session.configure(bind=test_engine, expire_on_commit=False)
+import backend.database
+backend.database.engine = test_engine
+backend.database.SessionLocal.configure(bind=test_engine, expire_on_commit=False)
+backend.database.db_session.configure(bind=test_engine, expire_on_commit=False)
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():
@@ -35,17 +35,17 @@ def setup_db():
     yield
     Base.metadata.drop_all(bind=test_engine)
 
-from api.main import app as fastapi_app
-from web import create_app as create_flask_app
-from core.database import get_db
+from backend.fastapi_service.main import app as fastapi_app
+from backend.app import create_app as create_flask_app
+from backend.database import get_db
 
 @pytest.fixture(scope="function")
 def db_session():
     """Provides a fresh isolated database session per test function."""
-    session = core.database.db_session()
+    session = backend.database.db_session()
     yield session
     session.rollback()
-    core.database.db_session.remove()
+    backend.database.db_session.remove()
     for table in reversed(Base.metadata.sorted_tables):
         session.execute(table.delete())
     session.commit()

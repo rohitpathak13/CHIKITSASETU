@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 import pytest
 
-from core.models import User, RoleEnum, Patient, GenderEnum
+from backend.models import User, RoleEnum, Patient, GenderEnum
 
 
 def test_flask_analytics_dashboard_admin_access(flask_client, admin_user):

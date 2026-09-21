@@ -10,7 +10,7 @@ import uvicorn
 # Ensure project root is on sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from core.config import settings
+from backend.config import settings
 
 if __name__ == "__main__":
     print(f"==================================================")
@@ -18,4 +18,4 @@ if __name__ == "__main__":
     print(f" API Docs (Swagger): http://127.0.0.1:{settings.FASTAPI_PORT}/docs")
     print(f" ReDoc Docs:         http://127.0.0.1:{settings.FASTAPI_PORT}/redoc")
     print(f"==================================================")
-    uvicorn.run("api.main:app", host="0.0.0.0", port=settings.FASTAPI_PORT, reload=False)
+    uvicorn.run("backend.fastapi_service.main:app", host="0.0.0.0", port=settings.FASTAPI_PORT, reload=False)

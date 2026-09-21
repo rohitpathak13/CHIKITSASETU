@@ -9,8 +9,8 @@ import sys
 # Ensure project root is on sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from web import create_app
-from core.config import settings
+from backend.app import create_app
+from backend.config import settings
 
 app = create_app()
 

@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 import pytest
 
-from core.models import (
+from backend.models import (
     User, Patient, Doctor, Department,
     Appointment, AppointmentStatusEnum,
     MedicalRecord, Diagnosis,
@@ -18,7 +18,7 @@ from core.models import (
     Medicine, MedicineInventory, StockTransaction,
     RoleEnum, GenderEnum
 )
-from core.services.analytics_service import (
+from backend.services.analytics_service import (
     get_patient_growth_data,
     get_appointment_trends_data,
     get_department_statistics_data,

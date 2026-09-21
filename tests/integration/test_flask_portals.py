@@ -1,6 +1,6 @@
 import pytest
-from core.models import User, RoleEnum
-from core.security import get_password_hash
+from backend.models import User, RoleEnum
+from backend.security import get_password_hash
 
 def test_flask_login_page_renders(flask_client):
     res = flask_client.get("/login")

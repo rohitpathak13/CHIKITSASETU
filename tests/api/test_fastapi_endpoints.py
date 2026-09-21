@@ -74,7 +74,7 @@ def test_fastapi_ml_metadata(fastapi_client):
     assert "readmission_model" in meta or "no_show_model" in meta
 
 def test_fastapi_clinical_record_creation(fastapi_client, admin_auth_headers, db_session):
-    from core.models import User, Patient, RoleEnum, GenderEnum
+    from backend.models import User, Patient, RoleEnum, GenderEnum
     from datetime import date
 
     user = User(

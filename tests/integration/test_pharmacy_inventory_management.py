@@ -2,21 +2,21 @@ import pytest
 from datetime import date, timedelta
 from decimal import Decimal
 
-from core.models import (
+from backend.models import (
     User, RoleEnum, Patient, PatientProfile, Doctor, Department,
     Medicine, MedicineInventory, MedicineBatch, StockTransaction,
     StockTransactionTypeEnum, Prescription, PrescriptionItem,
     PrescriptionStatusEnum, GenderEnum, AuditLog
 )
-from core.security import get_password_hash
-from core.services.pharmacy_service import (
+from backend.security import get_password_hash
+from backend.services.pharmacy_service import (
     create_medicine, update_medicine, get_medicine, list_medicines,
     stock_in, stock_out, get_low_stock_medicines, get_expired_batches,
     get_expiring_soon_batches, get_pharmacy_dashboard_stats, list_stock_transactions,
     PharmacyServiceError, MedicineNotFoundError, BatchNotFoundError,
     InvalidInventoryDataError, InsufficientInventoryError
 )
-from core.services.prescription_service import (
+from backend.services.prescription_service import (
     create_prescription, dispense_prescription
 )
 
