@@ -2,6 +2,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from datetime import datetime, date, timezone
 from decimal import Decimal
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from backend.database import db_session
 from backend.models import (
@@ -148,7 +151,8 @@ def create_bill():
             flash(str(be), "danger")
         except Exception as e:
             db_session.rollback()
-            flash(f"Failed to generate bill: {str(e)}", "danger")
+            logger.exception("Failed to generate bill: %s", e)
+            flash("Failed to generate bill. Please try again.", "danger")
 
     # GET: Load patients for selection
     patients = db_session.query(Patient).join(User, Patient.user_id == User.id).order_by(User.last_name.asc()).all()
@@ -224,7 +228,8 @@ def process_payment(invoice_id: int):
         flash(str(bse), "danger")
     except Exception as e:
         db_session.rollback()
-        flash(f"Payment failed: {str(e)}", "danger")
+        logger.exception("Payment failed: %s", e)
+        flash("Payment processing failed. Please try again.", "danger")
 
     return redirect(url_for("billing.invoice_detail", invoice_id=invoice_id))
 
@@ -256,7 +261,8 @@ def process_refund(invoice_id: int):
         flash(str(bse), "danger")
     except Exception as e:
         db_session.rollback()
-        flash(f"Refund processing failed: {str(e)}", "danger")
+        logger.exception("Refund processing failed: %s", e)
+        flash("Refund processing failed. Please try again.", "danger")
 
     return redirect(url_for("billing.invoice_detail", invoice_id=invoice_id))
 

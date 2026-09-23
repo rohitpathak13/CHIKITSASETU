@@ -122,7 +122,13 @@ def register():
         first_name = request.form.get("first_name", "").strip()
         last_name = request.form.get("last_name", "").strip()
         phone = request.form.get("phone", "").strip()
-        password = request.form.get("password", "Password123!")
+        password = request.form.get("password", "").strip()
+        if not password:
+            import secrets
+            password = secrets.token_urlsafe(12) + "A1!"
+        elif len(password) < 8:
+            flash("Password must be at least 8 characters long.", "danger")
+            return render_template("patient/register.html", active_page="patient_directory"), 400
         dob_str = request.form.get("dob", "").strip()
         gender_str = request.form.get("gender", "other").strip().lower()
         blood_group = request.form.get("blood_group", "").strip()

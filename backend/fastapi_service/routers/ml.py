@@ -5,8 +5,11 @@ and non-diagnostic educational disclaimers.
 """
 
 from typing import Dict, Any
+import logging
 from fastapi import APIRouter, HTTPException, status
 from pydantic import ValidationError
+
+logger = logging.getLogger(__name__)
 
 from backend.fastapi_service.schemas.ml import (
     PatientRiskPredictRequest,
@@ -37,9 +40,10 @@ def get_risk_predictor() -> PatientRiskPredictor:
         try:
             _risk_predictor = PatientRiskPredictor()
         except Exception as e:
+            logger.exception("Failed to load patient risk predictor: %s", e)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Patient risk model artifacts could not be loaded: {str(e)}"
+                detail="Patient risk model artifacts could not be loaded."
             )
     return _risk_predictor
 
@@ -85,9 +89,10 @@ def predict_patient_risk(payload: PatientRiskPredictRequest) -> PatientRiskPredi
             detail=f"Invalid clinical feature data: {str(ve)}"
         )
     except Exception as e:
+        logger.exception("Patient risk inference error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Patient risk inference failed: {str(e)}"
+            detail="Patient risk inference failed. Please try again."
         )
 
 
@@ -103,9 +108,10 @@ def get_risk_model_card() -> Dict[str, Any]:
             return predictor.model_card.to_dict()
         return {"message": "Model card metadata not available"}
     except Exception as e:
+        logger.exception("Failed to load patient risk model card: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to load model card: {str(e)}"
+            detail="Failed to load model card."
         )
 
 
@@ -116,9 +122,10 @@ def get_no_show_predictor() -> NoShowPredictorService:
         try:
             _no_show_predictor = NoShowPredictorService()
         except Exception as e:
+            logger.exception("Failed to load no-show predictor: %s", e)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Appointment no-show model artifacts could not be loaded: {str(e)}"
+                detail="Appointment no-show model artifacts could not be loaded."
             )
     return _no_show_predictor
 
@@ -173,9 +180,10 @@ def predict_appointment_no_show(payload: NoShowPredictRequest) -> NoShowPredictR
             detail=f"Invalid appointment feature data: {str(ve)}"
         )
     except Exception as e:
+        logger.exception("Appointment no-show inference error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Appointment no-show inference failed: {str(e)}"
+            detail="Appointment no-show inference failed. Please try again."
         )
 
 
@@ -191,7 +199,8 @@ def get_no_show_model_card() -> Dict[str, Any]:
             return predictor.model_card.to_dict()
         return {"message": "Model card metadata not available"}
     except Exception as e:
+        logger.exception("Failed to load no-show model card: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to load model card: {str(e)}"
+            detail="Failed to load model card."
         )

@@ -324,7 +324,10 @@ def test_appointment_rescheduling_cancelled_appointment_rejected(db_session, bas
     """Edge Case: Cannot reschedule an already cancelled appointment."""
     doc = base_clinical_setup["doctor"]
     p1 = base_clinical_setup["patient1"]
-    appt_dt = datetime.now(timezone.utc) + timedelta(days=3)
+    
+    # Deterministically select next Monday to ensure clinic weekday availability
+    days_to_monday = (0 - datetime.now(timezone.utc).weekday()) % 7 or 7
+    appt_dt = datetime.now(timezone.utc) + timedelta(days=days_to_monday)
 
     appt = book_appointment(
         db=db_session,
@@ -336,8 +339,8 @@ def test_appointment_rescheduling_cancelled_appointment_rejected(db_session, bas
     # Cancel it
     cancel_appointment(db=db_session, appointment_id=appt.id, cancellation_reason="Patient requested")
 
-    # Attempt reschedule
-    new_dt = datetime.now(timezone.utc) + timedelta(days=4)
+    # Attempt reschedule for Tuesday
+    new_dt = appt_dt + timedelta(days=1)
     with pytest.raises(AppointmentStateError):
         reschedule_appointment(db=db_session, appointment_id=appt.id, new_datetime=new_dt)
 

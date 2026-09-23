@@ -43,3 +43,6 @@ scratch/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# User uploads & temporary documents
+uploads/

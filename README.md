@@ -9,18 +9,20 @@
 
 ## Table of Contents
 1. [Executive Summary & Requirements Analysis](#1-executive-summary--requirements-analysis)
-2. [High-Level System Architecture](#2-high-level-system-architecture)
-3. [Database Architecture & Entity-Relationship Design](#3-database-architecture--entity-relationship-design)
-4. [Role-Based Access Control (RBAC) Matrix](#4-role-based-access-control-rbac-matrix)
-5. [Flask Presentation & Workflow Architecture](#5-flask-presentation--workflow-architecture)
-6. [FastAPI High-Performance Service Architecture](#6-fastapi-high-performance-service-architecture)
-7. [Machine Learning & Predictive Analytics Architecture](#7-machine-learning--predictive-analytics-architecture)
-8. [Hospital Analytics & Business Intelligence Engine](#8-hospital-analytics--business-intelligence-engine)
-9. [Module Dependency Analysis & Data Flow DAG](#9-module-dependency-analysis--data-flow-dag)
-10. [Security, Audit & Compliance Architecture](#10-security-audit--compliance-architecture)
-11. [Testing & Quality Assurance Strategy](#11-testing--quality-assurance-strategy)
-12. [Docker Deployment & Infrastructure Topology](#12-docker-deployment--infrastructure-topology)
-13. [Phase-by-Phase Development Roadmap](#13-phase-by-phase-development-roadmap)
+2. [Quickstart & Local Setup Guide (Windows / PowerShell)](#2-quickstart--local-setup-guide-windows--powershell)
+3. [High-Level System Architecture](#3-high-level-system-architecture)
+4. [Database Architecture & Entity-Relationship Design](#4-database-architecture--entity-relationship-design)
+5. [Role-Based Access Control (RBAC) Matrix](#5-role-based-access-control-rbac-matrix)
+6. [Flask Presentation & Workflow Architecture](#6-flask-presentation--workflow-architecture)
+7. [FastAPI High-Performance Service Architecture](#7-fastapi-high-performance-service-architecture)
+8. [Machine Learning & Predictive Analytics Architecture](#8-machine-learning--predictive-analytics-architecture)
+9. [Hospital Analytics & Business Intelligence Engine](#9-hospital-analytics--business-intelligence-engine)
+10. [Module Dependency Analysis & Data Flow DAG](#10-module-dependency-analysis--data-flow-dag)
+11. [Security, Audit & Compliance Architecture](#11-security-audit--compliance-architecture)
+12. [Testing & Quality Assurance Strategy](#12-testing--quality-assurance-strategy)
+13. [Docker Deployment & Infrastructure Topology](#13-docker-deployment--infrastructure-topology)
+14. [Phase-by-Phase Development Roadmap](#14-phase-by-phase-development-roadmap)
+15. [CHIKITSASETU AI Health Assistant](#15-chikitsasetu-ai-health-assistant)
 
 ---
 
@@ -67,7 +69,186 @@ The system satisfies 30 functional and non-functional requirements without intro
 
 ---
 
-## 2. High-Level System Architecture
+## 2. Quickstart & Local Setup Guide (Windows / PowerShell)
+
+### 2.1 Prerequisites
+- **Python**: 3.11+ (Python 3.11, 3.12, or 3.13)
+- **Git**
+- **Windows PowerShell**
+- *(Optional for Containerized Deployment)*: Docker Desktop & PostgreSQL 15+
+
+---
+
+### 2.2 Local Environment Setup
+
+Open PowerShell and navigate to the project directory:
+
+```powershell
+# 1. Navigate to project root
+cd D:\CHIKITSASETU
+
+# 2. Create isolated virtual environment
+python -m venv .venv
+
+# 3. Activate virtual environment
+.venv\Scripts\Activate.ps1
+
+# 4. Install all dependencies
+pip install -r requirements.txt
+```
+
+---
+
+### 2.3 Configuration Setup
+
+Copy the environment template to create your local `.env`:
+
+```powershell
+# Copy template configuration
+Copy-Item .env.example .env
+```
+
+Default settings in `.env` are configured for immediate, zero-configuration local development using standalone SQLite (`chikitsasetu_dev.db`).
+
+> [!NOTE]
+> For production deployments, set `ENV=production`, configure a high-entropy `SECRET_KEY`, and provide your PostgreSQL connection in `DATABASE_URL`. In production mode, the application strictly forbids SQLite fallback.
+
+---
+
+### 2.4 Database Setup & Alembic Migrations
+
+Run Alembic migrations to apply the relational schema:
+
+```powershell
+# Check migration head status
+alembic current
+alembic heads
+
+# Upgrade database to latest schema revision
+alembic upgrade head
+
+# Verify models and database schema match 100%
+alembic check
+```
+
+---
+
+### 2.5 Seed Realistic Clinical Demo Data (DEVELOPMENT ONLY)
+
+Populate the database with clinical departments, roles, doctors, patient records, inventory, and bed wards:
+
+```powershell
+# Seed local development database
+python scripts/seed_database.py
+```
+
+> [!CAUTION]
+> `seed_database.py` is for local development only and automatically aborts if run in `ENV=production`.
+
+---
+
+### 2.6 Running the Services Locally
+
+#### Option A: Run Both Services Simultaneously (Recommended)
+```powershell
+# Launches both Flask (port 5000) and FastAPI (port 8000) concurrently
+python run_all.py
+```
+*(Or double-click `run.bat` in File Explorer).*
+
+#### Option B: Run Flask Web Portal Separately
+```powershell
+python run_flask.py
+```
+- Web Portal URL: `http://127.0.0.1:5000`
+- Login Page: `http://127.0.0.1:5000/login`
+- Health Endpoint: `http://127.0.0.1:5000/health`
+
+#### Option C: Run FastAPI REST & ML Inference Service Separately
+```powershell
+python run_fastapi.py
+```
+- API Base URL: `http://127.0.0.1:8000`
+- Interactive Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc API Documentation: `http://127.0.0.1:8000/redoc`
+- Health Endpoint: `http://127.0.0.1:8000/health`
+
+---
+
+### 2.7 Automated Testing
+
+Execute the complete 331-item automated test suite:
+
+```powershell
+# Run entire test suite
+pytest -q
+
+# Run focused security & hardening audit suite
+pytest tests/security/ -v
+
+# Run unit tests
+pytest tests/unit/ -v
+
+# Run REST API contract tests
+pytest tests/api/ -v
+```
+
+---
+
+### 2.8 Docker Deployment
+
+To spin up the containerized architecture with PostgreSQL, FastAPI, and Flask:
+
+```powershell
+# Build and start all three container services
+docker compose up --build -d
+
+# Verify container health
+docker compose ps
+
+# View container logs
+docker compose logs -f
+```
+
+---
+
+### 2.9 AI Health Assistant & Multimodal Chatbot
+
+The AI Health Assistant is available on all authenticated portal pages via the floating widget at the bottom right.
+- **Offline Mode (Default)**: Clinical extraction engine operating without external API keys.
+- **Gemini Multimodal Mode**: Set `CHATBOT_PROVIDER=gemini` and provide `CHATBOT_API_KEY=your_gemini_key` in `.env`.
+- **Security & Privacy**:
+  - Unauthenticated requests are rejected with HTTP 401.
+  - Context is bound to authenticated user claims. Patients cannot access other patients' data.
+  - Uploaded files are validated via magic bytes and stored with randomized UUID filenames.
+  - API keys remain strictly server-side.
+
+---
+
+### 2.10 Security & Safe GitHub Push Commands
+
+To safely publish your repository to GitHub:
+
+```powershell
+# 1. Verify working tree status and confirm .env is ignored
+git status
+
+# 2. Review modified files
+git diff --stat
+
+# 3. Stage verified project changes
+git add .
+
+# 4. Commit with descriptive summary
+git commit -m "Harden security, authenticate chatbot, synchronize migrations, and remove default credentials"
+
+# 5. Push to GitHub
+git push origin main
+```
+
+---
+
+## 3. High-Level System Architecture
 
 CHIKITSASETU utilizes a **Hybrid Python Two-Tier Architecture** centered around a shared relational domain model in PostgreSQL.
 
@@ -906,28 +1087,85 @@ The project is structured across 6 sequential milestones:
 
 ---
 
-## 14. Getting Started (Preview)
+## 14. Getting Started & Operations
 
-When implementation begins, developers and evaluators can bootstrap the complete environment with the following commands:
+### 14.1 Local Development Setup
 
 ```bash
 # 1. Clone repository & create virtual environment
 git clone <repo-url>
 cd CHIKITSASETU
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# On Windows:
+venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
 
-# 2. Install dependencies
+# 2. Install production & development dependencies
 pip install -r requirements.txt
 
-# 3. Train ML models & seed database
-python -m ml.train.train_readmission
-python -m ml.train.train_no_show
+# 3. Database Migration & Initialization
+alembic upgrade head
 python -m scripts.seed_database
 
-# 4. Launch with Docker Compose
+# 4. Optional: Train ML Model Artifacts
+python -m ml.train.train_readmission
+python -m ml.train.train_no_show
+```
+
+### 14.2 Running the Application
+
+CHIKITSASETU can be launched in multiple ways:
+
+```bash
+# Option A: Start both FastAPI and Flask concurrently (Recommended for dev)
+python run_all.py
+
+# Option B: Run Flask Web Portal individually (Port 5000)
+python run_flask.py
+
+# Option C: Run FastAPI REST & ML Microservice individually (Port 8000)
+python run_fastapi.py
+
+# Option D: Launch complete containerized multi-service stack with PostgreSQL
 docker compose up --build
 ```
 
+### 14.3 Service Endpoints & Health Checks
+
+- **Flask Clinical Web Portal**: `http://localhost:5000`
+  - Health Endpoint: `http://localhost:5000/health` -> `{"status": "ok", "service": "CHIKITSASETU Web Portal"}`
+  - Login Page: `http://localhost:5000/login`
+- **FastAPI REST & ML API**: `http://localhost:8000`
+  - Health Endpoint: `http://localhost:8000/health` -> `{"status": "ok", "service": "CHIKITSASETU REST & ML Engine"}`
+  - Interactive OpenAPI Swagger UI: `http://localhost:8000/docs`
+  - ReDoc Documentation: `http://localhost:8000/redoc`
+
 ---
-*Document prepared for CHIKITSASETU System Architecture Review.*
+
+## 15. CHIKITSASETU AI Health Assistant
+
+The **CHIKITSASETU AI Health Assistant** is an integrated clinical conversational and document analysis assistant embedded across the patient and clinical portals.
+
+### Features:
+1. **Multilingual Patient Engagement**: Seamless clinical explanations in English, Hindi, and Hinglish.
+2. **Medical Document Analysis**: Parses laboratory reports and clinical discharge summaries from uploaded PDF files (`pypdf`).
+3. **Prescription & Image OCR**: Validates medical photos and prescriptions with deterministic format checking and optical character recognition (`Pillow`, `pytesseract`).
+4. **Safety & Emergency Triage**: Built-in deterministic pattern-matching engine detecting acute cardiovascular, respiratory, stroke, allergy, hemorrhage, and self-harm emergencies with immediate emergency guidance and disclaimer enforcement.
+5. **Zero-Lockin Dual Mode**:
+   - **Offline Mode (Default)**: Clinical knowledge extraction engine operating locally without external API dependencies.
+   - **Cloud Multimodal Mode**: Configurable via `CHATBOT_PROVIDER=gemini` and `CHATBOT_API_KEY` for advanced Gemini 1.5 Flash multimodal intelligence.
+
+---
+
+## 16. Automated Testing & Verification
+
+Execute the complete 320-item test suite with:
+
+```bash
+pytest
+```
+
+---
+*CHIKITSASETU — Production Ready Healthcare Management & Analytics Architecture.*
+

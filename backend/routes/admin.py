@@ -145,18 +145,11 @@ def create_user():
     last_name = request.form.get("last_name", "").strip()
     phone = request.form.get("phone", "").strip()
     role_str = request.form.get("role", "").strip()
-    password = request.form.get("password", "Password123!")
-
-    # Validations
-    if not email or "@" not in email:
-        flash("A valid email address is required.", "danger")
-        return redirect(url_for("admin.manage_users"))
-
-    if not first_name or not last_name:
-        flash("First and last names are required.", "danger")
-        return redirect(url_for("admin.manage_users"))
-
-    if len(password) < 8:
+    password = request.form.get("password", "").strip()
+    if not password:
+        import secrets
+        password = secrets.token_urlsafe(12) + "A1!"
+    elif len(password) < 8:
         flash("Password must be at least 8 characters long.", "danger")
         return redirect(url_for("admin.manage_users"))
 
@@ -323,7 +316,13 @@ def create_doctor():
     first_name = request.form.get("first_name", "").strip()
     last_name = request.form.get("last_name", "").strip()
     phone = request.form.get("phone", "").strip()
-    password = request.form.get("password", "Password123!")
+    password = request.form.get("password", "").strip()
+    if not password:
+        import secrets
+        password = secrets.token_urlsafe(12) + "A1!"
+    elif len(password) < 8:
+        flash("Password must be at least 8 characters long.", "danger")
+        return redirect(url_for("admin.manage_doctors"))
     specialization = request.form.get("specialization", "").strip()
     qualification = request.form.get("qualification", "").strip()
     license_number = request.form.get("license_number", "").strip()
@@ -485,7 +484,13 @@ def create_staff():
     first_name = request.form.get("first_name", "").strip()
     last_name = request.form.get("last_name", "").strip()
     phone = request.form.get("phone", "").strip()
-    password = request.form.get("password", "Password123!")
+    password = request.form.get("password", "").strip()
+    if not password:
+        import secrets
+        password = secrets.token_urlsafe(12) + "A1!"
+    elif len(password) < 8:
+        flash("Password must be at least 8 characters long.", "danger")
+        return redirect(url_for("admin.manage_staff"))
     role_str = request.form.get("role", "nurse").strip()
     employee_id = request.form.get("employee_id", "").strip()
     designation = request.form.get("designation", "").strip()
@@ -614,7 +619,13 @@ def create_patient():
     first_name = request.form.get("first_name", "").strip()
     last_name = request.form.get("last_name", "").strip()
     phone = request.form.get("phone", "").strip()
-    password = request.form.get("password", "Password123!")
+    password = request.form.get("password", "").strip()
+    if not password:
+        import secrets
+        password = secrets.token_urlsafe(12) + "A1!"
+    elif len(password) < 8:
+        flash("Password must be at least 8 characters long.", "danger")
+        return redirect(url_for("admin.manage_patients"))
     dob_str = request.form.get("dob", "").strip()
     gender_str = request.form.get("gender", "other").strip().lower()
     blood_group = request.form.get("blood_group", "").strip()

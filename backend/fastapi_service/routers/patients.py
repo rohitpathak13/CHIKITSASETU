@@ -68,9 +68,12 @@ def register_patient(
     if existing:
         raise HTTPException(status_code=400, detail="User with this email already exists")
 
+    import secrets
+    raw_password = payload.password or (secrets.token_urlsafe(12) + "A1!")
+
     new_user = User(
         email=payload.email,
-        password_hash=get_password_hash(payload.password),
+        password_hash=get_password_hash(raw_password),
         role=RoleEnum.PATIENT,
         first_name=payload.first_name,
         last_name=payload.last_name,

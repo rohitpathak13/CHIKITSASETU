@@ -30,6 +30,22 @@ class Settings:
     @property
     def DATABASE_URL(self) -> str:
         custom_url = os.getenv("DATABASE_URL")
+        if self.ENV == "production":
+            if self.USE_SQLITE:
+                raise RuntimeError(
+                    "CRITICAL CONFIGURATION ERROR: USE_SQLITE is strictly forbidden in production! "
+                    "PostgreSQL must be explicitly configured."
+                )
+            if custom_url:
+                if custom_url.startswith("sqlite"):
+                    raise RuntimeError(
+                        "CRITICAL CONFIGURATION ERROR: SQLite database URL is strictly forbidden in production! "
+                        "PostgreSQL must be configured."
+                    )
+                return custom_url
+            # In production, use explicit PostgreSQL connection URL; NEVER silently fall back to SQLite
+            return self.POSTGRES_DATABASE_URL
+
         if custom_url:
             return custom_url
         if self.USE_SQLITE or os.getenv("TESTING") == "1":
@@ -50,7 +66,18 @@ class Settings:
             return f"sqlite:///{self.SQLITE_PATH}"
 
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "chikitsasetu-super-secret-key-change-in-production-2026")
+    @property
+    def SECRET_KEY(self) -> str:
+        key = os.getenv("SECRET_KEY")
+        if self.ENV == "production":
+            if not key or "change-in-production" in key or "development-secret-key" in key:
+                raise RuntimeError(
+                    "CRITICAL CONFIGURATION ERROR: SECRET_KEY must be explicitly set via environment variable in production! "
+                    "Default or insecure secret keys are strictly forbidden."
+                )
+            return key
+        return key or "chikitsasetu-development-secret-key-not-for-production"
+
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours for dev convenience
     
@@ -74,22 +101,30 @@ class Settings:
         ]
 
     def validate_production_secrets(self):
-        """Validates that insecure default secrets are not deployed in production."""
-        if self.ENV == "production" and "change-in-production" in self.SECRET_KEY:
-            import warnings
-            warnings.warn(
-                "CRITICAL SECURITY WARNING: Default insecure SECRET_KEY detected in production environment! "
-                "Configure a high-entropy SECRET_KEY via environment variables.",
-                RuntimeWarning,
-                stacklevel=2
-            )
+        """Validates that production environment has secure secrets and PostgreSQL configured."""
+        if self.ENV == "production":
+            # Will raise RuntimeError if SECRET_KEY or DATABASE_URL is missing or invalid
+            _ = self.SECRET_KEY
+            _ = self.DATABASE_URL
     
     # ML Artifacts
     ML_ARTIFACTS_DIR: Path = BASE_DIR / "ml" / "artifacts"
     
+    # AI Health Assistant Configuration
+    CHATBOT_PROVIDER: str = os.getenv("CHATBOT_PROVIDER", "auto")  # "auto", "gemini", "openai", or "local"
+    CHATBOT_API_KEY: Optional[str] = (
+        os.getenv("CHATBOT_API_KEY") or os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY")
+    )
+    CHATBOT_MODEL: str = os.getenv("CHATBOT_MODEL", "gemini-1.5-flash")
+    CHATBOT_API_BASE: Optional[str] = os.getenv("CHATBOT_API_BASE")
+    CHATBOT_MAX_UPLOAD_BYTES: int = int(os.getenv("CHATBOT_MAX_UPLOAD_BYTES", 10 * 1024 * 1024))  # 10MB
+    CHATBOT_UPLOAD_DIR: Path = BASE_DIR / "uploads" / "chatbot_temp"
+
     # Network Ports
     FLASK_PORT: int = int(os.getenv("FLASK_PORT", "5000"))
     FASTAPI_PORT: int = int(os.getenv("FASTAPI_PORT", "8000"))
 
 settings = Settings()
 settings.validate_production_secrets()
+# Ensure upload directory exists
+settings.CHATBOT_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

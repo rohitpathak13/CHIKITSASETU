@@ -19,7 +19,8 @@ from backend.fastapi_service.routers import (
     ml_inference,
     ml,
     notifications,
-    audit
+    audit,
+    chatbot
 )
 
 openapi_tags = [
@@ -93,6 +94,7 @@ app.include_router(ml_inference.router, prefix=API_PREFIX)
 app.include_router(ml.router, prefix=API_PREFIX)
 app.include_router(notifications.router, prefix=API_PREFIX)
 app.include_router(audit.router, prefix=API_PREFIX)
+app.include_router(chatbot.router, prefix=API_PREFIX)
 
 
 @app.on_event("startup")
@@ -111,3 +113,13 @@ def root():
         "redoc": "/redoc",
         "openapi": "/openapi.json"
     }
+
+
+@app.get("/health", tags=["System"])
+def health():
+    return {
+        "status": "ok",
+        "service": "CHIKITSASETU REST & ML Engine",
+        "version": settings.PROJECT_VERSION
+    }
+

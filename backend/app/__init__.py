@@ -112,6 +112,7 @@ def create_app() -> Flask:
     from backend.routes.notifications import notifications_bp
     from backend.routes.appointment import appointment_bp
     from backend.routes.ipd import ipd_bp
+    from backend.chatbot import chatbot_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
@@ -126,6 +127,7 @@ def create_app() -> Flask:
     app.register_blueprint(notifications_bp)
     app.register_blueprint(appointment_bp)
     app.register_blueprint(ipd_bp)
+    app.register_blueprint(chatbot_bp)
 
     @app.route("/")
     def index():
@@ -142,5 +144,9 @@ def create_app() -> Flask:
             }
             return redirect(url_for(role_map.get(role, "auth.login")))
         return redirect(url_for("auth.login"))
+
+    @app.route("/health")
+    def health():
+        return {"status": "ok", "service": "CHIKITSASETU Web Portal"}, 200
 
     return app

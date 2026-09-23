@@ -44,7 +44,7 @@ EXPOSE 8000
 ENV FASTAPI_PORT=8000
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=5 \
-    CMD curl -f http://localhost:8000/ || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["api"]
@@ -58,7 +58,7 @@ EXPOSE 5000
 ENV FLASK_PORT=5000
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=5 \
-    CMD curl -f http://localhost:5000/login || exit 1
+    CMD curl -f http://localhost:5000/health || exit 1
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["web"]

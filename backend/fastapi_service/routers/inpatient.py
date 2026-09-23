@@ -1,6 +1,9 @@
 from typing import List, Optional
 from datetime import datetime, date, timezone, timedelta
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.database import get_db
@@ -85,7 +88,8 @@ def update_bed_status(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Bed status update failed: {str(e)}")
+        logger.exception("Bed status update failed unexpectedly: %s", e)
+        raise HTTPException(status_code=500, detail="Bed status update failed. Please try again.")
 
 
 @router.post("/admit", response_model=AdmissionResponse, status_code=status.HTTP_201_CREATED)
@@ -162,7 +166,8 @@ def admit_patient(
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Admission failed: {str(e)}")
+        logger.exception("Admission failed unexpectedly: %s", e)
+        raise HTTPException(status_code=500, detail="Admission processing failed. Please try again.")
 
 
 @router.post("/admissions/{admission_id}/transfer", response_model=BedTransferResponse)
@@ -196,7 +201,8 @@ def transfer_patient(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Bed transfer failed: {str(e)}")
+        logger.exception("Bed transfer failed unexpectedly: %s", e)
+        raise HTTPException(status_code=500, detail="Bed transfer failed. Please try again.")
 
 
 @router.post("/admissions/{admission_id}/discharge")
@@ -233,7 +239,8 @@ def discharge_patient(
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Discharge processing failed: {str(e)}")
+        logger.exception("Discharge processing failed unexpectedly: %s", e)
+        raise HTTPException(status_code=500, detail="Discharge processing failed. Please try again.")
 
 
 @router.get("/admissions", response_model=List[AdmissionResponse])

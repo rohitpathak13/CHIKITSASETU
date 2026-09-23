@@ -1,0 +1,110 @@
+<!-- ==============================================================================
+     CHIKITSASETU AI Health Assistant - Floating Chatbot Widget Partial
+     ============================================================================== -->
+
+<!-- Floating Launcher Button -->
+<button class="cb-launcher" id="cbLauncher" aria-label="Open CHIKITSASETU AI Health Assistant" type="button">
+    <span class="cb-launcher-icon">🤖</span>
+    <span>AI Health Assistant</span>
+    <span class="cb-launcher-badge" title="Active"></span>
+</button>
+
+<!-- Floating Chat Panel Window -->
+<div class="cb-panel cb-hidden" id="cbPanel" role="dialog" aria-modal="false" aria-label="CHIKITSASETU AI Health Assistant">
+    <!-- Header -->
+    <header class="cb-header">
+        <div class="cb-header-brand">
+            <div class="cb-header-avatar">🤖</div>
+            <div>
+                <div class="cb-header-title">CHIKITSA<span>SETU</span> AI Assistant</div>
+                <div class="cb-header-subtitle">Understand your medicines, reports & health information in simple language.</div>
+            </div>
+        </div>
+        <div class="cb-header-controls">
+            <button class="cb-icon-btn" id="cbExpandBtn" title="Toggle size" type="button">⤢</button>
+            <button class="cb-icon-btn" id="cbClearBtn" title="Clear chat history" type="button">🗑️</button>
+            <button class="cb-icon-btn" id="cbMinimizeBtn" title="Minimize" type="button">&times;</button>
+        </div>
+    </header>
+
+    <!-- Interactive Quick Actions Bar -->
+    <div class="cb-quick-actions-bar" id="cbQuickActions">
+        <button class="cb-chip" data-category="medicine" data-prompt="Explain my medicine, its purpose, common side effects, and precautions." type="button">
+            <span>💊</span> Explain My Medicine
+        </button>
+        <button class="cb-chip" data-category="prescription" data-prompt="Help me understand this doctor prescription and how to take these medicines." type="button">
+            <span>🧾</span> Explain Prescription
+        </button>
+        <button class="cb-chip" data-category="xray_report" data-prompt="Explain this X-ray report and what the medical terms mean." type="button">
+            <span>🩻</span> Explain X-Ray Report
+        </button>
+        <button class="cb-chip" data-category="lab_report" data-prompt="Explain my lab test results and standard reference ranges." type="button">
+            <span>🧪</span> Explain Lab Report
+        </button>
+        <button class="cb-chip" data-category="document_summary" data-prompt="Please summarize this medical document or discharge summary." type="button">
+            <span>📄</span> Summarize Medical Report
+        </button>
+        <button class="cb-chip" data-category="health_image" data-prompt="I have attached a photo of a visible skin condition. What could this be?" type="button">
+            <span>🖼️</span> Analyze Health Image
+        </button>
+        <button class="cb-chip" data-category="symptoms" data-prompt="I have some symptoms I want to understand. Which doctor should I consult?" type="button">
+            <span>🩺</span> Understand Symptoms
+        </button>
+        <button class="cb-chip" data-category="doctor_recommendation" data-prompt="Which doctor specialty in CHIKITSASETU should I visit?" type="button">
+            <span>👨‍⚕️</span> Find Appropriate Doctor
+        </button>
+        <button class="cb-chip" data-category="appointment_help" data-prompt="How do I book an appointment with a hospital doctor?" type="button">
+            <span>📅</span> Appointment Help
+        </button>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="cb-messages" id="cbMessages">
+        <!-- Initial Welcome Message -->
+        <div class="cb-msg-row cb-msg-bot">
+            <div class="cb-avatar-bot">🤖</div>
+            <div class="cb-bubble">
+                <p><strong>Namaste! Welcome to CHIKITSASETU AI Health Assistant.</strong></p>
+                <p>I can help you understand your medicines, doctor prescriptions, laboratory reports, X-ray findings, and symptoms in simple English, Hindi, or Hinglish.</p>
+                <p style="font-size: 0.78rem; color: #94A3B8; margin-top: 0.4rem;">
+                    💡 <em>Tip: You can type your question below or click the 📎 paperclip to upload a report (PDF) or health photo (JPG/PNG).</em>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Attachment Preview Bar -->
+    <div class="cb-upload-preview-bar" id="cbUploadPreviewBar">
+        <div class="cb-upload-preview-info">
+            <span id="cbUploadIcon">📎</span>
+            <span id="cbUploadFileName" style="font-weight: 500;">document.pdf</span>
+            <span id="cbUploadFileSize" style="color: #94A3B8;">(120 KB)</span>
+        </div>
+        <button class="cb-upload-remove-btn" id="cbUploadRemoveBtn" title="Remove file" type="button">&times;</button>
+    </div>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="cbFileInput" accept=".jpg,.jpeg,.png,.webp,.pdf" style="display: none;">
+
+    <!-- Input Footer -->
+    <footer class="cb-footer">
+        <form class="cb-input-form" id="cbForm">
+            <button class="cb-upload-btn" id="cbAttachBtn" title="Attach report (PDF) or health image (JPG/PNG)" type="button">
+                📎
+            </button>
+            <input 
+                type="text" 
+                class="cb-input-box" 
+                id="cbInput" 
+                placeholder="Ask about a medicine, symptom, or report..." 
+                autocomplete="off"
+            >
+            <button class="cb-send-btn" id="cbSendBtn" title="Send Message" type="submit">
+                ➤
+            </button>
+        </form>
+        <div class="cb-disclaimer">
+            Educational AI assistant. Not a substitute for professional clinical diagnosis or prescription.
+        </div>
+    </footer>
+</div>

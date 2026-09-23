@@ -47,7 +47,7 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if "user_id" not in session:
             flash("Please log in to access this page.", "warning")
-            if request.is_json or request.path.startswith("/api/"):
+            if request.is_json or request.path.startswith("/api/") or "/api/" in request.path or request.path.startswith("/chatbot/"):
                 return jsonify({"error": "Unauthorized", "message": "Authentication required."}), 401
             return redirect(url_for("auth.login", next=request.url))
 
@@ -56,6 +56,8 @@ def login_required(f):
         if not user or not user.is_active:
             session.clear()
             flash("Your account has been deactivated or does not exist. Please sign in again.", "danger")
+            if request.is_json or request.path.startswith("/api/") or "/api/" in request.path or request.path.startswith("/chatbot/"):
+                return jsonify({"error": "Unauthorized", "message": "Authentication required."}), 401
             return redirect(url_for("auth.login"))
 
         return f(*args, **kwargs)

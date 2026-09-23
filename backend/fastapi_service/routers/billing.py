@@ -1,7 +1,10 @@
 from typing import List, Optional
 from datetime import datetime, date, timezone
 from decimal import Decimal
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -89,7 +92,8 @@ def create_invoice(
         raise HTTPException(status_code=400, detail=str(be))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Bill creation failed: {str(e)}")
+        logger.exception("Bill creation failed unexpectedly: %s", e)
+        raise HTTPException(status_code=500, detail="Bill creation failed. Please try again.")
 
 
 @router.get("/invoices/{invoice_id}", response_model=BillDetailResponse)
@@ -146,7 +150,8 @@ def record_payment(
         raise HTTPException(status_code=400, detail=str(be))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Payment processing failed: {str(e)}")
+        logger.exception("Payment processing failed unexpectedly: %s", e)
+        raise HTTPException(status_code=500, detail="Payment processing failed. Please try again.")
 
 
 @router.post("/invoices/{invoice_id}/refund")
@@ -182,7 +187,8 @@ def process_refund(
         raise HTTPException(status_code=400, detail=str(be))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Refund processing failed: {str(e)}")
+        logger.exception("Refund processing failed unexpectedly: %s", e)
+        raise HTTPException(status_code=500, detail="Refund processing failed. Please try again.")
 
 
 @router.get("/dashboard-stats", response_model=BillingStatsResponse)

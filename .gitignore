@@ -51,3 +51,6 @@ dist/
 
 # Docker Local Volume Data
 postgres_data/
+
+# Uploaded medical documents & temporary files
+uploads/

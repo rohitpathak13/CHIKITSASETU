@@ -1,6 +1,9 @@
 from typing import List, Optional
 from datetime import date
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -107,7 +110,8 @@ def create_medical_record(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Medical record creation failed: {str(e)}")
+        logger.exception("Medical record creation failed unexpectedly: %s", e)
+        raise HTTPException(status_code=500, detail="Medical record creation failed. Please try again.")
 
 
 @router.get("/{record_id}", response_model=MedicalRecordResponse)

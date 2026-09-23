@@ -24,6 +24,10 @@ from backend.security import get_password_hash
 
 
 def seed():
+    if os.getenv("ENV") == "production":
+        print("CRITICAL SECURITY ERROR: seed_database.py is strictly forbidden in production!")
+        sys.exit(1)
+
     print("[*] Initializing database tables...")
     init_db()
     db = SessionLocal()
@@ -61,8 +65,9 @@ def seed():
         db.flush()
         role_map[r_name] = r_obj
 
-    print("[*] Seeding System Users & Profiles...")
-    password_hash = get_password_hash("Password123!")
+    print("[*] Seeding System Users & Profiles (DEVELOPMENT ONLY)...")
+    seed_password = os.getenv("SEED_DEFAULT_PASSWORD", "Password123!")
+    password_hash = get_password_hash(seed_password)
 
     # 1. Admin
     admin_user = User(

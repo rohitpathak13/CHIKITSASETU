@@ -7,7 +7,7 @@ class PatientCreateRequest(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
-    password: str = Field(default="Password123!", min_length=8, description="Minimum 8 characters")
+    password: Optional[str] = Field(default=None, min_length=8, description="Minimum 8 characters or leave empty for auto-generated")
     phone: Optional[str] = None
     dob: date
     gender: GenderEnum

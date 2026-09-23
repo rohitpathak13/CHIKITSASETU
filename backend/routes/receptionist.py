@@ -1,3 +1,4 @@
+import secrets
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from datetime import datetime, date, timezone
 from sqlalchemy import func
@@ -111,9 +112,17 @@ def register_patient():
             flash("Invalid date of birth format.", "danger")
             return render_template("receptionist/register.html", active_page="rec_register")
 
+        password_input = request.form.get("password", "").strip()
+        if password_input and len(password_input) >= 8:
+            chosen_password = password_input
+            temp_msg = ""
+        else:
+            chosen_password = secrets.token_urlsafe(12) + "A1!"
+            temp_msg = f" Temporary password: '{chosen_password}'."
+
         user = User(
             email=email,
-            password_hash=get_password_hash("Password123!"),
+            password_hash=get_password_hash(chosen_password),
             role=RoleEnum.PATIENT,
             first_name=first_name,
             last_name=last_name,
@@ -136,7 +145,7 @@ def register_patient():
         db_session.add(profile)
         db_session.commit()
 
-        flash(f"Patient {user.full_name} registered successfully. Default password is 'Password123!'.", "success")
+        flash(f"Patient {user.full_name} registered successfully.{temp_msg}", "success")
         return redirect(url_for("receptionist.book_appointment", patient_id=user.id))
 
     return render_template("receptionist/register.html", active_page="rec_register")

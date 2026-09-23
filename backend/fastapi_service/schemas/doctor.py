@@ -4,7 +4,7 @@ from decimal import Decimal
 
 class DoctorCreateRequest(BaseModel):
     email: EmailStr
-    password: str = "Password123!"
+    password: Optional[str] = None
     first_name: str
     last_name: str
     phone: Optional[str] = None
